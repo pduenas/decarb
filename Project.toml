@@ -1,0 +1,15 @@
+name = "DECARB"
+uuid = "987cfde4-73f7-40fc-a81b-2f2fe31fdba5"
+authors = ["Pablo Duenas <36854223+pduenas@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+AstroLib = "c7932e45-9af1-51e7-9da9-f004cd3a462b"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
