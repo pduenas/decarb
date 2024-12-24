@@ -34,7 +34,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
         fix.(vTup,0; force=true)
         fix.(vTlo,0; force=true)
     else
-        println("   \u2139 Discomfort temperature allowed.")
+        println("   \u2139  Discomfort temperature allowed")
     end
 
     # remove temperature control when inputted as disable
@@ -97,7 +97,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     @variable(model, 1 >= vNShw[t=1:tm["P"]] >= 0)
 
     # disable discomfort hot water if indicated
-    in["NSHWcost"]==0 ? fix.(vNShw,0; force=true) : println("   \u2139 Discomfort hot water allowed.")
+    in["NSHWcost"]==0 ? fix.(vNShw,0; force=true) : println("   \u2139  Discomfort hot water allowed")
 
     # domestic hot water balance [kWh]
     @constraint(model, eHWbal[t=1:tm["P"]], 

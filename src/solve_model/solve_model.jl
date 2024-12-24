@@ -7,7 +7,7 @@ function solve_model!(model::Model,b_relax_integrality::Bool)
 
     optimize!(model)    # solve model
     s = termination_status(model)
-    println("  \u26DD  ", s)
+    println("  \u2139  ", s)
 
     # Check infeasibility if not optimal
     if s != MOI.OPTIMAL
@@ -17,7 +17,7 @@ function solve_model!(model::Model,b_relax_integrality::Bool)
             iis_model, reference_map = copy_conflict(model)
             print(iis_model)
         end
-        error("\u26A0 model is not optimal. Check input data.\n")
+        error("\u2757  Model is not optimal. Check input data.\n")
     end
 
     # relax integrality to get dual information
@@ -37,7 +37,7 @@ function solve_model!(model::Model,b_relax_integrality::Bool)
         optimize!(model)
     end
 
-    has_duals(model)==true ? println("   \u2139 Dual information available.") : 
-        println("   ! Dual information unavailable.")
+    has_duals(model)==true ? println("   \u2139  Dual information available.") : 
+        println("   \u2757  Dual information unavailable.")
 
 end

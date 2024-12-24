@@ -31,7 +31,7 @@ function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::
     @variable(model, bQbs[t=1:tm["P"]], Bin)
 
     # disable non-served energy if indicated
-    in["NSEcost"]==0 ? fix.(vNSEq,0; force=true) : println("   \u2139 Non-served energy allowed.")
+    in["NSEcost"]==0 ? fix.(vNSEq,0; force=true) : println("   \u2139  Non-served energy allowed")
 
     # non-served electricity [kWh]
     @expression(model, vNSE_Q[t=1:tm["P"]], tm["TM"][t]*(tm["Qlight"][t]+tm["Qequip"][t])*vNSEq[t])
