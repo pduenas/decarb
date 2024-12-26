@@ -43,6 +43,8 @@ function load_sp(path::AbstractString,in::Dict)
     sp["BESS0"] = collect(skipmissing(df_sp.pBESS0))    # BESS equipment
     sp["BESSz0"] = collect(skipmissing(df_sp.pBESSz0))  # BESS existing modules [0,...,n]
     sp["BESSyn"] = collect(skipmissing(df_sp.pBESSyn))  # enable investment in BESS
+    sp["EV0"] = collect(skipmissing(df_sp.pEV0))        # EV types
+    sp["EVz0"] = collect(skipmissing(df_sp.pEVz0))      # EV existing types [0,...,n]
 
     # disable potential for investment when investment windows do not exist
     if in["b_inv"]==false
