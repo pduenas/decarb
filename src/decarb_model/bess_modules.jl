@@ -14,12 +14,12 @@ bess    dictionary with BESS data
 """
 function bess_modules!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::Dict)
 
-    # integer state-of-charge of BESS [0,z]
+    # unitary state-of-charge of multiple BESS [0,z]
     @variable(model, bdg["Bbess"] >= vBESSsoc[t=0:tm["P"],s=1:bess["N"]] >= 0)
-    # integer electricity charged in BESS [0,z]
+    # unitary electricity charged in multiple BESS [0,z]
     @variable(model,
         bdg["Bbess"]*tm["TM"][t]*bess["up"][s]/bess["mx"][s] >= vBESSup[t=1:tm["P"],s=1:bess["N"]] >= 0)
-    # integer electricity discharged from BESS [0,z]
+    # unitary electricity discharged from multiple BESS [0,z]
     @variable(model,
         bdg["Bbess"]*tm["TM"][t]*bess["dn"][s]/bess["mx"][s] >= vBESSdn[t=1:tm["P"],s=1:bess["N"]] >= 0)
     # charge/discharge mode of BESS {0,1}
