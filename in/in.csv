@@ -2,6 +2,9 @@ pP0,2017-12-31T23:00
 pTmode,True
 pBESSsoc0,1
 pBESSsocf,1
+pEVsoc0,1
+pEVsocf,1
+pEVmnsoc,0.5
 pWHsto0,0.5
 pWHstof,0.5
 pTin0,17
@@ -17,5 +20,9 @@ pQmxTM,1
 pNSEcost,1000000
 pNSTcost,1000000
 pNSHWcost,1000000
+pNSEVcost,1000000
+pEVdriver,0
+pEVpen,100
+pEVv2g,0
 pIT,1
 pIR,0.06
