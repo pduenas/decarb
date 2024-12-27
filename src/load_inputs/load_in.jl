@@ -18,9 +18,10 @@ function load_in(path::AbstractString)
     
     # load file into dataframe with predefined types
     df_in = CSV.File(path2file;delim=',',types=[DateTime,Bool,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64,UInt16,Float64,
-                    Float64,Float64,Float64,Float64,UInt8,Float64,Float64,Float64,UInt8,
-                    Float64,Bool,UInt8,Float64],transpose=true) |> DataFrame
+                    Float64,Float64,Float64,Float64,Float64,Float64,Float64,UInt16,
+                    Float64,Float64,Float64,Float64,Float64,UInt8,Float64,Float64,
+                    Float64,Float64,UInt8,Float64,Bool,UInt8,Float64],
+                    transpose=true) |> DataFrame
 
     in["P0"] = df_in.pP0[1]             # initial date - datetime
     in["Tmode"] = df_in.pTmode[1]       # temperature control mode {0,1}
