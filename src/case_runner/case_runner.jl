@@ -18,10 +18,9 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     bdg = load_bdgii(path2in,bdg)
     tm = load_tm(path2in,in,bdg)
     pv = load_pv(path2in,tm,bdg)
-    chp,abp,hvac,wh = load_thermal_catalog(path2in,tm,sp,bdg)
+    chp,abp,hvac,wh,ev = load_extended_catalog(path2in,tm,sp,bdg)
     wind = load_wind(path2in,tm)
     bess = load_bess(path2in)
-    ev = load_ev(path2in)
     topo = load_topo(path2in,chp,abp)
     
     in["b_inv"]==false  ? println("   \u2139  investments prevented") : println("   \u2139  investments allowed")
