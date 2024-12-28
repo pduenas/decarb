@@ -113,7 +113,7 @@ function ev_names(ty,z0)
 end
 
 """
-km_to_kwh_seasonal(drv::Float64,km::Float64,T::Float64)
+km_to_kwh(drv::Float64,km::Float64,T::Float64)
 ref: https://pubs.acs.org/doi/pdf/10.1021/es505621s
 """
 

@@ -18,17 +18,15 @@ function load_in(path::AbstractString)
     
     # load file into dataframe with predefined types
     df_in = CSV.File(path2file;delim=',',types=[DateTime,Bool,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64,Float64,UInt16,
-                    Float64,Float64,Float64,Float64,Float64,UInt8,Float64,Float64,
-                    Float64,Float64,UInt8,Float64,Bool,UInt8,Float64],
-                    transpose=true) |> DataFrame
+                    Float64,Float64,Float64,Float64,Float64,Float64,UInt16,Float64,
+                    Float64,Float64,Float64,Float64,UInt8,Float64,Float64,Float64,
+                    Float64,UInt8,Float64,Bool,UInt8,Float64],transpose=true) |> DataFrame
 
     in["P0"] = df_in.pP0[1]             # initial date - datetime
     in["Tmode"] = df_in.pTmode[1]       # temperature control mode {0,1}
     in["BESSsoc0"] = df_in.pBESSsoc0[1] # initial state-of-charge of BESS [%]
     in["BESSsocf"] = df_in.pBESSsocf[1] # final state-of-charge of BESS [%]
     in["EVsoc0"] = df_in.pEVsoc0[1]     # initial state-of-charge of EV [%]
-    in["EVsocf"] = df_in.pEVsocf[1]     # final state-of-charge of EV [%]
     in["EVmnsoc"] = df_in.pEVmnsoc[1]   # minimum state-of-charge of EV [%]
     in["WHsto0"] = df_in.pWHsto0[1]     # initial state-of-tank WH [%]
     in["WHstof"] = df_in.pWHstof[1]     # final state-of-tank WH [%]

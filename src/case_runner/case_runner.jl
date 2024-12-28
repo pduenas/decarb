@@ -93,28 +93,33 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     a10 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a10-a9; digits=2), " seconds\n")
 
-    println("   \u23E9 defining electrical model")
-    electric_load!(model,in,tm,chp,hvac,wh,pv,wind,bess)
+    println("   \u23E9 defining EV module model")
+    electric_vehicles!(model,in,tm,ev)
     a11 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a11-a10; digits=2), " seconds\n")
 
-    println("   \u23E9 defining thermal model")
-    thermal_load!(model,in,tm,bdg,topo,chp,abp,wh)
+    println("   \u23E9 defining electrical model")
+    electric_load!(model,in,tm,chp,hvac,wh,pv,wind,bess,ev)
     a12 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a12-a11; digits=2), " seconds\n")
 
-    println("   \u23E9 defining objective function")
-    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,wind)
+    println("   \u23E9 defining thermal model")
+    thermal_load!(model,in,tm,bdg,topo,chp,abp,wh)
     a13 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a13-a12; digits=2), " seconds\n")
+
+    println("   \u23E9 defining objective function")
+    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,wind)
+    a14 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a14-a13; digits=2), " seconds\n")
 
     println("\u23E9 solving model")
     write_status(path,4)
 
     solve_model!(model,b_relax_integrality)
 
-    a14 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a14-a13; digits=2), " seconds\n")
+    a15 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
 
     println("\u23E9 reading outputs")
     write_status(path,5)
@@ -134,8 +139,8 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
         hvac["ACmx_k"],wh["mx"],topo["chp_bdg"])
     df_dual,df_econ = read_econ(model,tm)
 
-    a15 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
+    a16 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
 
     println("\u23E9 writing outputs")
     write_status(path,6)
@@ -143,8 +148,8 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     write_outputs(path,tm["Date"],tm["IW"],df_chp,df_hvac,df_abs,df_wh,df_pv,df_pviw,df_bess,
         df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
-    a16 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
+    a17 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a17-a16; digits=2), " seconds\n")
 
 end
 
