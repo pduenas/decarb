@@ -109,7 +109,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("   \u231B elapsed time ... ", round(a13-a12; digits=2), " seconds\n")
 
     println("   \u23E9 defining objective function")
-    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,wind)
+    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,ev,wind)
     a14 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a14-a13; digits=2), " seconds\n")
 

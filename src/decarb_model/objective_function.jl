@@ -1,6 +1,6 @@
 """
 objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,hvac::Dict,
-    wh::Dict,pv::Dict,bess::Dict,wind::Dict)
+    wh::Dict,pv::Dict,bess::Dict,ev::Dict,wind::Dict)
 
 Creates variables, expressions and constraints associated with the objective function
 
@@ -14,11 +14,12 @@ hvac    dictionary with HVAC data
 wh      dictionary with water heater data
 pv      dictionary with PV data
 bess    dictionary with BESS data
+ev      dictionary with EV data
 wind    dictionary with wind turbine data
 
 """
 function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,hvac::Dict,
-    wh::Dict,pv::Dict,bess::Dict,wind::Dict)
+    wh::Dict,pv::Dict,bess::Dict,ev::Dict,wind::Dict)
 
     # cost of non-served electricity [$]
     @expression(model, vNSEcost[t=1:tm["P"]], in["NSEcost"]*model[:vNSE_Q][t])
@@ -26,6 +27,9 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     @expression(model, vNSTcost[t=1:tm["P"]], in["NSTcost"]*(model[:vTup][t]+model[:vTlo][t]))
     # cost of non-served hot water [$]
     @expression(model, vNSHWcost[t=1:tm["P"]], in["NSHWcost"]*tm["HWdem"][t]*model[:vNShw][t])
+    # cost of non-served hot water [$]
+    @expression(model, vNSEVcost[t=1:tm["P"]],
+        in["NSEVcost"]*sum(model[:vEVlo][t,e] for e=1:ev["N"]))
     # cost of purchasing electricity [$]
     @expression(model, vQcost[t=1:tm["P"]], tm["QcostBuy"][t]*model[:vQbuy][t])
     # income from selling electricity [$]
@@ -34,6 +38,10 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     @expression(model, vGLcost[t=1:tm["P"]], 
         tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABS_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
         tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABS_L][t]+model[:vWH_L][t]+model[:vTH_L][t]))
+    
+    # penalties for driver type: range anxious (-1), indifferent (0), battery concious (1)
+    @expression(model, vEVpen,
+        sum(in["EVdriver"]*in["EVpen"]*model[:vEVsoc][t,e] for t=1:tm["P"],e=1:ev["N"]))
     
     # cost of peak capacity subscription [$]
     @expression(model, vQmxCost, sum(tm["QmxCostN"][n]*model[:vQmx][n] for n=1:in["QmxTM"]))
@@ -92,17 +100,18 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     
     # total variable costs (+) / total incomes (-) [$]
     @expression(model, COST_VAR, 
-        sum(vNSEcost[t]+vNSTcost[t]+vNSHWcost[t]+vQcost[t]-vQearn[t]+vGLcost[t] for t=1:tm["P"]) + 
-        vQmxCost + COST_VOM)
+        sum(vNSEcost[t]+vNSTcost[t]+vNSHWcost[t]+vNSEVcost[t]+vQcost[t]-vQearn[t]+vGLcost[t]
+            for t=1:tm["P"]) + vQmxCost + COST_VOM)
     # total annualized costs
     @expression(model, COST_INV, vCHPinv+vHVACinv+vABSinv+vWHinv+vPVinv+vWINDinv+vBESSinv + COST_FOM)
     # total costs [$]
-    @expression(model, COST, COST_VAR + COST_INV)
+    @expression(model, COST, COST_VAR + COST_INV + vEVpen)
 
     # CO2 emissions from building [ton]
     @expression(model, CO2_B, 
         sum(in["Gco2"]*(model[:vCHP_G][t]+model[:vABS_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
-            in["Lco2"]*(model[:vCHP_L][t]+model[:vABS_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) for t=1:tm["P"])/1e6)
+            in["Lco2"]*(model[:vCHP_L][t]+model[:vABS_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
+            for t=1:tm["P"])/1e6)
 
     # CO2 emissions from grid purchases [kg]
     @expression(model, CO2_E, sum(model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"]))
