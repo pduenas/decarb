@@ -1,6 +1,7 @@
 """
 read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
-    n_pv::Int64,n_bess::Int64,n_wind::Int64,BESSmx::Vector{Float64})
+    n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
+    EVmx::Vector{Float64})
 
 Reads time series outputs related to electric demands and generations and
     load them into dataframe
@@ -13,14 +14,17 @@ n_hvac  number of HVAC types
 n_wh    number of water heater types
 n_pv    number of PV panel types
 n_bess  number of BESS module types
+n_ev    number of electric vehicle types
 n_wind  number of wind turbine types
 BESSmx  maximum battery capacity
+EVmx    maximum EV battery capacity
 
 returns dataframes of outputs
 """
 
 function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
-    n_pv::Int64,n_bess::Int64,n_wind::Int64,BESSmx::Vector{Float64})
+    n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
+    EVmx::Vector{Float64})
 
     Qdem = tm["Qlight"] + tm["Qequip"]
     Qsell = round.(value.(model[:vQsell])./tm["TM"], digits=2)
@@ -71,6 +75,20 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
         BESSsoc = zeros(Float64, tm["P"])
     end
 
+    # outputs from electric electric_vehicles
+    if n_ev > 0
+        EV_UP = round.(sum(value.(model[:vEV_UP][:,e]) for e=1:n_ev)./tm["TM"], digits=2)
+        EV_DN = round.(sum(value.(model[:vEV_DN][:,e]) for e=1:n_ev)./tm["TM"], digits=2)
+        EVsoc = zeros(Float64, tm["P"])										 
+        for p=1:tm["P"]
+            EVsoc[p] = round.(sum(EVmx[e]*value.(model[:vEVsoc][p,e]) for e=1:n_ev), digits=2)
+        end
+    else
+        EV_UP = zeros(Float64, tm["P"])
+        EV_DN = zeros(Float64, tm["P"])
+        EVsoc = zeros(Float64, tm["P"])
+    end
+
     # outputs from wind turbines
     if n_wind > 0
         WIND_Q = round.(sum(value.(model[:vWIND_Q][:,p]) for p=1:n_wind)./tm["TM"], digits=2)
@@ -79,9 +97,10 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
     end
 
     df = DataFrame(dem=Qdem,sell=Qsell,hvac_HT=HVAC_Qht,hvac_AC=HVAC_Qac,Qwh=WH_Q,bess_UP=BESS_UP,
-        buy=Qbuy,pv=PV_Q,wind=WIND_Q,chp=CHP_Q,bess_DN=BESS_DN,nse=NSE_Q,bess_SOC=BESSsoc)
+        ev_UP=EV_UP,buy=Qbuy,pv=PV_Q,wind=WIND_Q,chp=CHP_Q,bess_DN=BESS_DN,ev_DN=EV_DN,nse=NSE_Q,
+        bess_SOC=BESSsoc,ev_SOC=EVsoc)
 
-    balance = Qdem+Qsell+HVAC_Qht+HVAC_Qac+WH_Q+BESS_UP-Qbuy-PV_Q-WIND_Q-CHP_Q-BESS_DN-NSE_Q
+    balance = Qdem+Qsell+HVAC_Qht+HVAC_Qac+WH_Q+BESS_UP+EV_UP-Qbuy-PV_Q-WIND_Q-CHP_Q-BESS_DN-EV_DN-NSE_Q
     
     return df,balance
 

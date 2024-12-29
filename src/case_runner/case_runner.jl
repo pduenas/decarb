@@ -133,7 +133,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     df_bess,df_bessiw = read_der(model,sp,in,"bess",bess)
     df_wind,df_windiw = read_der(model,sp,in,"wind",wind)
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
-        bess["N"],wind["N"],bess["mx"])
+        bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"])
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])
     df_indoor = read_indoor(model,tm,chp["N"],abp["N"],hvac["N"],wh["N"],hvac["HVmx_k"],
         hvac["ACmx_k"],wh["mx"],topo["chp_bdg"])

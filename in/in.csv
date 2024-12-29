@@ -20,7 +20,7 @@ pNSEcost,1000000
 pNSTcost,1000000
 pNSHWcost,1000000
 pNSEVcost,1000000
-pEVdriver,0
+pEVdriver,1
 pEVpen,100
 pEVv2g,0
 pIT,1
