@@ -1,7 +1,7 @@
 """
 read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
     n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    EVmx::Vector{Float64})
+    EVmx::Vector{Float64},WHfuel::Vector{String})
 
 Reads time series outputs related to electric demands and generations and
     load them into dataframe
@@ -18,13 +18,14 @@ n_ev    number of electric vehicle types
 n_wind  number of wind turbine types
 BESSmx  maximum battery capacity
 EVmx    maximum EV battery capacity
+WHfuel  type of fuel in water heater
 
 returns dataframes of outputs
 """
 
 function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
     n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    EVmx::Vector{Float64})
+    EVmx::Vector{Float64},WHfuel::Vector{String})
 
     Qdem = tm["Qlight"] + tm["Qequip"]
     Qsell = round.(value.(model[:vQsell])./tm["TM"], digits=2)
@@ -35,7 +36,7 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
     if n_chp>0
         CHP_Q = round.(sum(value.(model[:vCHP_Q][:,c]) for c=1:n_chp)./tm["TM"], digits=2)
     else
-        oCHP_Q = zeros(Float64, tm["P"])
+        CHP_Q = zeros(Float64, tm["P"])
     end
 
     # outputs from HVAC units
@@ -48,8 +49,9 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
     end
 
     # outputs from water heaters
-    if n_wh > 0
-        WH_Q = round.(sum(value.(model[:vWH_Q][:,w]) for w=1:n_wh)./tm["TM"], digits=2)
+    if n_wh > 0 && any.(WHfuel[:]=="0")
+        WH_Q = round.(sum(value.(model[:vWH_Q][:,w]) for w=1:n_wh if WHfuel[w]=="0"; init=0)./tm["TM"],
+                      digits=2)
     else
         WH_Q=zeros(Float64, tm["P"])
     end

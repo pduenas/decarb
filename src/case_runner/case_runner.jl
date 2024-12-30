@@ -22,7 +22,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     wind = load_wind(path2in,tm)
     bess = load_bess(path2in)
     topo = load_topo(path2in,chp,abp)
-    
+
     in["b_inv"]==false  ? println("   \u2139  investments prevented") : println("   \u2139  investments allowed")
 
     in["b_temp"]==false ? println("   \u2139  temperature disabled")  : println("   \u2139  temperature enabled")
@@ -133,7 +133,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     df_bess,df_bessiw = read_der(model,sp,in,"bess",bess)
     df_wind,df_windiw = read_der(model,sp,in,"wind",wind)
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
-        bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"])
+        bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"],collect(wh["fuel"]))
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])
     df_indoor = read_indoor(model,tm,chp["N"],abp["N"],hvac["N"],wh["N"],hvac["HVmx_k"],
         hvac["ACmx_k"],wh["mx"],topo["chp_bdg"])
