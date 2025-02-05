@@ -24,7 +24,7 @@ function bess_modules!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::D
         bdg["Bbess"]*tm["TM"][t]*bess["dn"][s]/bess["mx"][s] >= vBESSdn[t=1:tm["P"],s=1:bess["N"]] >= 0)
     # charge/discharge mode of BESS {0,1}
     @variable(model, bBESS[t=1:tm["P"],s=1:bess["N"]], Bin)
-    # investment in BESS {0,z}
+    # number of installed BESS {0,z}
     @variable(model, 0 >= zBESS[i=1:in["IT"],s=1:bess["N"]] >= 0, Int)
 
     bess["zmx0"] = zeros(Int16, bess["N"])      # maximum number of potential existing BESS modules

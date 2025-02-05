@@ -14,7 +14,7 @@ wind    dictionary with wind turbines data
 """
 function wind_turbines!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,wind::Dict)
 
-    # integer electricity generation by wind turbine [0,z]
+    # electricity generation by wind turbine [kWh]
 	@variable(model, bdg["Bwind"] >= vWINDq[t=1:tm["P"],d=1:wind["N"]] >= 0) 
     # investment in total # WIND turbines {0,z}
     @variable(model, 0 >= zWIND[i=1:in["IT"],d=1:wind["N"]] >= 0, Int)

@@ -36,7 +36,7 @@ function load_wh(path::AbstractString,sp::Dict,bdg::Dict)
     wh["hr"] = df_wh.hr         # heat rate [MMBtu/kWh]
     wh["fuel"] = df_wh.fuel     # type of fuel --gaseous|liquid-- {G,L}
     wh["eff"] = df_wh.eff       # efficiency --water heater--
-    wh["tank"] = df_wh.tank     # in-site storage tank size [MMBtu]
+    wh["tank"] = df_wh.tank     # in-site storage tank size [kWh]
     wh["inv"] = df_wh.inv       # capital cost [$]
     wh["fom"] = df_wh.fom       # fixed O&M cost [$/year]
     wh["vom"] = df_wh.vom       # variable O&M cost [$/kWh]

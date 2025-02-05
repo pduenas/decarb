@@ -1,6 +1,6 @@
 """
 read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHmx::Vector{Float64},CHPbdg::Matrix{Float64})
+    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
 
 Reads time series outputs related to indoor demands for temperature and hot water and
     load them into dataframe
@@ -14,14 +14,14 @@ n_hvac  number of HVAC types
 n_wh    number of water heater types
 HVmx    heating capacity of HVAC unit
 ACmx    cooling capacity of HVAC unit
-WHmx    capacity of water heater
+WHtank  capacity of water heater
 CHPbdg  CHP unit connected to building
 
 returns dataframes of outputs
 """
 
 function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHmx::Vector{Float64},CHPbdg::Matrix{Float64})
+    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
 
     # indoor temperature
     Tin = round.(value.(model[:vTin]), digits=2)
@@ -75,7 +75,7 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
     if n_wh>0
         WHsoc = zeros(Float64, tm["P"])
         for p=1:tm["P"]
-            WHsoc[p] = round.(sum(WHmx[w]*value.(model[:vWHsoc][p,w]) for w=1:n_wh), digits=2)
+            WHsoc[p] = round.(sum(WHtank[w]*value.(model[:vWHsoc][p,w]) for w=1:n_wh), digits=2)
         end
     else
         WHsoc = zeros(Float64, tm["P"])

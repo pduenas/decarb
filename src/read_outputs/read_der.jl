@@ -15,7 +15,7 @@ returns dataframes of outputs
 
 function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
 
-    # read specific output and attrs
+    # read specific output and attributes
     type = attr["ty"]
     cost = attr["inv"]
     if equip=="pv"
@@ -38,25 +38,25 @@ function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
     n_unit = UInt8(sum(unit, dims=1)[1])	# number of existing equips
 
     if n_unit>0
-        type = type[findall(unit -> unit!=0, unit)]
+        type = collect(Tuple(type[findall(unit -> unit!=0, unit)]))
         cost = cost[findall(unit -> unit!=0, unit)]
-        hyphen = findlast.("-",type)
-        for n=1:n_unit
-            type[n] = type[n][1:hyphen[n][1]-1]
-        end
-        quantity = round.(zeros(Int8,n_unit),digits=1)
+        quantity = zeros(Int8,n_unit)
         for n=1:n_unit
             quantity[n] = sum(type.==type[n])
         end
+        new = zeros(length(quantity))
         for n in findall(sp_yn.!="0")
-            name = type.==sp_0[n]
-            if any(name)
+            name = findall(type.==sp_0[n])
+            if !isempty(name)
                 new[name] = quantity[name] .- sp_z0[n]
             end
         end
         capex = cost.*new
-        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex),
-            rename!(DataFrame(Eq=unit[unit.>0]),Symbol.(type))
+        df_eq = DataFrame(Eq=unit[unit .> 0])
+        if length(type)==ncol(df_eq)
+            rename!(df_eq, Dict(names(df_eq) .=> Symbol.(type)))
+        end
+        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex), df_eq
     else
         return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing),
             DataFrame(zeros(Int64,in["IT"],0),:auto)

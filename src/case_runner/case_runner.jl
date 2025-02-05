@@ -136,7 +136,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
         bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"],collect(wh["fuel"]))
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])
     df_indoor = read_indoor(model,tm,chp["N"],abp["N"],hvac["N"],wh["N"],hvac["HVmx_k"],
-        hvac["ACmx_k"],wh["mx"],topo["chp_bdg"])
+        hvac["ACmx_k"],wh["tank"],topo["chp_bdg"])
     df_dual,df_econ = read_econ(model,tm)
 
     a16 = time()		# elapsed time
