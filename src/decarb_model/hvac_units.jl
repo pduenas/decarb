@@ -68,7 +68,7 @@ function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dic
     # investment in HVAC unit {0,1}
     for i1=1:in["IT"]
     	eHVACb = @constraint(model, [t=tm["IW"][i1]:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
-    		bHVAC_u[t,h] <= sum(bHVACty[i2,h] for i2=1:i1))
+    		bHVAC_u[t,h] == sum(bHVACty[i2,h] for i2=1:i1))
     end
     # maximum heat provided by HVAC (0,1)
     @constraint(model, eHVACht[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0],
