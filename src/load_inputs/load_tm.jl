@@ -19,7 +19,7 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
     path2file = joinpath(path,"tm.csv")
 
     # load file into dataframe with predefined types
-    df_tm = CSV.File(path2file;delim=',',types=[DateTime,Float64,Float64,Bool,Float64,
+    df_tm = CSV.File(path2file;delim=',',types=[DateTime,Float64,Float64,UInt8,Float64,
                     Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
                     UInt8,Float64,Float64,Float64,Float64,Float64,Float64,UInt8,
                     Float64]) |> DataFrame
@@ -31,7 +31,7 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
     tm["QcostBuy"] = df_tm.pQcostBuy    # price of electricity purchase [$/kWh]
     tm["QcostSell"] = df_tm.pQcostSell  # price of electricity sale [$/kWh]
     tm["Qmx"] = df_tm.pQmx		        # peak capacity charge period type {0,12}
-    tm["QmxCost"] = df_tm.pQmx		    # peak capacity charge [$/kW]
+    tm["QmxCost"] = df_tm.pQmxCost		# peak capacity charge [$/kW]
     tm["Qco2"] = df_tm.pQco2            # CO2 emissions rate of power system [kg/kWh]
     tm["Gcost"] = df_tm.pGcost          # price of gaseous fuel [$/kWh]
     tm["Lcost"] = df_tm.pLcost          # price of liquid fuel [$/kWh]
