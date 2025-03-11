@@ -48,13 +48,13 @@ function load_sp(path::AbstractString,in::Dict)
 
     # disable potential for investment when investment windows do not exist
     if in["b_inv"]==false
-        sp["pCHPyn"] .= "NO"
+        sp["CHPyn"] .= "NO"
         sp["ABSyn"] .= "NO"
-        sp["pHVACyn"] .= "NO"
-        sp["pWHyn"] .= "NO"
-        sp["pPVyn"] .= "NO"
-        sp["pWINDyn"] .= "NO"
-        sp["pBESSyn"] .= "NO"
+        sp["HVACyn"] .= "NO"
+        sp["WHyn"] .= "NO"
+        sp["PVyn"] .= "NO"
+        sp["WINDyn"] .= "NO"
+        sp["BESSyn"] .= "NO"
     end
 
     return sp
