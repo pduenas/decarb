@@ -116,7 +116,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("\u23E9 solving model")
     write_status(path,4)
 
-    solve_model!(model,b_relax_integrality)
+    solve_model!(path,model,b_relax_integrality)
 
     a15 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")

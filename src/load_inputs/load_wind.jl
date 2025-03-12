@@ -22,9 +22,12 @@ function load_wind(path::AbstractString,tm::Dict)
                     Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_wind,findall(ismissing.(df_wind.ty)))
+    filter!(row -> !ismissing(row.ty), df_wind)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_wind)
     # delete zero-capacity elemenets
-    delete!(df_wind,findall(iszero.(df_wind.mx)))
+    filter!(row -> !iszero(row.mx), df_wind)
+
     # delete repeated rows
     unique!(df_wind)
 

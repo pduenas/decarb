@@ -23,7 +23,9 @@ function load_topo(path::AbstractString,chp::Dict,abs::Dict)
                     Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_topo,findall(ismissing.(df_topo.up)))
+    filter!(row -> !ismissing(row.up), df_topo)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_topo)
 
     topo["up"] = df_topo.up         # upper link of equipment
     topo["lo"] = df_topo.lo         # lower link of equipment or building

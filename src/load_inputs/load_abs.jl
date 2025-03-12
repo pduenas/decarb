@@ -21,11 +21,13 @@ function load_abs(path::AbstractString,sp::Dict,bdg::Dict)
     # load file into dataframe with predefined types
     df_abs = CSV.File(path2file;delim=',',types=[String,Float64,Float64,String,
                     Float64,Float64,Float64,Float64,Float64]) |> DataFrame
-
+    
     # delete non-existing rows
-    delete!(df_abs,findall(ismissing.(df_abs.ty)))
+    filter!(row -> !ismissing(row.ty), df_abs)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_abs)
     # delete zero-capacity elemenets
-    delete!(df_abs,findall(iszero.(df_abs.mx)))
+    filter!(row -> !iszero(row.mx), df_abs)
     # delete repeated rows
     unique!(df_abs)
 

@@ -23,9 +23,11 @@ function load_chp(path::AbstractString,sp::Dict,bdg::Dict)
                     Float64,Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_chp,findall(ismissing.(df_chp.ty)))
+    filter!(row -> !ismissing(row.ty), df_chp)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_chp)
     # delete zero-capacity elemenets
-    delete!(df_chp,findall(iszero.(df_chp.mx)))
+    filter!(row -> !iszero(row.mx), df_chp)
     # delete repeated rows
     unique!(df_chp)
 

@@ -1,4 +1,4 @@
-function solve_model!(model::Model,b_relax_integrality::Bool)
+function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Bool)
     
     # relax integrality {true,false}
     if b_relax_integrality==true
@@ -11,11 +11,13 @@ function solve_model!(model::Model,b_relax_integrality::Bool)
 
     # Check infeasibility if not optimal
     if s != MOI.OPTIMAL
-        CSV.write(joinpath(p,"status.csv"),DataFrame(s); header=false)
+        CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
         compute_conflict!(model)
         if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
             iis_model, reference_map = copy_conflict(model)
-            print(iis_model)
+            open(joinpath(path, "iis_model.txt"), "w") do file
+                print(file, iis_model)
+            end
         end
         error("\u2757  Model is not optimal. Check input data.\n")
     end

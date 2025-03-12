@@ -46,6 +46,46 @@ function load_sp(path::AbstractString,in::Dict)
     sp["EV0"] = collect(skipmissing(df_sp.pEV0))        # EV types
     sp["EVz0"] = collect(skipmissing(df_sp.pEVz0))      # EV existing types [0,...,n]
 
+    # For each equipment group, filter rows if all three corresponding columns are zero
+    maskCHP = .!((sp["CHP0"].=="0") .& (sp["CHPz0"].==0) .& (sp["CHPyn"].=="0"))
+    sp["CHP0"] = sp["CHP0"][maskCHP]
+    sp["CHPz0"] = sp["CHPz0"][maskCHP]
+    sp["CHPyn"] = sp["CHPyn"][maskCHP]
+
+    maskABS = .!((sp["ABS0"].=="0") .& (sp["ABSz0"].==0) .& (sp["ABSyn"].=="0"))
+    sp["ABS0"] = sp["ABS0"][maskABS]
+    sp["ABSz0"] = sp["ABSz0"][maskABS]
+    sp["ABSyn"] = sp["ABSyn"][maskABS]
+
+    maskHVAC = .!((sp["HVAC0"].=="0") .& (sp["HVACz0"].==0) .& (sp["HVACyn"].=="0"))
+    sp["HVAC0"] = sp["HVAC0"][maskHVAC]
+    sp["HVACz0"] = sp["HVACz0"][maskHVAC]
+    sp["HVACyn"] = sp["HVACyn"][maskHVAC]
+
+    maskWH = .!((sp["WH0"].=="0") .& (sp["WHz0"].==0) .& (sp["WHyn"].=="0"))
+    sp["WH0"] = sp["WH0"][maskWH]
+    sp["WHz0"] = sp["WHz0"][maskWH]
+    sp["WHyn"] = sp["WHyn"][maskWH]
+
+    maskPV = .!((sp["PV0"].=="0") .& (sp["PVz0"].==0) .& (sp["PVyn"].=="0"))
+    sp["PV0"] = sp["PV0"][maskPV]
+    sp["PVz0"] = sp["PVz0"][maskPV]
+    sp["PVyn"] = sp["PVyn"][maskPV]
+
+    maskWIND = .!((sp["WIND0"].=="0") .& (sp["WINDz0"].== 0) .& (sp["WINDyn"].=="0"))
+    sp["WIND0"] = sp["WIND0"][maskWIND]
+    sp["WINDz0"] = sp["WINDz0"][maskWIND]
+    sp["WINDyn"] = sp["WINDyn"][maskWIND]
+
+    maskBESS = .!((sp["BESS0"].=="0") .& (sp["BESSz0"].==0) .& (sp["BESSyn"].=="0"))
+    sp["BESS0"] = sp["BESS0"][maskBESS]
+    sp["BESSz0"] = sp["BESSz0"][maskBESS]
+    sp["BESSyn"] = sp["BESSyn"][maskBESS]
+
+    maskEV = .!((sp["EV0"].=="0") .& (sp["EVz0"].==0))
+    sp["EV0"] = sp["EV0"][maskEV]
+    sp["EVz0"] = sp["EVz0"][maskEV]
+
     # disable potential for investment when investment windows do not exist
     if in["b_inv"]==false
         sp["CHPyn"] .= "NO"

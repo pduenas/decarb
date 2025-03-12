@@ -23,9 +23,12 @@ function load_wh(path::AbstractString,sp::Dict,bdg::Dict)
                     Float64,Float64,Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_wh,findall(ismissing.(df_wh.ty)))
+    filter!(row -> !ismissing(row.ty), df_wh)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_wh)
     # delete zero-capacity elemenets
-    delete!(df_wh,findall(iszero.(df_wh.mx)))
+    filter!(row -> !iszero(row.mx), df_wh)
+
     # delete repeated rows
     unique!(df_wh)
 

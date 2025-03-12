@@ -17,7 +17,9 @@ function load_bdgii(path::AbstractString,bdg::Dict)
     df_bdg = CSV.File(path2file;delim=',',types=[Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_bdg,findall(ismissing.(df_bdg.pBwall)))
+    filter!(row -> !ismissing(row.pBwall), df_bdg)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_bdg)
 
     bdg["Bwall"] = df_bdg.pBwall        # surface of wall section [m2]
     bdg["Bkwall"] = df_bdg.pBkwall      # material U-value of wall section [W/m2-°C]

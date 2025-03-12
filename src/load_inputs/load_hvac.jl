@@ -25,9 +25,11 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
                     Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_hvac,findall(ismissing.(df_hvac.ty)))
+    filter!(row -> !ismissing(row.ty), df_hvac)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_hvac)
     # delete zero-capacity elemenets
-    delete!(df_hvac,findall(iszero.(df_hvac.pHVmx) .& iszero.(df_hvac.pACmx)))
+    filter!(row -> !(iszero(row.pHVmx) && iszero(row.pACmx)), df_hvac)
     # delete repeated rows
     unique!(df_hvac)
 

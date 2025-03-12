@@ -25,8 +25,10 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
                     Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_tm,findall(ismissing.(df_tm.pP)))
-
+    filter!(row -> !ismissing(row.pP), df_tm)
+    # delete all zero rows
+    filter!(row -> !all(iszero, collect(row)[2:end]), df_tm)
+    
     tm["Date"] = df_tm.pP               # date - datetime
     tm["QcostBuy"] = df_tm.pQcostBuy    # price of electricity purchase [$/kWh]
     tm["QcostSell"] = df_tm.pQcostSell  # price of electricity sale [$/kWh]
@@ -66,10 +68,12 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
     # enable or disable temperature control
     in["b_temp"]==true ? tm["Ton"]=tm["Ton"] : tm["Ton"].=0
 
+    # allow initial free installation
+    tm["IW"] = 1
+    # when investments are allowed
     if in["b_inv"]==true
+        # create investment windows
         tm["IW"] = investment_windows(in["IT"],tm["H"],tm["TM"])
-    else
-        tm["IW"] = 0
     end
 
     if in["QmxTM"]==0

@@ -50,8 +50,16 @@ function load_in(path::AbstractString)
     in["IT"] = df_in.pIT[1]		        # investment windows [0,...,n]
     in["IR"] = df_in.pIR[1]             # annual interest rate [%]
 
-    # enable or disable investments in equipment
-    in["IT"]>0 ? in["b_inv"]=true : in["b_inv"]=false
+    # enable investments
+    in["b_inv"] = true
+    # when no investment windows are defined
+    if in["IT"] == 0
+        # disable investments
+        in["b_inv"] = false
+        # allow initial free installation
+        in["IT"] = 1
+    end
+
     # enable or disable temperature control
     in["b_temp"] = in["Tmode"]
 

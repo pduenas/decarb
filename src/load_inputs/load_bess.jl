@@ -21,9 +21,11 @@ function load_bess(path::AbstractString)
                     Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_bess,findall(ismissing.(df_bess.ty)))
+    filter!(row -> !ismissing(row.ty), df_bess)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_bess)
     # delete zero-capacity elemenets
-    delete!(df_bess,findall(iszero.(df_bess.mx)))
+    filter!(row -> !iszero(row.mx), df_bess)
     # delete repeated rows
     unique!(df_bess)
 

@@ -23,9 +23,11 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
                     Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    delete!(df_pv,findall(ismissing.(df_pv.ty)))
+    filter!(row -> !ismissing(row.ty), df_pv)
+    # delete all zero rows
+    filter!(row -> !all(x -> x==0, row), df_pv)
     # delete zero-capacity elemenets
-    delete!(df_pv,findall(iszero.(df_pv.mx)))
+    filter!(row -> !iszero(row.mx), df_pv)
     # delete repeated rows
     unique!(df_pv)
 
