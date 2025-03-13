@@ -42,7 +42,7 @@ function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::
         sum(model[:vHVAC_HT][t,h]+model[:vHVAC_AC][t,h] for h=1:hvac["N"]) + 
         sum(model[:vBESS_UP][t,s] for s=1:bess["N"] if bess["zmx0"][s]>0) + 
         sum(model[:vEV_UP][t,e] for e=1:ev["N"] if ev["mx"][e]>0) + 
-        sum(vWH_Q[t,w] for w=1:wh["N"] if wh["mx"][w]>0 && wh["fuel"][w]=="0"))
+        sum(model[:vWH_Q][t,w] for w=1:wh["N"] if wh["mx"][w]>0 && wh["fuel"][w]=="0"))
     # electricity generated [kWh]
     @expression(model, vQgen[t=1:tm["P"]],
         sum(model[:vCHP_Q][t,c] for c=1:chp["N"] if chp["mx"][c]>0) + 

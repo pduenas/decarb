@@ -35,23 +35,26 @@ function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
         sp_z0 = sp["WINDz0"]
     end
 
-    n_unit = UInt8(sum(unit, dims=1)[1])	# number of existing equips
+    idx = findall(x -> x != 0, unit)        # indices of existing equipment
 
-    if n_unit>0
-        type = collect(Tuple(type[findall(unit -> unit!=0, unit)]))
-        cost = cost[findall(unit -> unit!=0, unit)]
-        quantity = zeros(Int8,n_unit)
-        for n=1:n_unit
-            quantity[n] = sum(type.==type[n])
-        end
+    if !isempty(idx)
+        type = type[idx]
+        cost = cost[idx]
+        quantity = unit[idx]
         new = zeros(length(quantity))
-        for n in findall(sp_yn.!="0")
-            name = findall(type.==sp_0[n])
+        for n in findall(x -> x!="0", sp_yn)
+            name = findall(x -> x==sp_0[n], type)
             if !isempty(name)
                 new[name] = quantity[name] .- sp_z0[n]
             end
         end
         capex = cost.*new
+        println(type,"\n")
+        println(cost,"\n")
+        println(quantity,"\n")
+        println(new,"\n")
+        println(capex,"\n")
+        println(value.(model[:zPV]),"\n")
         df_eq = DataFrame(Eq=unit[unit .> 0])
         if length(type)==ncol(df_eq)
             rename!(df_eq, Dict(names(df_eq) .=> Symbol.(type)))

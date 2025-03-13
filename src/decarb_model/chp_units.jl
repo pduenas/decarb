@@ -99,7 +99,7 @@ function chp_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict
         bCHP_q[t,c] <= bCHP_u[t,c])
     # investment in CHP unit {0,1}
     for i1=1:in["IT"]
-    	eCHPb = @constraint(model, [t=tm["IW"][i1]:tm["P"],c=1:chp["N"]; chp["mx"][c]>0],
+    	 @constraint(model, eCHPb[t=tm["IW"][i1]:tm["P"],c=1:chp["N"]; chp["mx"][c]>0],
     		bCHP_u[t,c] == sum(bCHPty[i2,c] for i2=1:i1))
     end
     # disable electricity generation for boilers and furnaces

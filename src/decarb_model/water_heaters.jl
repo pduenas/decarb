@@ -77,7 +77,7 @@ function water_heaters!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::Di
         vWHq[t,w] <= bWH_u[t,w])
     # investment in water heater {0,1}
     for i1=1:in["IT"]
-    	eWHb = @constraint(model, [t=tm["IW"][i1]:tm["P"],w=1:wh["N"]; wh["mx"][w]>0],
+    	@constraint(model, eWHb[t=tm["IW"][i1]:tm["P"],w=1:wh["N"]; wh["mx"][w]>0],
     		bWH_u[t,w] == sum(bWHty[i2,w] for i2=1:i1))
     end
     # maximum water stored by water heater [0,1]
@@ -86,8 +86,10 @@ function water_heaters!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::Di
     # water heater balance [0,1]
     @constraint(model, eWHbal[t=1:tm["P"],w=1:wh["N"]; wh["mx"][w]>0],
     	wh["tank"][w]/(tm["TM"][t]*wh["mx"][w])*(vWHsoc[t,w] - vWHsoc[t-1,w]) ==
-        wh["eff"][w]*vWHq[t,w] - vWHhw[t,w] +
-    	sum(in["WHsto0"][1]*bWHty[i,w] for i=1:in["IT"] if t==tm["IW"][i] && wh["tank"][w]>0))
+        wh["eff"][w]*vWHq[t,w] - vWHhw[t,w])
+    # fix initial tank level [0,1]
+    @constraint(model, eWHi[w=1:wh["N"]; wh["tank"][w]>0],
+        vWHsoc[0,w] == in["WHsto0"][1]*bWH_u[1,w])
     # fix final tank level [0,1]
     @constraint(model, eWHf[w=1:wh["N"]; wh["tank"][w]>0],
         vWHsoc[tm["P"],w] == in["WHstof"][1]*bWH_u[tm["P"],w])

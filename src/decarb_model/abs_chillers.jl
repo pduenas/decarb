@@ -78,7 +78,7 @@ function abs_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
      @constraint(model, eABSac[t=1:tm["P"],a=1:abs["N"]], vABSac[t,a] <= bABS_u[t,a])
     # investment in absorption chiller {0,1}
     for i1=1:in["IT"]
-    	eABSb = @constraint(model, [t=tm["IW"][i1]:tm["P"],a=1:abs["N"]],
+    	 @constraint(model, eABSb[t=tm["IW"][i1]:tm["P"],a=1:abs["N"]],
     		bABS_u[t,a] == sum(bABSty[i2,a] for i2=1:i1))
     end
     # allowed cooling to building from absorption chiller {0,1}
