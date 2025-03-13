@@ -49,12 +49,6 @@ function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
             end
         end
         capex = cost.*new
-        println(type,"\n")
-        println(cost,"\n")
-        println(quantity,"\n")
-        println(new,"\n")
-        println(capex,"\n")
-        println(value.(model[:zPV]),"\n")
         df_eq = DataFrame(Eq=unit[unit .> 0])
         if length(type)==ncol(df_eq)
             rename!(df_eq, Dict(names(df_eq) .=> Symbol.(type)))

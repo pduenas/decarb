@@ -56,7 +56,7 @@ function abs_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
     # gaseous fuel purchased by absorption chillers [MMBtu]
     if any(abs["fuel"].=="G")
         @expression(model, vABS_G[t=1:tm["P"]],
-            sum(abs["hr"][a]*vABS_Q[t,a] for a=1:abs["N"] if abs["hr"][a]>0 && abs["fuel"][a]=="G"))
+            sum(vABS_Q[t,a]/abs["hr"][a] for a=1:abs["N"] if abs["hr"][a]>0 && abs["fuel"][a]=="G"))
     else
         @variable(model, vABS_G[t=1:tm["P"]] == 0)
     end
@@ -64,7 +64,7 @@ function abs_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
     # liquid fuel purchased by absorption chillers [MMBtu]
     if any(abs["fuel"].=="L")
         @expression(model, vABS_L[t=1:tm["P"]],
-            sum(abs["hr"][a]*vABS_Q[t,a] for a=1:abs["N"] if abs["hr"][a]>0 && abs["fuel"][a]=="L"))
+            sum(vABS_Q[t,a]/abs["hr"][a] for a=1:abs["N"] if abs["hr"][a]>0 && abs["fuel"][a]=="L"))
     else
         @variable(model, vABS_L[t=1:tm["P"]] == 0)
     end

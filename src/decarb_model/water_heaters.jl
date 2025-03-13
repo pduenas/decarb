@@ -53,14 +53,14 @@ function water_heaters!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::Di
 
     # gaseous fuel purchased by water heaters [MMBtu]
     if any(wh["fuel"].=="G")
-        @expression(model, vWH_G[t=1:tm["P"]], sum(wh["hr"][w]*vWH_Q[t,w] for w=1:wh["N"]
+        @expression(model, vWH_G[t=1:tm["P"]], sum(vWH_Q[t,w]/wh["hr"][w] for w=1:wh["N"]
             if wh["hr"][w]>0 && wh["fuel"][w]=="G"))
     else
         @variable(model, vWH_G[t=1:tm["P"]] == 0)
     end
     # liquid fuel purchased by water heaters [MMBtu]
     if any(wh["fuel"].=="L")
-        @expression(model, vWH_L[t=1:tm["P"]], sum(wh["hr"][w]*vWH_Q[t,w] for w=1:wh["N"]
+        @expression(model, vWH_L[t=1:tm["P"]], sum(vWH_Q[t,w]/wh["hr"][w] for w=1:wh["N"]
             if wh["hr"][w]>0 && wh["fuel"][w]=="L"))
     else
         @variable(model, vWH_L[t=1:tm["P"]] == 0)
