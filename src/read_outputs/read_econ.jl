@@ -28,23 +28,25 @@ function read_econ(model::Model,tm::Dict)
     end
 
     # Read values for economic variables
-    C = round.(value.(model[:COST_VAR]), digits=2)
+    C = -round.(value.(model[:COST_VAR]), digits=2)
     Qearn = round.(sum(value.(model[:vQearn][t]) for t=1:tm["P"]), digits=2)
     Qcost = round.(sum(value.(model[:vQcost][t]) for t=1:tm["P"]), digits=2)
+    QmxCost = round.(value.(model[:vQmxCost]), digits=2)
     GLcost = round.(sum(value.(model[:vGLcost][t]) for t=1:tm["P"]), digits=2)
     Cvom = round.(value.(model[:COST_VOM]), digits=2)
     Cfom = round.(value.(model[:COST_FOM]), digits=2)
     NSEcost = round.(sum(value.(model[:vNSEcost][t]) for t=1:tm["P"]), digits=2)
     NSTcost = round.(sum(value.(model[:vNSTcost][t]) for t=1:tm["P"]), digits=2)
     NSHWcost = round.(sum(value.(model[:vNSHWcost][t]) for t=1:tm["P"]), digits=2)
+    NSEVcost = round.(sum(value.(model[:vNSEVcost][t]) for t=1:tm["P"]), digits=2)
 
     # Read values for direct and indirect emissions
     Bco2 = round.(value.(model[:CO2_B]), digits=2)
     Eco2 = round.(value.(model[:CO2_E]), digits=2)
 
     df_dual = DataFrame(dualQ=Qdual,dualT=Tdual,dualHW=HWdual)
-    df_econ = DataFrame(eq=[C;Qearn;Qcost;GLcost;Cvom;Cfom;NSEcost;NSTcost;NSHWcost;
-        Bco2;Eco2])
+    df_econ = DataFrame(eq=[C;Qearn;Qcost;QmxCost;GLcost;Cvom;Cfom;NSEcost;NSTcost;
+        NSHWcost;NSEVcost;Bco2;Eco2])
     
     return df_dual,df_econ
 

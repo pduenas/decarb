@@ -45,7 +45,7 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     
     # cost of peak capacity subscription [$]
     @expression(model, vQmxCost, sum(tm["QmxCostN"][n]*model[:vQmx][n] for n=1:in["QmxTM"]))
-    
+
     # annualized cost of CHP during time scope [$]
     b = has_upper_bound.(model[:bCHPty]).==true     # for potential investments
     @expression(model, vCHPinv,
@@ -100,12 +100,14 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     
     # total variable costs (+) / total incomes (-) [$]
     @expression(model, COST_VAR, 
-        sum(vNSEcost[t]+vNSTcost[t]+vNSHWcost[t]+vNSEVcost[t]+vQcost[t]-vQearn[t]+vGLcost[t]
-            for t=1:tm["P"]) + vQmxCost + COST_VOM)
+        sum(vQcost[t]-vQearn[t]+vGLcost[t] for t=1:tm["P"]) + vQmxCost + COST_VOM)
+    # total discomfort costs
+    @expression(model, COST_NS, 
+        sum(vNSEcost[t]+vNSTcost[t]+vNSHWcost[t]+vNSEVcost[t] for t=1:tm["P"]))
     # total annualized costs
     @expression(model, COST_INV, vCHPinv+vHVACinv+vABSinv+vWHinv+vPVinv+vWINDinv+vBESSinv + COST_FOM)
     # total costs [$]
-    @expression(model, COST, COST_VAR + COST_INV + vEVpen)
+    @expression(model, COST, COST_VAR + COST_NS + COST_INV + vEVpen)
 
     # CO2 emissions from building [ton]
     @expression(model, CO2_B, 
