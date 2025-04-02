@@ -18,10 +18,10 @@ pBwest,30.8465966680281
 pBeast,30.8465966680281
 pBnorth,30.8465966680281
 pBsouth,30.8465966680281
-pBkwest,0.3
-pBkeast,0.3
-pBknorth,0.3
-pBksouth,0.3
+pBkwest,0
+pBkeast,0
+pBknorth,0
+pBksouth,0
 pBchp,2
 pBabs,2
 pBhvac,2
