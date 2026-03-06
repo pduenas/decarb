@@ -61,38 +61,54 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     # calculate total radiation on roof and external facades
     Q_R = tm["Q_R"]
 
-# !!! CONFIRM WITH LES FOLLOWING FORMULAS AND THERMAL MODELS
-    # calculate capacitance of RC model
-    B_C = bdg["Bfoot"]*bdg["Bslab"]*bdg["Btslab"]*bdg["Bpslab"]*bdg["Bcpslab"]
-    # calculate resistance '1' of RC model
-    B_R1 = 1/bdg["Bfoot"]/bdg["Bslab"]/bdg["Bkslab"]
-    # calculate resistance '2' of RC model
-    B_R2 = 1/sum(bdg["Bwall"].*bdg["Bkwall"],dims=1)[1]
-    B_R2 = 1 ./ (1/B_R2.+Au)    # correct resistance due to ventilation
-    replace!(B_R2,Inf=>1)
+    # # calculate capacitance of RC model
+    # B_C = bdg["Bfoot"]*bdg["Bslab"]*bdg["Btslab"]*bdg["Bpslab"]*bdg["Bcpslab"]
+    # # calculate resistance '1' of RC model
+    # B_R1 = 1/bdg["Bfoot"]/bdg["Bslab"]/bdg["Bkslab"]
+    # # calculate resistance '2' of RC model
+    # B_R2 = 1/sum(bdg["Bwall"].*bdg["Bkwall"],dims=1)[1]
+    # B_R2 = 1 ./ (1/B_R2.+Au)    # correct resistance due to ventilation
+    # replace!(B_R2,Inf=>1)
 
-    # temperature balance [°C]
-    if B_C>0.01     # mass in floor slabs
-        @constraint(model, eTbal0,      # initial period
-            vQ_HTAC[1]+Q_IHG[1] == -1/B_R2[1]*tm["Tout"][1] +
-            (B_R1+B_R2[1])/(B_R1*B_R2[1])*(vTin[1]-in["Tin0"]-(tm["TM"][1]/B_C*Q_R[1])))
-        @constraint(model, eTbal[t=2:tm["P"]],
-            vQ_HTAC[t]+Q_IHG[t] == 
-            (1-tm["TM"][t]/(B_R1*B_C))*(vQ_HTAC[t-1]+Q_IHG[t-1]) -
-            1/B_R2[t]*(tm["Tout"][t]-tm["Tout"][t-1]) +
-            (B_R1+B_R2[t])/(B_R1*B_R2[t])*(vTin[t]-vTin[t-1]-(tm["TM"][t]/B_C*Q_R[t])) +
-            tm["TM"][t]/(B_R1*B_R2[t]*B_C)*(vTin[t-1]-tm["Tout"][t-1]))
-    else            # mass in walls
-        @constraint(model, eTbal0,      # initial period
-            vQ_HTAC[1]+Q_IHG[1]== (1/B_R1)*(vTin[1]-in["Tin0"]) - 
-            tm["TM"][1]/(B_R1*B_C)*Q_R[1])
-        @constraint(model, eTbal[t=2:tm["P"]],
-            vQ_HTAC[t]+Q_IHG[t] == 
-            (1-tm["TM"][t]*B_R1*B_R2[t]/(B_R1*B_R2[t]*B_C))*(vQ_HTAC[t-1]+Q_IHG[t-1]) +
-            tm["TM"][t]/(B_R1*B_R2[t]*B_C)*(vTin[t-1]-tm["Tout"][t-1]) +
-            (1/B_R1)*(vTin[t]-vTin[t-1]) - tm["TM"][t]/(B_R1*B_C)*Q_R[t])
-    end
+    # # temperature balance [°C]
+    # if B_C>0.01     # mass in floor slabs
+    #     @constraint(model, eTbal0,      # initial period
+    #         vQ_HTAC[1]+Q_IHG[1] == -1/B_R2[1]*tm["Tout"][1] +
+    #         (B_R1+B_R2[1])/(B_R1*B_R2[1])*(vTin[1]-in["Tin0"]-(tm["TM"][1]/B_C*Q_R[1])))
+    #     @constraint(model, eTbal[t=2:tm["P"]],
+    #         vQ_HTAC[t]+Q_IHG[t] == 
+    #         (1-tm["TM"][t]/(B_R1*B_C))*(vQ_HTAC[t-1]+Q_IHG[t-1]) -
+    #         1/B_R2[t]*(tm["Tout"][t]-tm["Tout"][t-1]) +
+    #         (B_R1+B_R2[t])/(B_R1*B_R2[t])*(vTin[t]-vTin[t-1]-(tm["TM"][t]/B_C*Q_R[t])) +
+    #         tm["TM"][t]/(B_R1*B_R2[t]*B_C)*(vTin[t-1]-tm["Tout"][t-1]))
+    # else            # mass in walls
+    #     @constraint(model, eTbal0,      # initial period
+    #         vQ_HTAC[1]+Q_IHG[1]== (1/B_R1)*(vTin[1]-in["Tin0"]) - 
+    #         tm["TM"][1]/(B_R1*B_C)*Q_R[1])
+    #     @constraint(model, eTbal[t=2:tm["P"]],
+    #         vQ_HTAC[t]+Q_IHG[t] == 
+    #         (1-tm["TM"][t]*B_R1*B_R2[t]/(B_R1*B_R2[t]*B_C))*(vQ_HTAC[t-1]+Q_IHG[t-1]) +
+    #         tm["TM"][t]/(B_R1*B_R2[t]*B_C)*(vTin[t-1]-tm["Tout"][t-1]) +
+    #         (1/B_R1)*(vTin[t]-vTin[t-1]) - tm["TM"][t]/(B_R1*B_C)*Q_R[t])
+    # end
 
+    println("typeof(in[\"Tin0\"]) = ", typeof(in["Tin0"]))
+    println("typeof(bdg[\"Bk1\"]) = ", typeof(bdg["Bk1"]))
+    println("typeof(bdg[\"Bk2\"]) = ", typeof(bdg["Bk2"]))
+    println("typeof(bdg[\"Bk3\"]) = ", typeof(bdg["Bk3"]))
+    println("typeof(tm[\"Tout\"]) = ", typeof(tm["Tout"]))
+    println("typeof(tm[\"Tout\"][1]) = ", typeof(tm["Tout"][1]))
+    println("typeof(Q_R) = ", typeof(Q_R))
+    println("typeof(Q_R[1]) = ", typeof(Q_R[1]))
+    println("typeof(vQ_HTAC[1]) = ", typeof(vQ_HTAC[1]))
+
+    @constraint(model, eTbal0,      # initial period
+        vTin[1] == 
+        in["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-in["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*vQ_HTAC[1])
+    @constraint(model, eTbal[t=2:tm["P"]],
+        vTin[t] == 
+        vTin[t-1] + bdg["Bk1"]*(tm["Tout"][t-1]-vTin[t-1]) + bdg["Bk2"]*Q_R[t] + bdg["Bk3"]*vQ_HTAC[t])
+    
     # non-served hot water [0,1]
     @variable(model, 1 >= vNShw[t=1:tm["P"]] >= 0)
 
