@@ -14,18 +14,16 @@ function load_bdgii(path::AbstractString,bdg::Dict)
     path2file = joinpath(path,"bdg_ii.csv")
 
     # load file into dataframe with predefined types
-    df_bdg = CSV.File(path2file;delim=',',types=[Float64,Float64]) |> DataFrame
+    df_bdg = CSV.File(path2file;delim=',',types=[Float64,Float64,Float64]) |> DataFrame
 
     # delete non-existing rows
-    filter!(row -> !ismissing(row.pBwall), df_bdg)
+    filter!(row -> !ismissing(row.pBk1), df_bdg)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_bdg)
 
-    bdg["Bwall"] = df_bdg.pBwall        # surface of wall section [m2]
-    bdg["Bkwall"] = df_bdg.pBkwall      # material U-value of wall section [W/m2-°C]
-
-    # unit transformations
-    bdg["Bkwall"] = bdg["Bkwall"]/1000  # in [kW/m2-°C]
+    bdg["Bk1"] = df_bdg.pBk1[1]     # thermal coefficient- outdoor to indoor temperature [-]
+    bdg["Bk2"] = df_bdg.pBk2[1]     # thermal coefficient- external radiation [°C/kW]
+    bdg["Bk3"] = df_bdg.pBk3[1]     # thermal coefficient- internal heating/cooling [°C/kW]
 
     return bdg
 
