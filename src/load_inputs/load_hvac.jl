@@ -78,13 +78,13 @@ end
 
 function correct_heating_capacity(Qmx,Thvac,Coeff,Tout)
 
-    return Qmx.*(1 .-Coeff.*(Thvac.-Tout))
+    return Qmx.*(1 .-Coeff.*max.(Thvac.-Tout,0))
 
 end
 
 function correct_cooling_capacity(Qmx,Thvac,Coeff,Tout)
 
-    return Qmx.*(1 .-Coeff.*(Tout.-Thvac))
+    return Qmx.*(1 .-Coeff.*max.(Tout.-Thvac,0))
 
 end
 

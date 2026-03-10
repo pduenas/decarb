@@ -104,7 +104,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("   \u231B elapsed time ... ", round(a12-a11; digits=2), " seconds\n")
 
     println("   \u23E9 defining thermal model")
-    thermal_load!(model,in,tm,bdg,topo,chp,abp,wh)
+    thermal_load!(model,in,tm,bdg,topo,chp,hvac,abp,wh)
     a13 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a13-a12; digits=2), " seconds\n")
 
