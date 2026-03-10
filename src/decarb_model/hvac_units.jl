@@ -14,10 +14,6 @@ hvac    dictionary with HVAC data
 """
 function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dict)
 
-    # electricity unitary consumption for heating [0,1]
-    @variable(model, (!iszero).(hvac["HVmx"][h]) >= vHVACht[t=1:tm["P"],h=1:hvac["N"]] >= 0)
-    # electricity unitary consumption for cooling [0,1]
-    @variable(model, (!iszero).(hvac["ACmx"][h]) >= vHVACac[t=1:tm["P"],h=1:hvac["N"]] >= 0)
     # heating mode of HVAC unit along simulation {0,1}
     @variable(model, bHVACht[t=1:tm["P"],h=1:hvac["N"]], Bin)
     # cooling mode of HVAC unit along simulation {0,1}
@@ -45,16 +41,23 @@ function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dic
     # correct maximum capacity for non-existing or disabled HVAC units
     hvac["HVmx"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
     hvac["ACmx"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
+    hvac["HVmx_k"][:, hvac["HVmx"].==0] .= 0
+    hvac["ACmx_k"][:, hvac["ACmx"].==0] .= 0
+
+    # electricity unitary consumption for heating [0,1]
+    @variable(model, (!iszero).(hvac["HVmx"][h]) >= vHVACht[t=1:tm["P"],h=1:hvac["N"]] >= 0)
+    # electricity unitary consumption for cooling [0,1]
+    @variable(model, (!iszero).(hvac["ACmx"][h]) >= vHVACac[t=1:tm["P"],h=1:hvac["N"]] >= 0)
 
     # electricity consumption for heating [kWh]
     @expression(model, vHVAC_HT[t=1:tm["P"],h=1:hvac["N"]],
         tm["TM"][t]*hvac["HVmx_k"][t,h]*vHVACht[t,h]/hvac["HVeff_k"][t,h])
     # electricity consumption for cooling [kWh]
     @expression(model, vHVAC_AC[t=1:tm["P"],h=1:hvac["N"]],
-        tm["TM"][t]*hvac["ACmx_k"][t,h]*vHVACac[t,h]/hvac["ACeff_k"][t,h])
+        tm["TM"][t]*hvac["ACmx_k"][t,h]*vHVACac[t,h]/hvac["ACeff_k"][t,h])    
     # heat(+)/cool(-) provided by HVAC [kWh]
     @expression(model, vHVAC_HTAC[t=1:tm["P"],h=1:hvac["N"]],
-        hvac["HVmx_k"][t,h]*vHVACht[t,h]-hvac["ACmx_k"][t,h]*vHVACac[t,h])
+        tm["TM"][t]*(hvac["HVmx_k"][t,h]*vHVACht[t,h]-hvac["ACmx_k"][t,h]*vHVACac[t,h]))
     
     # maximum available space for HVAC units [0,Bhvac]
     @constraint(model, eHVACbdg,

@@ -1,6 +1,6 @@
 """
-thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,abs::Dict,
-    wh::Dict)
+thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,hvac::Dict,
+    abs::Dict,wh::Dict)
 
 Creates variables, expressions and constraints associated with thermal load balance
 
@@ -11,12 +11,13 @@ tm      dictionary with time series data
 bdg     dictionary with building data
 topo    dictionary with topology of thermal connections
 chp     dictionary with CHP data
+hvac    dictionary with HVAC data
 abs     dictionary with absorption chiller data
 wh      dictionary with water heater data
 
 """
 function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,
-    abs::Dict,wh::Dict)
+    hvac::Dict,abs::Dict,wh::Dict)
 
     # Bounds on extreme indoor temperatures [°C]
     Tup = maximum([tm["Tout"];tm["Tmx"]], dims=1)[1]
@@ -53,7 +54,8 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     # thermal gain from active equipment [kWh]
     @expression(model, vQ_HTAC[t=1:tm["P"]],
         sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) + 
-        model[:vHVAC_HTAC][t] - sum(model[:vABS_AC][t,a] for a=1:abs["N"]))
+        sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0)) - 
+        sum(model[:vABS_AC][t,a] for a=1:abs["N"]))
 
     # calculate internal heat gains from occupancy, lighting and electrical equipment
     Q_IHG = tm["Qihg_P"] + tm["Qihg_L"] + tm["Qihg_E"]
@@ -91,16 +93,6 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     #         tm["TM"][t]/(B_R1*B_R2[t]*B_C)*(vTin[t-1]-tm["Tout"][t-1]) +
     #         (1/B_R1)*(vTin[t]-vTin[t-1]) - tm["TM"][t]/(B_R1*B_C)*Q_R[t])
     # end
-
-    println("typeof(in[\"Tin0\"]) = ", typeof(in["Tin0"]))
-    println("typeof(bdg[\"Bk1\"]) = ", typeof(bdg["Bk1"]))
-    println("typeof(bdg[\"Bk2\"]) = ", typeof(bdg["Bk2"]))
-    println("typeof(bdg[\"Bk3\"]) = ", typeof(bdg["Bk3"]))
-    println("typeof(tm[\"Tout\"]) = ", typeof(tm["Tout"]))
-    println("typeof(tm[\"Tout\"][1]) = ", typeof(tm["Tout"][1]))
-    println("typeof(Q_R) = ", typeof(Q_R))
-    println("typeof(Q_R[1]) = ", typeof(Q_R[1]))
-    println("typeof(vQ_HTAC[1]) = ", typeof(vQ_HTAC[1]))
 
     @constraint(model, eTbal0,      # initial period
         vTin[1] == 
