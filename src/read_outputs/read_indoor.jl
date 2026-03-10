@@ -28,8 +28,9 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
 
     # outputs from HVAC units
     if n_hvac>0
-        HVAC_HT = round.(sum(HVmx[:,h].*value.(model[:vHVAC_HT][:,h]) for h=1:n_hvac),digits=2)
-        HVAC_AC = round.(sum(ACmx[:,h].*value.(model[:vHVAC_AC][:,h]) for h=1:n_hvac),digits=2)
+        HVAC_HTAC = round.(sum(value.(model[:vHVAC_HTAC][:,h]) for h in 1:n_hvac),digits=2)
+        HVAC_HT = max.(HVAC_HTAC, 0)
+        HVAC_AC = max.(-HVAC_HTAC, 0)
     else
         HVAC_HT = zeros(Float64, tm["P"])
         HVAC_AC = zeros(Float64, tm["P"])
