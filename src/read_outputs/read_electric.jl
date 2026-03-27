@@ -49,8 +49,9 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
     end
 
     # outputs from water heaters
-    if n_wh > 0 && any.(WHfuel[:]=="0")
-        WH_Q = round.(sum(value.(model[:vWH_Q][:,w]) for w=1:n_wh if WHfuel[w]=="0"; init=0)./tm["TM"],
+    if n_wh > 0 && any(WHfuel.=="0")
+        WH_Q = round.(sum(value.(model[:vWH_Q][:,w]) for w=1:n_wh if WHfuel[w]=="0"; 
+                          init=zeros(Float64, tm["P"]))./tm["TM"],
                       digits=2)
     else
         WH_Q=zeros(Float64, tm["P"])
