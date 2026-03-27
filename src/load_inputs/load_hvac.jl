@@ -90,12 +90,12 @@ end
 
 function correct_heating_efficiency(Qeff,Thvac,Coeff,Tout)
 
-    return max.(Qeff.*(1 .-Coeff.*(max.(Thvac.-Tout,0))), 1)
+    return max.(Qeff .- Coeff.*(max.(Thvac.-Tout,0)), 1)
 
 end
 
 function correct_cooling_efficiency(Qeff,Thvac,Coeff,Tout)
 
-    return max.(Qeff.*(1 .-Coeff.*(max.(Tout.-Thvac,0))), 1)
+    return max.(Qeff .- Coeff.*(max.(Tout.-Thvac,0)), 1)
 
 end
