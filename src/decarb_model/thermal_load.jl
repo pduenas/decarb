@@ -19,16 +19,10 @@ wh      dictionary with water heater data
 function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,
     hvac::Dict,abs::Dict,wh::Dict)
 
-    # Bounds on extreme indoor temperatures [°C]
-    Tup = maximum([tm["Tout"];tm["Tmx"]], dims=1)[1]
-    Tlo = minimum([tm["Tout"];tm["Tmn"]], dims=1)[1]
-
-    # indoor temperature [°C]
-    @variable(model, Tup >= vTin[t=1:tm["P"]] >= Tlo)
-    # excursion up discomfort temperature [°C]
-    @variable(model, Tup.-tm["Tmx"][t] >= vTup[t=1:tm["P"]] >= 0)
-    # excursion low discomfort temperature [°C]
-    @variable(model, tm["Tmn"][t].-Tlo >= vTlo[t=1:tm["P"]] >= 0)
+    # load temperature variables
+    vTin = model[:vTin]
+    vTup = model[:vTup]
+    vTlo = model[:vTlo]
 
     # disable discomfort temperature if indicated
     if in["NSTcost"]==0
@@ -39,7 +33,6 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     end
 
     # remove temperature control when inputted as disable
-
     delete_upper_bound.(vTin[tm["Ton"].==0])
     delete_lower_bound.(vTin[tm["Ton"].==0])
 

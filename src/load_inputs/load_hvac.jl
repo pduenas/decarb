@@ -58,12 +58,6 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
     hvac["ACeff_k"] = zeros(tm["P"], hvac["N"])
     
     for h=1:hvac["N"]
-        # correct heating capacity with temperature
-        hvac["HVmx_k"][:,h] = correct_heating_capacity(hvac["HVmx"][h],hvac["temp"][h],
-            hvac["HVmx_"][h],tm["Tout"])
-        # correct cooling capacity with temperature
-        hvac["ACmx_k"][:,h] = correct_cooling_capacity(hvac["ACmx"][h],hvac["temp"][h],
-            hvac["ACmx_"][h],tm["Tout"])
         # correct heating efficiency with temperature
         hvac["HVeff_k"][:,h] = correct_heating_efficiency(hvac["HVeff"][h],hvac["temp"][h],
             hvac["HVeff_"][h],tm["Tout"])
@@ -73,18 +67,6 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
     end
 
     return hvac
-
-end
-
-function correct_heating_capacity(Qmx,Thvac,Coeff,Tout)
-
-    return Qmx.*(1 .-Coeff.*max.(Thvac.-Tout,0))
-
-end
-
-function correct_cooling_capacity(Qmx,Thvac,Coeff,Tout)
-
-    return Qmx.*(1 .-Coeff.*max.(Tout.-Thvac,0))
 
 end
 

@@ -52,6 +52,7 @@ include(joinpath("configure_solver","configure_cplex.jl"))
 
 # Create DECARB model
 include(joinpath("decarb_model","heat_connections.jl"))
+include(joinpath("decarb_model","temperature_variables.jl"))
 include(joinpath("decarb_model","chp_units.jl"))
 include(joinpath("decarb_model","hvac_units.jl"))
 include(joinpath("decarb_model","abs_chillers.jl"))

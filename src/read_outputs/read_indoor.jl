@@ -12,8 +12,6 @@ n_chp   number of CHP types
 n_abp   number of absorption chiller types
 n_hvac  number of HVAC types
 n_wh    number of water heater types
-HVmx    heating capacity of HVAC unit
-ACmx    cooling capacity of HVAC unit
 WHtank  capacity of water heater
 CHPbdg  CHP unit connected to building
 
@@ -21,7 +19,7 @@ returns dataframes of outputs
 """
 
 function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
+    WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
 
     # indoor temperature
     Tin = round.(value.(model[:vTin]), digits=2)
