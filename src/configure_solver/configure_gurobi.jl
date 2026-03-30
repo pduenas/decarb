@@ -15,5 +15,6 @@ function configure_gurobi(model::Model)
     set_optimizer_attribute(model, "MIPFocus", 1)
     set_optimizer_attribute(model, "MIPGap", 1e-2) #  5e-2
     set_optimizer_attribute(model, "NumericFocus", 1)
-    set_optimizer_attribute(model, "OptimalityTol", 1e-9)    
+    set_optimizer_attribute(model, "OptimalityTol", 1e-9) 
+    set_optimizer_attribute(model, "TimeLimit", 300)
 end
