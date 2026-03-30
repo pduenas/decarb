@@ -15,9 +15,15 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
         compute_conflict!(model)
         if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
             iis_model, reference_map = copy_conflict(model)
-            open(joinpath(path, "iis_model.txt"), "w") do file
-                print(file, iis_model)
+            println("\n❗ IIS detected:\n")
+            for (orig, _) in reference_map
+                println(orig)
             end
+            write_to_file(iis_model, joinpath(path, "iis_model.lp"))
+            # iis_model, reference_map = copy_conflict(model)
+            # open(joinpath(path, "iis_model.txt"), "w") do file
+            #     print(file, iis_model)
+            # end
         end
         error("\u2757  Model is not optimal. Check input data.\n")
     end

@@ -58,68 +58,73 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     a3 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a3-a2; digits=2), " seconds\n")
 
-    println("   \u23E9 defining CHP unit model")
-    chp_units!(model,in,tm,bdg,topo,sp,chp,abp)
+    println("   \u23E9 defining temperature variables")
+    temperature_variables!(model,tm)
     a4 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a4-a3; digits=2), " seconds\n")
+
+    println("   \u23E9 defining CHP unit model")
+    chp_units!(model,in,tm,bdg,topo,sp,chp,abp)
+    a5 = time()			# elapsed time
+    println("   \u231B elapsed time ... ", round(a5-a4; digits=2), " seconds\n")
     
     println("   \u23E9 defining HVAC unit model")
     hvac_units!(model,in,tm,bdg,sp,hvac)
-    a5 = time()			# elapsed time
-    println("   \u231B elapsed time ... ", round(a5-a4; digits=2), " seconds\n")
-
-    println("   \u23E9 defining absorption chiller model")
-    abs_chillers!(model,in,tm,bdg,topo,sp,chp,abp)
     a6 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a6-a5; digits=2), " seconds\n")
 
-    println("   \u23E9 defining water heater model")
-    water_heaters!(model,in,tm,bdg,sp,wh)
+    println("   \u23E9 defining absorption chiller model")
+    abs_chillers!(model,in,tm,bdg,topo,sp,chp,abp)
     a7 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a7-a6; digits=2), " seconds\n")
 
-    println("   \u23E9 defining PV module model")
-    pv_panels!(model,in,tm,bdg,sp,pv)
+    println("   \u23E9 defining water heater model")
+    water_heaters!(model,in,tm,bdg,sp,wh)
     a8 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a8-a7; digits=2), " seconds\n")
 
-    println("   \u23E9 defining wind turbine model")
-    wind_turbines!(model,in,tm,bdg,sp,wind)
+    println("   \u23E9 defining PV module model")
+    pv_panels!(model,in,tm,bdg,sp,pv)
     a9 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a9-a8; digits=2), " seconds\n")
 
-    println("   \u23E9 defining BESS module model")
-    bess_modules!(model,in,tm,bdg,sp,bess)
+    println("   \u23E9 defining wind turbine model")
+    wind_turbines!(model,in,tm,bdg,sp,wind)
     a10 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a10-a9; digits=2), " seconds\n")
 
-    println("   \u23E9 defining EV module model")
-    electric_vehicles!(model,in,tm,ev)
-    a11 = time()		# elapsed time
+    println("   \u23E9 defining BESS module model")
+    bess_modules!(model,in,tm,bdg,sp,bess)
+    a11 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a11-a10; digits=2), " seconds\n")
 
-    println("   \u23E9 defining electrical model")
-    electric_load!(model,in,tm,chp,hvac,wh,pv,wind,bess,ev)
+    println("   \u23E9 defining EV module model")
+    electric_vehicles!(model,in,tm,ev)
     a12 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a12-a11; digits=2), " seconds\n")
 
-    println("   \u23E9 defining thermal model")
-    thermal_load!(model,in,tm,bdg,topo,chp,hvac,abp,wh)
+    println("   \u23E9 defining electrical model")
+    electric_load!(model,in,tm,chp,hvac,wh,pv,wind,bess,ev)
     a13 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a13-a12; digits=2), " seconds\n")
 
-    println("   \u23E9 defining objective function")
-    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,ev,wind)
+    println("   \u23E9 defining thermal model")
+    thermal_load!(model,in,tm,bdg,topo,chp,hvac,abp,wh)
     a14 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a14-a13; digits=2), " seconds\n")
+
+    println("   \u23E9 defining objective function")
+    objective_function!(model,in,tm,chp,abp,hvac,wh,pv,bess,ev,wind)
+    a15 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
 
     println("\u23E9 solving model")
     write_status(path,4)
 
     solve_model!(path,model,b_relax_integrality)
 
-    a15 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
+    a16 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
 
     println("\u23E9 reading outputs")
     write_status(path,5)
@@ -135,12 +140,12 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
         bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"],collect(wh["fuel"]))
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])
-    df_indoor = read_indoor(model,tm,chp["N"],abp["N"],hvac["N"],wh["N"],hvac["HVmx_k"],
-        hvac["ACmx_k"],wh["tank"],topo["chp_bdg"])
+    df_indoor = read_indoor(model,tm,chp["N"],abp["N"],hvac["N"],wh["N"],wh["tank"],
+        topo["chp_bdg"])
     df_dual,df_econ = read_econ(model,tm)
 
-    a16 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
+    a17 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a17-a16; digits=2), " seconds\n")
 
     println("\u23E9 writing outputs")
     write_status(path,6)
@@ -148,8 +153,8 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     write_outputs(path,tm["Date"],tm["IW"],df_chp,df_hvac,df_abs,df_wh,df_pv,df_pviw,df_bess,
         df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
-    a17 = time()		# elapsed time
-    println("   \u231B elapsed time ... ", round(a17-a16; digits=2), " seconds\n")
+    a18 = time()		# elapsed time
+    println("   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
 
 end
 
