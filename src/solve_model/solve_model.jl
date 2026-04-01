@@ -14,16 +14,19 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
         CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
         compute_conflict!(model)
         if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-            iis_model, reference_map = copy_conflict(model)
-            println("\n❗ IIS detected:\n")
-            for (orig, _) in reference_map
-                println(orig)
+            iis_model, _ = copy_conflict(model)
+            backend_model = unsafe_backend(model)
+            open(joinpath(path, "iis_report.txt"), "w") do io
+                println(io, "===== IIS CONSTRAINTS =====\n")
+                for (F, S) in list_of_constraint_types(model)
+                    for con in all_constraints(model, F, S)
+                        st = MOI.get(backend_model,MOI.ConstraintConflictStatus(),JuMP.index(con))
+                        if st == MOI.IN_CONFLICT
+                            println(io, con)
+                        end
+                    end
+                end
             end
-            write_to_file(iis_model, joinpath(path, "iis_model.lp"))
-            # iis_model, reference_map = copy_conflict(model)
-            # open(joinpath(path, "iis_model.txt"), "w") do file
-            #     print(file, iis_model)
-            # end
         end
         error("\u2757  Model is not optimal. Check input data.\n")
     end
