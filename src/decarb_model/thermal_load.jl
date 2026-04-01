@@ -32,17 +32,13 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
         println("   \u2139  Discomfort temperature allowed")
     end
 
-    # remove temperature control when inputted as disable
-    delete_upper_bound.(vTin[tm["Ton"].==0])
-    delete_lower_bound.(vTin[tm["Ton"].==0])
-
     # minimum indoor temperature [°C]
     @constraint(model, eTmn[t=1:tm["P"]; tm["Ton"][t]==1], vTin[t]+vTlo[t] >= tm["Tmn"][t])
     # maximum indoor temperature [°C]
     @constraint(model, eTmx[t=1:tm["P"]; tm["Ton"][t]==1], vTin[t]-vTup[t] <= tm["Tmx"][t])
 
-    Au = calculate_conductivity_ventilation(bdg["Balt"],bdg["Bventy"],bdg["Bvent"],tm["P"],
-        tm["Tout"],tm["Bppl"])
+    # Au = calculate_conductivity_ventilation(bdg["Balt"],bdg["Bventy"],bdg["Bvent"],tm["P"],
+    #     tm["Tout"],tm["Bppl"])
 
     # thermal gain from active equipment [kWh]
     @expression(model, vQ_HTAC[t=1:tm["P"]],
@@ -109,39 +105,39 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
 end
 
 
-function calculate_conductivity_ventilation(alt,venty,vent,nP,Tout,ppl)
+# function calculate_conductivity_ventilation(alt,venty,vent,nP,Tout,ppl)
 
-    # air density variation with temperature [kg/m3]
-    Ap_T = [1.4224,1.3943,1.3673,1.3413,1.3163,1.2922,1.269,1.2466,1.225,1.2041,1.1839,1.1644,1.1455]
-    A_T  = [   -25,   -20,   -15,   -10,    -5,     0,    5,    10,   15,    20,    25,    30,    35]
+#     # air density variation with temperature [kg/m3]
+#     Ap_T = [1.4224,1.3943,1.3673,1.3413,1.3163,1.2922,1.269,1.2466,1.225,1.2041,1.1839,1.1644,1.1455]
+#     A_T  = [   -25,   -20,   -15,   -10,    -5,     0,    5,    10,   15,    20,    25,    30,    35]
 
-    # air density correction by altitude [kg/m3]
-    Ap_T = Ap_T.*exp(-alt/10400)
+#     # air density correction by altitude [kg/m3]
+#     Ap_T = Ap_T.*exp(-alt/10400)
 
-    # air volumetric heat capacity [kWh/m3-°C]
-    Avhc_T = Ap_T.*0.0002793
+#     # air volumetric heat capacity [kWh/m3-°C]
+#     Avhc_T = Ap_T.*0.0002793
 
-    # conductivity due to ventilation per person [kW/°C/person]
-    Au_T = Avhc_T.*vent
-    Au = Array{Float64}(undef,nP)       # initialize conductivity vector
-    for t=1:nP
-        lb = diff([Tout[t].>=A_T;0],dims=1).!=0     # lower bound for interpolation
-        ub = diff([0;Tout[t].<=A_T],dims=1).!=0     # upper bound for interpolation
-        # identify temperature interval for interpolation
-        xin = (1:length(A_T)).*(lb.|ub)
-        xin_T = Array{Float64}(undef,sum(xin.!=0))
-        xin_T = xin[xin.!=0]
-        # if coincident upper and lower bound, no need for interpolation
-        length(xin_T)==1 ? Au[t]=Au_T[xin_T[1]] : 
-        # else, interpolate within interval of temperatures
-            Au[t]=(Au_T[xin_T[2]]-Au_T[xin_T[1]])/(A_T[xin_T[2]]-A_T[xin_T[1]])*(Tout[t]-A_T[xin_T[1]])+Au_T[xin_T[1]]
-    end
+#     # conductivity due to ventilation per person [kW/°C/person]
+#     Au_T = Avhc_T.*vent
+#     Au = Array{Float64}(undef,nP)       # initialize conductivity vector
+#     for t=1:nP
+#         lb = diff([Tout[t].>=A_T;0],dims=1).!=0     # lower bound for interpolation
+#         ub = diff([0;Tout[t].<=A_T],dims=1).!=0     # upper bound for interpolation
+#         # identify temperature interval for interpolation
+#         xin = (1:length(A_T)).*(lb.|ub)
+#         xin_T = Array{Float64}(undef,sum(xin.!=0))
+#         xin_T = xin[xin.!=0]
+#         # if coincident upper and lower bound, no need for interpolation
+#         length(xin_T)==1 ? Au[t]=Au_T[xin_T[1]] : 
+#         # else, interpolate within interval of temperatures
+#             Au[t]=(Au_T[xin_T[2]]-Au_T[xin_T[1]])/(A_T[xin_T[2]]-A_T[xin_T[1]])*(Tout[t]-A_T[xin_T[1]])+Au_T[xin_T[1]]
+#     end
 
-    # conductivity due to ventilation [kW/°C]
-    if venty==0         # forced ventilation varies with level of occupancy
-        return Au.*ppl
-    elseif venty==1     # forced ventilation fixed at maximum occupancy
-        return Au.*maximum(ppl)
-    end
+#     # conductivity due to ventilation [kW/°C]
+#     if venty==0         # forced ventilation varies with level of occupancy
+#         return Au.*ppl
+#     elseif venty==1     # forced ventilation fixed at maximum occupancy
+#         return Au.*maximum(ppl)
+#     end
 
-end
+# end
