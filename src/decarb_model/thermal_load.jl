@@ -85,10 +85,10 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
 
     @constraint(model, eTbal0,      # initial period
         vTin[1] == 
-        in["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-in["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*vQ_HTAC[1])
+        in["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-in["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*(vQ_HTAC[1]+Q_IHG[1]))
     @constraint(model, eTbal[t=2:tm["P"]],
         vTin[t] == 
-        vTin[t-1] + bdg["Bk1"]*(tm["Tout"][t-1]-vTin[t-1]) + bdg["Bk2"]*Q_R[t] + bdg["Bk3"]*vQ_HTAC[t])
+        vTin[t-1] + bdg["Bk1"]*(tm["Tout"][t-1]-vTin[t-1]) + bdg["Bk2"]*Q_R[t] + bdg["Bk3"]*(vQ_HTAC[t]+Q_IHG[t]))
     
     # non-served hot water [0,1]
     @variable(model, 1 >= vNShw[t=1:tm["P"]] >= 0)
