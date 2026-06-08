@@ -6,7 +6,7 @@ pEVsoc0,1
 pEVmnsoc,0.5
 pWHsto0,0.5
 pWHstof,0.5
-pTin0,17.5
+pTin0,15.482223
 pQmxBuy,1000
 pQmxSell,1000
 pST,168
