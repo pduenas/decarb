@@ -37,7 +37,7 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
 
     hvac["ty"] = df_hvac.ty             # name of HVAC unit
     hvac["HVmx"] = df_hvac.pHVmx        # maximum heating capacity [kW]
-    hvac["ACmx"] = df_hvac.pACmx        # maximum cooling capacity [kW]
+    hvac["ACmx"] = df_hvac.pACmx       # maximum cooling capacity [kW]
     hvac["HVeff"] = df_hvac.pHVeff      # efficiency --heating--
     hvac["ACeff"] = df_hvac.pACeff      # efficiency --cooling--
     hvac["temp"] = df_hvac.temp         # design temperature [°C]
