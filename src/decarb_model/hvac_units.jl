@@ -93,5 +93,4 @@ function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dic
     # maximum cold provided by HVAC (0,1)
     @constraint(model, eHVACac[t=1:tm["P"],h=1:hvac["N"]; hvac["ACmx"][h]>0],
         vHVACac[t,h] <= bHVACac[t,h])
-
 end

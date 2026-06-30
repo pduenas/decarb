@@ -9,26 +9,44 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
     s = termination_status(model)
     println("  \u2139  ", s)
 
-    # Check infeasibility if not optimal
     if s != MOI.OPTIMAL
         CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
         compute_conflict!(model)
         if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-            iis_model, _ = copy_conflict(model)
-            backend_model = unsafe_backend(model)
-            open(joinpath(path, "iis_report.txt"), "w") do io
-                println(io, "===== IIS CONSTRAINTS =====\n")
+            println("\n❗ IIS detected — infeasible constraints:\n")
+            open(joinpath(path, "iis_constraints.txt"), "w") do io
                 for (F, S) in list_of_constraint_types(model)
+                    F == VariableRef && continue
                     for con in all_constraints(model, F, S)
-                        st = MOI.get(backend_model,MOI.ConstraintConflictStatus(),JuMP.index(con))
-                        if st == MOI.IN_CONFLICT
-                            println(io, con)
+                        cs = get_attribute(con, MOI.ConstraintConflictStatus())
+                        if cs == MOI.IN_CONFLICT
+                            label = name(con) == "" ? string(con) : name(con)
+                            println(io, "[IN_CONFLICT] ", label)
+                            println("  ❌ ", label)
                         end
                     end
                 end
             end
         end
         error("\u2757  Model is not optimal. Check input data.\n")
+    end
+    
+    if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+        println("\n❗ IIS detected — infeasible constraints:\n")
+
+        open(joinpath(path, "iis_constraints.txt"), "w") do io
+            for (F, S) in list_of_constraint_types(model)
+                for con in all_constraints(model, F, S)
+                    status = get_attribute(con, MOI.ConstraintConflictStatus())
+                    if status == MOI.IN_CONFLICT
+                        println(io, "[IN_CONFLICT] ", name(con) == "" ? con : name(con), " : ", constraint_object(con))
+                        println("  ❌ ", name(con) == "" ? con : name(con))
+                    elseif status == MOI.MAYBE_IN_CONFLICT
+                        println(io, "[MAYBE]       ", name(con) == "" ? con : name(con), " : ", constraint_object(con))
+                    end
+                end
+            end
+        end
     end
 
     # relax integrality to get dual information
