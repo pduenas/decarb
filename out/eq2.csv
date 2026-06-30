@@ -1,3 +1,4 @@
 Eq,Inv,Qty,New,CAPEX
-Electricity ASHP SEER 13 7.7 HSPF,14911.95474,1,0,0.0
-Electric Standard,4000.0,1,0,0.0
+Propane Fuel Furnace 80% AFUE,2148.23253,1,0,0.0
+Room AC EER 12.0,4000.0,1,0,0.0
+Electric Premium,4000.0,1,0,0.0
