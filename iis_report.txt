@@ -1,4 +1,0 @@
-===== IIS CONSTRAINTS =====
-
-bHVACty[1,2] >= 1
-bHVACty[1,6] >= 1
