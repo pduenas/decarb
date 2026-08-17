@@ -32,6 +32,7 @@ Desktop.ini
 # Input, output and intermediate files
 bdg_path.txt
 balance.csv
+status.csv
 status.txt
 DECARB.xlsm
 in/
