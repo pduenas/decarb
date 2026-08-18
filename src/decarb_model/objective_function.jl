@@ -24,7 +24,7 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     # cost of non-served electricity [$]
     @expression(model, vNSEcost[t=1:tm["P"]], in["NSEcost"]*model[:vNSE_Q][t])
     # cost of non-served temperature [$]
-    @expression(model, vNSTcost[t=1:tm["P"]], in["NSTcost"]*(model[:vTup][t]+model[:vTlo][t]))
+    @expression(model, vNSTcost[t=1:tm["P"]], in["NSTcost"]*(model[:vTup][t]+model[:vTlo][t]))*tm["TM"][t]
     # cost of non-served hot water [$]
     @expression(model, vNSHWcost[t=1:tm["P"]], in["NSHWcost"]*tm["HWdem"][t]*model[:vNShw][t])
     # cost of non-served hot water [$]
