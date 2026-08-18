@@ -31,9 +31,9 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     @expression(model, vNSEVcost[t=1:tm["P"]],
         in["NSEVcost"]*sum(model[:vEVlo][t,e] for e=1:ev["N"]))
     # cost of purchasing electricity [$]
-    @expression(model, vQcost[t=1:tm["P"]], tm["QcostBuy"][t]*model[:vQbuy][t])
+    @expression(model, vQcost[t=1:tm["P"]], tm["TM"][t]*tm["QcostBuy"][t]*model[:vQbuy][t])
     # income from selling electricity [$]
-    @expression(model, vQearn[t=1:tm["P"]], tm["QcostSell"][t]*model[:vQsell][t])
+    @expression(model, vQearn[t=1:tm["P"]], tm["TM"][t]*tm["QcostSell"][t]*model[:vQsell][t])
     # cost of purchased fuel [$]
     @expression(model, vGLcost[t=1:tm["P"]], 
         tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABS_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
@@ -116,7 +116,7 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
             for t=1:tm["P"])/1e6)
 
     # CO2 emissions from grid purchases [kg]
-    @expression(model, CO2_E, sum(model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"]))
+    @expression(model, CO2_E, sum(tm["TM"][t]*model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"]))
 
     # Define the objective function
     @objective(model,Min,COST)
