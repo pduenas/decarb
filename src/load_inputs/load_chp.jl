@@ -36,7 +36,7 @@ function load_chp(path::AbstractString,sp::Dict,bdg::Dict)
     chp["ty"] = df_chp.ty           # name of CHP device
     chp["mx"] = df_chp.mx           # maximum CHP capacity [kW]
     chp["mn"] = df_chp.mn           # minimum CHP output [%]
-    chp["hr"] = df_chp.hr           # thermal efficiency factor [%]
+    chp["fcf"] = df_chp.fcf         # fuel conversion factor
     chp["fuel"] = df_chp.fuel       # type of fuel --gaseous|liquid-- {G,L}
     chp["tank"] = df_chp.tank       # in site storage tank size [kWh]
     chp["h2p"] = df_chp.h2p         # heat-to-power ratio

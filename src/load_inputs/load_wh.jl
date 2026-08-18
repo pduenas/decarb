@@ -36,7 +36,7 @@ function load_wh(path::AbstractString,sp::Dict,bdg::Dict)
 
     wh["ty"] = df_wh.ty         # name of water heater
     wh["mx"] = df_wh.mx         # maximum capacity [kW] || [kWh]
-    wh["hr"] = df_wh.hr         # heat rate [MMBtu/kWh]
+    wh["fcf"] = df_wh.fcf       # fuel conversion factor
     wh["fuel"] = df_wh.fuel     # type of fuel --gaseous|liquid-- {G,L}
     wh["eff"] = df_wh.eff       # efficiency --water heater--
     wh["tank"] = df_wh.tank     # in-site storage tank size [kWh]

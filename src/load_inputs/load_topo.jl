@@ -32,7 +32,7 @@ function load_topo(path::AbstractString,chp::Dict,abs::Dict)
     topo["in"] = df_topo.in         # input product to lower link
     topo["fuel"] = df_topo.fuel     # existing supplemental firing {G,D}
     topo["mx"] = df_topo.mx         # nominal capacity [kW]
-    topo["hr"] = df_topo.hr         # heat rate [MMBtu/kWh]
+    topo["fcf"] = df_topo.fcf       # fuel conversion factor
     topo["eff"] = df_topo.eff       # efficiency of connection
 
     topo["N"] = size(topo["up"],1)  # number of thermal links
@@ -112,13 +112,13 @@ function create_chp_fire(topo,chp,abs)
         end
         if dim2 != 0
             for c=1:chp["N"]
-                chpfire[chp["ty"][c][1:end-2]==topo["up"][i],dim2,dim3] .= topo["hr"][i]*topo["mx"][i]
+                chpfire[chp["ty"][c][1:end-2]==topo["up"][i],dim2,dim3] .= topo["fcf"][i]*topo["mx"][i]
             end
         elseif dim2 == 0
             for c=1:chp["N"]
                 for a=1:abs["N"]
                     chpfire[chp["ty"][c][1:end-2]==topo["up"][i],
-                            abs["ty"][a][1:end-2]==topo["up"][i],dim3] .= topo["hr"][i]*topo["mx"][i]
+                            abs["ty"][a][1:end-2]==topo["up"][i],dim3] .= topo["fcf"][i]*topo["mx"][i]
                 end
             end
         end

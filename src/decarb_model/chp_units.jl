@@ -59,11 +59,11 @@ function chp_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict
     # gaseous fuel purchased by CHP units [MMBtu]
     if any(chp["fuel"].=="G")
         @expression(model, vCHP_G[t=1:tm["P"]],
-            sum(vCHP_Q[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="G") +
-            sum(vCHP_HT[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_HT[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,1]>0) +
-            sum(vCHP_HW[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_HW[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,2]>0))
     else
         @variable(model, vCHP_G[t=1:tm["P"]] == 0)
@@ -72,11 +72,11 @@ function chp_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict
     # liquid fuel purchased by CHP [MMBtu]
     if any(chp["fuel"].=="L")
         @expression(model, vCHP_L[t=1:tm["P"]],
-            sum(vCHP_Q[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="L") +
-            sum(vCHP_HT[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_HT[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,1]>0) +
-            sum(vCHP_HW[t,c]/chp["hr"][c] for c=1:chp["N"]
+            sum(vCHP_HW[t,c]/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,2]>0))
     else
         @variable(model, vCHP_L[t=1:tm["P"]] == 0)
