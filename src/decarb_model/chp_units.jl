@@ -56,7 +56,7 @@ function chp_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict
         tm["TM"][t] * (chp["mx"][c]*topo["chp_bdg"][c,2]*model[:vCHPbdg][t,c,2] +
                        sum(topo["chp_fire"][c,abs["N"]+2,f]*model[:vCHPfire][t,c,abs["N"]+2,f] for f=1:2)))
 
-    # gaseous fuel purchased by CHP units [MMBtu]
+    # gaseous fuel purchased by CHP units [kWh]
     if any(chp["fuel"].=="G")
         @expression(model, vCHP_G[t=1:tm["P"]],
             sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
@@ -69,7 +69,7 @@ function chp_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict
         @variable(model, vCHP_G[t=1:tm["P"]] == 0)
     end
 
-    # liquid fuel purchased by CHP [MMBtu]
+    # liquid fuel purchased by CHP [kWh]
     if any(chp["fuel"].=="L")
         @expression(model, vCHP_L[t=1:tm["P"]],
             sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
