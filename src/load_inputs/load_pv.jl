@@ -35,9 +35,9 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
     pv["tech"] = df_pv.tech     # technology of PV power
     pv["mx"] = df_pv.mx         # module PV capacity [kW]
     pv["ar"] = df_pv.ar         # module PV area [m2]
-    pv["eff"] = df_pv.eff       # DC/AC efficiency [%]
-    pv["loss"] = df_pv.loss     # PV system losses [%]
-    pv["fail"] = df_pv.fail     # PV failure rate [%]
+    pv["eff"] = df_pv.eff       # DC/AC efficiency [p.u.]
+    pv["loss"] = df_pv.loss     # PV system losses [p.u.]
+    pv["fail"] = df_pv.fail     # PV failure rate [p.u.]
     pv["inv"] = df_pv.inv       # capital cost [$]
     pv["lc"] = df_pv.lc         # learning curve [%/year]
     pv["fom"] = df_pv.fom       # fixed O&M cost [$/year]
@@ -48,9 +48,9 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
     # maximum potential number of PV panels [0,z]
     pv["zmx"] = floor.(bdg["Bpv"]./pv["ar"])
 
-    # maximum PV panel potential [kW/m2]
-    pv["Sdnimx"] = maximum_solar_potential(pv["tech"],bdg["Btilt"],bdg["Bazi"],
-        bdg["Btck"],tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],tm["P"],tm["Tout"])
+    # PV panel capacity factor [kW/m2]
+    pv["pv_cf"] = maximum_solar_potential(pv["tech"],bdg["Btilt"],bdg["Bazi"],bdg["Btck"],
+    tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],bdg["Balb"],tm["P"],tm["Tout"])
 
     return pv
 
@@ -61,7 +61,7 @@ same PV solar model as renewables.ninja: Huld 2010, Pfenninger 2016
 """
 
 function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
-    sdni,sdhi,np,tout)
+    sdni,sdhi,albedo,np,tout)
 
     # calculate the incident angle and correct the tilt angle
     if pvtck==0			# fixed axis
@@ -75,9 +75,14 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
     end
 
     # calculate the normalized flat irradiance based on real DNI and DHI
-    dni = sdni.*cos.(incid)
-    dhi = sdhi.*(1 .+ cos.(pvtilt))/2 .+ 0.3.*(sdni.+sdhi).*(1 .- cos.(pvtilt))/2
-    ir = dni+dhi
+    dni = max.(sdni.*cos.(incid), 0)            # avoid negative values
+    dhi = max.(sdhi, 0)                         # avoid negative values
+    ghi = max.(sdni.*sin.(ele), 0).+dhi         # obtain the global horizontal irradiance
+
+    sky = dhi.*(1 .+ cos.(pvtilt))./2
+    ground = albedo.*ghi.*(1 .- cos.(pvtilt))./2 
+    
+    ir = dni .+ sky .+ ground
     ir[ir.<0] .= 0
 
     # input: efficiency parameters for each type of PV technology
@@ -86,14 +91,14 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
         -0.046689 	-0.072844	-0.002262	0.000276	0.000159	-0.000006]
 
     # calculate PV panel efficieny depending on type
-    G_ = transpose(log.(ir))                            # natural logarithm
-    T_ = transpose(tout.+0.035*1000*(ir).-25)           # temperature of PV panel
-    eff = 1 .+ k[tech,1].*G_ .+ k[tech,2].*G_.^2 .+     # empirical formula
+    eff = zeros(size(ir))
+    idx = ir .> 0
+    G_ = transpose(log.(ir[idx]))                           # natural logarithm
+    T_ = transpose(tout[idx].+0.035*1000*(ir[idx]).-25)     # temperature of PV panel
+    eff[idx] = 1 .+ k[tech,1].*G_ .+ k[tech,2].*G_.^2 .+    # empirical formula
         T_.*(k[tech,3].+k[tech,4].*G_.+k[tech,5].*G_.^2) .+ k[tech,6].*T_.^2
-    eff[eff.<0] .= 0
-    eff[eff.>1] .= 1
-    replace!(eff,NaN=>0)
-    
+    eff = clamp.(eff, 0, 1)
+
     return transpose(eff).*ir
 
 end
