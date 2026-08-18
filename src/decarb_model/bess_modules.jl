@@ -43,9 +43,9 @@ function bess_modules!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::D
     end
 
     # electricity charged in BESS module [kWh]
-    @expression(model, vBESS_UP[t=1:tm["P"],s=1:bess["N"]], tm["TM"][t]*bess["mx"][s]*vBESSup[t,s])
+    @expression(model, vBESS_UP[t=1:tm["P"],s=1:bess["N"]], bess["mx"][s]*vBESSup[t,s])
     # electricity discharged from BESS module [kWh]
-    @expression(model, vBESS_DN[t=1:tm["P"],s=1:bess["N"]], tm["TM"][t]*bess["mx"][s]*vBESSdn[t,s])
+    @expression(model, vBESS_DN[t=1:tm["P"],s=1:bess["N"]], bess["mx"][s]*vBESSdn[t,s])
 
     # maximum available space for BESS modules {0,z}
     @constraint(model, eBESSbdg, sum(zBESS[i,s] for i=1:in["IT"],s=1:bess["N"]) <= bdg["Bbess"])
@@ -65,7 +65,7 @@ function bess_modules!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::D
     @constraint(model, eBESSud[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
     	vBESSup[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["up"][s]/bess["mx"][s]*bBESS[t,s])
     @constraint(model, eBESSdu[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    	vBESSdn[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["up"][s]/bess["mx"][s]*(1-bBESS[t,s]))
+    	vBESSdn[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["dn"][s]/bess["mx"][s]*(1-bBESS[t,s]))
     # electricity stored balance [0,z]
     @constraint(model, eBESSbal[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
         vBESSsoc[t,s]-vBESSsoc[t-1,s] == vBESSup[t,s]*bess["effu"][s]-vBESSdn[t,s]/bess["effd"][s] +
