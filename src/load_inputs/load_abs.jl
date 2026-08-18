@@ -35,7 +35,7 @@ function load_abs(path::AbstractString,sp::Dict,bdg::Dict)
 
     abs["ty"] = df_abs.ty           # name of absorption chiller
     abs["mx"] = df_abs.mx           # maximum absorption chiller capacity [kW]
-    abs["hr"] = df_abs.hr           # heat rate [MMBtu/kWh]
+    abs["fcf"] = df_abs.fcf         # fuel conversion factor
     abs["fuel"] = df_abs.fuel       # type of fuel --gaseous|liquid-- {G,L}
     abs["ac"] = df_abs.ac           # efficiency --cooling--
     abs["inv"] = df_abs.inv         # capital cost [$]
