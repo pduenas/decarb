@@ -31,9 +31,9 @@ function electric_vehicles!(model::Model,in::Dict,tm::Dict,ev::Dict)
     end
 
     # electricity charged in electric vehicle [kWh]
-    @expression(model, vEV_UP[t=1:tm["P"],e=1:ev["N"]], tm["TM"][t]*ev["up"][e]*vEVup[t,e])
+    @expression(model, vEV_UP[t=1:tm["P"],e=1:ev["N"]], ev["mx"][e]*vEVup[t,e])
     # electricity discharged from electric vehicle [kWh]
-    @expression(model, vEV_DN[t=1:tm["P"],e=1:ev["N"]], tm["TM"][t]*ev["dn"][e]*vEVdn[t,e])
+    @expression(model, vEV_DN[t=1:tm["P"],e=1:ev["N"]], ev["mx"][e]*vEVdn[t,e])
 
     # maximum charging of electric vehicle [0,1]
     @constraint(model, eEVup[t=1:tm["P"],e=1:ev["N"]; ev["mx"][e]>0],
