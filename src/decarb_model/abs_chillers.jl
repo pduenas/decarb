@@ -53,7 +53,7 @@ function abs_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
     # cooling provided by absorption chiller [kWh]
     @expression(model, vABS_AC[t=1:tm["P"],a=1:abs["N"]], tm["TM"][t]*abs["mx"][a]*vABSac[t,a])
 
-    # gaseous fuel purchased by absorption chillers [MMBtu]
+    # gaseous fuel purchased by absorption chillers [kWh]
     if any(abs["fuel"].=="G")
         @expression(model, vABS_G[t=1:tm["P"]],
             sum(vABS_Q[t,a]/abs["fcf"][a] for a=1:abs["N"] if abs["fcf"][a]>0 && abs["fuel"][a]=="G"))
@@ -61,7 +61,7 @@ function abs_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
         @variable(model, vABS_G[t=1:tm["P"]] == 0)
     end
 
-    # liquid fuel purchased by absorption chillers [MMBtu]
+    # liquid fuel purchased by absorption chillers [kWh]
     if any(abs["fuel"].=="L")
         @expression(model, vABS_L[t=1:tm["P"]],
             sum(vABS_Q[t,a]/abs["fcf"][a] for a=1:abs["N"] if abs["fcf"][a]>0 && abs["fuel"][a]=="L"))
