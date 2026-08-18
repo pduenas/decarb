@@ -182,7 +182,7 @@ function write_status(path::AbstractString,opt::Int64)
         write(st,"solving model")
     elseif opt==5
         write(st,"reading outputs")
-    elseif opt==5
+    elseif opt==6
         write(st,"writing outputs")
     end
     close(st)
