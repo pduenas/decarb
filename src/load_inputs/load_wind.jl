@@ -36,7 +36,7 @@ function load_wind(path::AbstractString,tm::Dict)
     wind["mn"] = df_wind.mn         # minimum output capacity [kW]
     wind["vmn"] = df_wind.vmn       # minimum wind speed [m/s]
     wind["vmx"] = df_wind.vmx       # cutoff wind speed [m/s]
-    wind["fail"] = df_wind.fail     # wind turbine failure rate [%]
+    wind["fail"] = df_wind.fail     # wind turbine failure rate [p.u.]
     wind["inv"] = df_wind.inv       # capital cost [$]
     wind["lc"] = df_wind.lc         # learning curve [%/year]
     wind["fom"] = df_wind.fom       # fixed O&M cost [$/year]

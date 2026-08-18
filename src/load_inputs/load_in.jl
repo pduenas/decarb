@@ -24,12 +24,12 @@ function load_in(path::AbstractString)
 
     in["P0"] = df_in.pP0[1]             # initial date - datetime
     in["Tmode"] = df_in.pTmode[1]       # temperature control mode {0,1}
-    in["BESSsoc0"] = df_in.pBESSsoc0[1] # initial state-of-charge of BESS [%]
-    in["BESSsocf"] = df_in.pBESSsocf[1] # final state-of-charge of BESS [%]
-    in["EVsoc0"] = df_in.pEVsoc0[1]     # initial state-of-charge of EV [%]
-    in["EVmnsoc"] = df_in.pEVmnsoc[1]   # minimum state-of-charge of EV [%]
-    in["WHsto0"] = df_in.pWHsto0[1]     # initial state-of-tank WH [%]
-    in["WHstof"] = df_in.pWHstof[1]     # final state-of-tank WH [%]
+    in["BESSsoc0"] = df_in.pBESSsoc0[1] # initial state-of-charge of BESS
+    in["BESSsocf"] = df_in.pBESSsocf[1] # final state-of-charge of BESS
+    in["EVsoc0"] = df_in.pEVsoc0[1]     # initial state-of-charge of EV
+    in["EVmnsoc"] = df_in.pEVmnsoc[1]   # minimum state-of-charge of EV
+    in["WHsto0"] = df_in.pWHsto0[1]     # initial state-of-tank WH
+    in["WHstof"] = df_in.pWHstof[1]     # final state-of-tank WH
     in["Tin0"] = df_in.pTin0[1]         # initial indoor temperature [°C]
     in["QmxBuy"] = df_in.pQmxBuy[1]     # maximum purchase of electricity [kW]
     in["QmxSell"] = df_in.pQmxSell[1]   # maximum sale of electricity [kW]
@@ -43,12 +43,12 @@ function load_in(path::AbstractString)
     in["NSEcost"] = df_in.pNSEcost[1]   # cost of non-served electricity [$/kWh]
     in["NSTcost"] = df_in.pNSTcost[1]   # cost of temperature discomfort [$/°C-h]
     in["NSHWcost"] = df_in.pNSHWcost[1] # cost of non-served hot water [$/kWh]
-    in["NSEVcost"] = df_in.pNSEVcost[1] # cost of non-served EV state-of-charge [$/%]
+    in["NSEVcost"] = df_in.pNSEVcost[1] # cost of non-served EV state-of-charge [$/p.u.]
     in["EVdriver"] = df_in.pEVdriver[1]	# type of driver {0,1,2}
-    in["EVpen"] = df_in.pEVpen[1]	    # penalty on type of driver [$/%]
+    in["EVpen"] = df_in.pEVpen[1]	    # penalty on type of driver [$/p.u.]
     in["EVv2g"] = df_in.pEVv2g[1]	    # vehicle to grid allowed {0,1}
     in["IT"] = df_in.pIT[1]		        # investment windows [0,...,n]
-    in["IR"] = df_in.pIR[1]             # annual interest rate [%]
+    in["IR"] = df_in.pIR[1]             # annual interest rate [p.u.]
 
     # enable investments
     in["b_inv"] = true

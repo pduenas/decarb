@@ -39,11 +39,11 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
     ev["ty"] = df_ev.ty         # name of electric vehicle
     ev["mx"] = df_ev.mx         # maximum battery capacity [kWh]
     ev["drv"] = df_ev.drv       # driving effiency [kWh/km]
-    ev["cold"] = df_ev.cold     # winter efficiency penalty [%]
+    ev["cold"] = df_ev.cold     # winter efficiency penalty [p.u.]
     ev["up"] = df_ev.up         # charging rate [kWh/h]
     ev["dn"] = df_ev.dn         # discharging rate [kWh/h]
-    ev["effu"] = df_ev.effu     # charging efficiency [%]
-    ev["effd"] = df_ev.effd     # discharging efficiency [%]
+    ev["effu"] = df_ev.effu     # charging efficiency [p.u.]
+    ev["effd"] = df_ev.effd     # discharging efficiency [p.u.]
 
     ev["N"] = size(ev["ty"],1)  # number of EV types
 
