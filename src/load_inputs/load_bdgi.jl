@@ -57,8 +57,7 @@ function load_bdgi(path::AbstractString)
     bdg["Btck"] = df_bdg.pBtck[1]   	# tracking system {0,2}
     bdg["Bwind"] = df_bdg.pBwind[1]     # available wind space {0,z}
     bdg["Bbess"] = df_bdg.pBbess[1]     # available BESS space {0,z}
-    bdg["Bbess"] = df_bdg.pBbess[1]     # available BESS space {0,z}
-    bdg["Bevmx"] = df_bdg.pBbess[1]     # EV maximum charging capacity [kW]
+    bdg["Bevmx"] = df_bdg.pBevmx[1]     # EV maximum charging capacity [kW]
 
     # unit transformations
     bdg["Bvent"] = bdg["Bvent"]/1000*3600   # in [m3/h/person]
