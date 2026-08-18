@@ -24,9 +24,9 @@ function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::
     @variable(model, 1 >= vNSEq[t=1:tm["P"]] >= 0)
     # peak power demand [kW]
     @variable(model, vQmx[n=1:in["QmxTM"]] >= 0)
-    # purchased electricity [kWh]
+    # purchased electricity [kW]
     @variable(model, in["QmxBuy"] >= vQbuy[t=1:tm["P"]] >= 0)
-    # sold electricity [kWh]
+    # sold electricity [kW]
     @variable(model, in["QmxSell"] >= vQsell[t=1:tm["P"]] >= 0)
     # purchase/sale electricity mode {0,1}
     @variable(model, bQbs[t=1:tm["P"]], Bin)
@@ -52,13 +52,13 @@ function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::
         sum(model[:vEV_DN][t,e] for e=1:ev["N"] if ev["mx"][e]>0))
 
     # electricity balance [kWh]
-    @constraint(model, eQbal[t=1:tm["P"]], vQgen[t]+vQbuy[t]+vNSE_Q[t] == vQdem[t]+vQsell[t])
+    @constraint(model, eQbal[t=1:tm["P"]], vQgen[t]+tm["TM"][t]*(vQbuy[t]-vQsell[t])+vNSE_Q[t] == vQdem[t])
     # peak power load over time scope [kW]
     @constraint(model, eDmx[t=1:tm["P"],n=1:in["QmxTM"]; tm["Qmx"][t]==n && tm["QmxCost"][t]>0],
         vQmx[n] >= vQbuy[t])
-    # purchase electricity mode {0,1}
+    # purchase electricity mode [kW]
     @constraint(model, eQbuy[t=1:tm["P"]], vQbuy[t] <= in["QmxBuy"]*bQbs[t])
-    # sell electricity mode {0,1}
+    # sell electricity mode [kW]
     @constraint(model, eQsell[t=1:tm["P"]], vQsell[t] <= in["QmxSell"]*(1-bQbs[t]))
 
 end

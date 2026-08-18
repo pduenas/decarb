@@ -28,8 +28,8 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
     EVmx::Vector{Float64},WHfuel::Vector{String})
 
     Qdem = tm["Qlight"] + tm["Qequip"]
-    Qsell = round.(value.(model[:vQsell])./tm["TM"], digits=2)
-    Qbuy = round.(value.(model[:vQbuy])./tm["TM"], digits=2)
+    Qsell = round.(value.(model[:vQsell]), digits=2)
+    Qbuy = round.(value.(model[:vQbuy]), digits=2)
     NSE_Q = round.(value.(model[:vNSE_Q])./tm["TM"], digits=2)
 
     # outputs from CHP units
