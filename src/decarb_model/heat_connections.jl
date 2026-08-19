@@ -32,10 +32,10 @@ function heat_connections!(model::Model,topo::Dict,tm::Dict,chp::Dict,abs::Dict)
     # cooling mode in building {0,1}
     @variable(model, bBDGac[t=1:tm["P"]], Bin)
 
-    # gaseous fuel purchased by supplemental firing [MMBtu]
+    # gaseous fuel purchased by supplemental firing [kWh]
     @expression(model, vTH_G[t=1:tm["P"]],
         tm["TM"][t]*sum(topo["chp_fire"][c,l,1]*vCHPfire[t,c,l,1] for c=1:chp["N"],l=1:abs["N"]+2))
-    # liquid fuel purchased by supplemental firing [MMBtu]
+    # liquid fuel purchased by supplemental firing [kWh]
     @expression(model, vTH_L[t=1:tm["P"]],
         tm["TM"][t]*sum(topo["chp_fire"][c,l,2]*vCHPfire[t,c,l,2] for c=1:chp["N"],l=1:abs["N"]+2))
 
