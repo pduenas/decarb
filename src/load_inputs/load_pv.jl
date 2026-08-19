@@ -50,7 +50,7 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
 
     # PV panel capacity factor [kW/m2]
     pv["pv_cf"] = maximum_solar_potential(pv["tech"],bdg["Btilt"],bdg["Bazi"],bdg["Btck"],
-    tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],bdg["Balb"],tm["P"],tm["Tout"])
+        tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],bdg["Balb"],tm["P"],tm["Tout"])
 
     return pv
 
@@ -63,16 +63,35 @@ same PV solar model as renewables.ninja: Huld 2010, Pfenninger 2016
 function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
     sdni,sdhi,albedo,np,tout)
 
-    # calculate the incident angle and correct the tilt angle
-    if pvtck==0			# fixed axis
-        incid = acos.(sin.(ele).*cos(pvtilt)+cos.(ele).*sin(pvtilt).*cos.(pvazi.-azi))
-    elseif pvtck==1		# single-axis
-        incid = acos.(sqrt.(1 .- (cos.(ele.+pvtilt)-cos(pvtilt).*cos.(ele).*(1 .- cos.(azi.-pvazi))).^2))
-        pvtilt = atan.(cos.(ele).*sin.(azi.-pvazi)./(sin.(ele.-pvtilt).+sin(pvtilt).*cos.(ele).*  (1 .- cos.(azi.-pvazi))))
-    elseif pvtck==2		# dual-axis
-        incid = zeros(Float64, np)
-        pvtilt = pi/2 .- ele
+    # Solar projections into x,y,z coordinates
+    sunx = sin.(azi).*cos.(ele)
+    suny = cos.(azi).*cos.(ele)
+    sunz = sin.(ele)
+
+    # Fixed panel: normal is defined by the panel tilt and azimuth
+    if pvtck==0
+        nx = sin.(pvtilt).*sin.(pvazi)
+        ny = sin.(pvtilt).*cos.(pvazi)
+        nz = cos.(pvtilt)
+        cosinc = sunx.*nx .+ suny.*ny .+ sunz.*nz
+    # Single-axis tracker: axis is defined by (pvtilt, pvazi)
+    elseif pvtck==1
+        ax = sin.(pvtilt).*sin.(pvazi)
+        ay = sin.(pvtilt).*cos.(pvazi)
+        az = cos.(pvtilt)
+        # panel normal is sun vector projected onto plane perpendicular to that axis
+        d = sunx.*ax .+ suny.*ay .+ sunz.*az                # projection of sun onto axis
+        projx = sunx .- d.*ax
+        projy = suny .- d.*ay
+        projz = sunz .- d.*az
+        projn = sqrt.(projx.^2 .+ projy.^2 .+ projz.^2)     # magnitude of projected sun vector
+        cosinc = projn
+    # Dual-axis tracker: panel normal matches the sun vector for daylight hours.
+    elseif pvtck==2
+        cosinc = ones(Float64, np)
     end
+
+    incid = acos.(clamp.(cosinc, -1, 1))
 
     # calculate the normalized flat irradiance based on real DNI and DHI
     dni = max.(sdni.*cos.(incid), 0)            # avoid negative values
@@ -90,15 +109,15 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
         -0.005554	-0.038724	-0.003723	-0.000905	-0.001256	0.000001;
         -0.046689 	-0.072844	-0.002262	0.000276	0.000159	-0.000006]
 
-    # calculate PV panel efficieny depending on type
-    eff = zeros(size(ir))
+    # calculate PV panel efficiency depending on technology and active irradiance periods
     idx = ir .> 0
-    G_ = transpose(log.(ir[idx]))                           # natural logarithm
-    T_ = transpose(tout[idx].+0.035*1000*(ir[idx]).-25)     # temperature of PV panel
-    eff[idx] = 1 .+ k[tech,1].*G_ .+ k[tech,2].*G_.^2 .+    # empirical formula
+    eff = zeros(Float64, length(ir), length(tech))
+    G_ = transpose(log.(ir[idx]))
+    T_ = transpose(tout[idx].+0.035*1000*(ir[idx]).-25)
+    eff_active = 1 .+ k[tech,1].*G_ .+ k[tech,2].*G_.^2 .+
         T_.*(k[tech,3].+k[tech,4].*G_.+k[tech,5].*G_.^2) .+ k[tech,6].*T_.^2
-    eff = clamp.(eff, 0, 1)
+    eff[idx, :] = transpose(clamp.(eff_active, 0, 1))
 
-    return transpose(eff).*ir
+    return eff.*ir
 
 end

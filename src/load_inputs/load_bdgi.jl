@@ -21,7 +21,7 @@ function load_bdgi(path::AbstractString)
                     Float64,Float64,Float64,Float64,Float64,Int8,Float64,Float64,
                     Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
                     Float64,Float64,Float64,Int8,Int8,Int8,Int8,Float64,Float64,Float64,
-                    Int8,Int8,Int8,Float64],transpose=true) |> DataFrame
+                    Float64,Int8,Int8,Int8,Float64],transpose=true) |> DataFrame
 
     bdg["Balt"] = df_bdg.pBalt[1]       # altitude above sea level [m]
     bdg["Blon"] = df_bdg.pBlon[1]		# longitude [°]
@@ -55,7 +55,7 @@ function load_bdgi(path::AbstractString)
     bdg["Btilt"] = df_bdg.pBtilt[1] 	# PV tilt (roof) angle [°]
     bdg["Bazi"] = df_bdg.pBazi[1]     	# PV azimuth (roof) angle [°]
     bdg["Balb"] = df_bdg.pBalb[1]   	# albedo of roof surface
-    bdg["Btck"] = df_bdg.pBtck[1]   	# tracking system {0,2}
+    bdg["Btck"] = df_bdg.pBtck[1]   	# tracking system {0,1,2}
     bdg["Bwind"] = df_bdg.pBwind[1]     # available wind space {0,z}
     bdg["Bbess"] = df_bdg.pBbess[1]     # available BESS space {0,z}
     bdg["Bevmx"] = df_bdg.pBevmx[1]     # EV maximum charging capacity [kW]
