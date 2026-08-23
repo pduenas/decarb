@@ -1,7 +1,7 @@
 using DECARB
 
 # define solver 
-#   1: Gurobi, 2: CPLEX
+#   1: Gurobi, 2: HiGHS
 i_solver = 1
 # define integrality
 b_relax_integrality = false
