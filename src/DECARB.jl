@@ -24,7 +24,7 @@ using TimeZones
 
 # uncomment your solver
 using Gurobi
-#using CPLEX
+using HiGHS
 
 # Launch DECARB process
 include(joinpath("case_runner","case_runner.jl"))
@@ -48,7 +48,7 @@ include(joinpath("load_inputs","load_ev.jl"))
 
 # Configure solver settings
 include(joinpath("configure_solver","configure_gurobi.jl"))
-include(joinpath("configure_solver","configure_cplex.jl"))
+include(joinpath("configure_solver","configure_highs.jl"))
 
 # Create DECARB model
 include(joinpath("decarb_model","heat_connections.jl"))

@@ -42,9 +42,9 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
         configure_gurobi(model)
         println("   \u2139  Gurobi called satisfactorily")
     elseif i_solver==2
-        set_optimizer(model,CPLEX.Optimizer)
-        configure_cplex(model)
-        println("   \u2139  CPLEX called satisfactorily")
+        set_optimizer(model,HiGHS.Optimizer)
+        configure_highs(model)
+        println("   \u2139  HiGHS called satisfactorily")
     end
 
     a2 = time()			# elapsed time
