@@ -30,24 +30,6 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
         end
         error("\u2757  Model is not optimal. Check input data.\n")
     end
-    
-    if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-        println("\n❗ IIS detected — infeasible constraints:\n")
-
-        open(joinpath(path, "iis_constraints.txt"), "w") do io
-            for (F, S) in list_of_constraint_types(model)
-                for con in all_constraints(model, F, S)
-                    status = get_attribute(con, MOI.ConstraintConflictStatus())
-                    if status == MOI.IN_CONFLICT
-                        println(io, "[IN_CONFLICT] ", name(con) == "" ? con : name(con), " : ", constraint_object(con))
-                        println("  ❌ ", name(con) == "" ? con : name(con))
-                    elseif status == MOI.MAYBE_IN_CONFLICT
-                        println(io, "[MAYBE]       ", name(con) == "" ? con : name(con), " : ", constraint_object(con))
-                    end
-                end
-            end
-        end
-    end
 
     # relax integrality to get dual information
     if b_relax_integrality==false
