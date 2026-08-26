@@ -42,7 +42,8 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
 			for c=1:n_chp
 				if !iszero(CHPbdg[c,1])
                     CHP_HT[t] += round(value(model[:vCHP_HT][t,c]),digits=2)
-				elseif !iszero(CHPbdg[c,2])
+                end
+				if !iszero(CHPbdg[c,2])
                     CHP_HW[t] += round(value(model[:vCHP_HW][t,c]),digits=2)
 				end
 			end
