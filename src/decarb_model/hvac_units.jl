@@ -1,25 +1,25 @@
 """
-hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,hvac::Dict)
+hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,hvac::Dict)
 
 Creates variables, expressions and constraints associated to HVAC units
 
 inputs:
 model   name of core model
-in      dictionary with miscellaneous input data
+cfg     dictionary with configuration input data
 tm      dictionary with time series data
 bdg     dictionary with building data
 sp      dictionary with equipment selection data
 hvac    dictionary with HVAC data
 
 """
-function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dict)
+function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dict)
 
     # heating mode of HVAC unit along simulation {0,1}
     @variable(model, bHVACht[t=1:tm["P"],h=1:hvac["N"]], Bin)
     # cooling mode of HVAC unit along simulation {0,1}
     @variable(model, bHVACac[t=1:tm["P"],h=1:hvac["N"]], Bin)
     # investment in HVAC unit at investment window {0,1}
-    @variable(model, bHVACty[i=1:in["IT"],h=1:hvac["N"]], Bin)
+    @variable(model, bHVACty[i=1:cfg["IT"],h=1:hvac["N"]], Bin)
     # existing HVAC along simulation {0,1}
     @variable(model, bHVAC_u[t=1:tm["P"],h=1:hvac["N"]], Bin)
 
@@ -75,15 +75,15 @@ function hvac_units!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dic
     
     # maximum available space for HVAC units [0,Bhvac]
     @constraint(model, eHVACbdg,
-    	sum(bHVACty[i,h] for i=1:in["IT"],h=1:hvac["N"] if hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0) <= bdg["Bhvac"])
+    	sum(bHVACty[i,h] for i=1:cfg["IT"],h=1:hvac["N"] if hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0) <= bdg["Bhvac"])
     # only one investment per time window for HVAC units {0,1}
     @constraint(model, eHVACw[h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
-        sum(bHVACty[i,h] for i=1:in["IT"]) <= 1)
+        sum(bHVACty[i,h] for i=1:cfg["IT"]) <= 1)
     # heating/cooling mode of HVAC unit {0,1}
     @constraint(model, eHVAChtac[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
         bHVACht[t,h]+bHVACac[t,h] <= bHVAC_u[t,h])
     # investment in HVAC unit {0,1}
-    for i1=1:in["IT"]
+    for i1=1:cfg["IT"]
     	 @constraint(model, eHVACb[t=tm["IW"][i1]:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
     		bHVAC_u[t,h] == sum(bHVACty[i2,h] for i2=1:i1))
     end

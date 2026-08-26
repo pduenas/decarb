@@ -6,14 +6,14 @@ Reads DER component outputs from model and load them into dataframe
 inputs:
 model   optimization model object
 sp      dictionary with equipment selection
-in      dictionary with miscellaneous data
+cfg     dictionary with miscellaneous data
 equip   character vector with equipment type
 attr    dictionary of equipment attributes
 
 returns dataframes of outputs
 """
 
-function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
+function read_der(model::Model,sp::Dict,cfg::Dict,equip::String,attr::Dict)
 
     # read specific output and attributes
     type = attr["ty"]
@@ -56,7 +56,7 @@ function read_der(model::Model,sp::Dict,in::Dict,equip::String,attr::Dict)
         return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex), df_eq
     else
         return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing),
-            DataFrame(zeros(Int64,in["IT"],0),:auto)
+            DataFrame(zeros(Int64,cfg["IT"],0),:auto)
     end
 
 end

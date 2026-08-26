@@ -1,12 +1,12 @@
 """
-abp_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,chp::Dict,
+abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,chp::Dict,
     abp::Dict)
 
 Creates variables, expressions and constraints associated to absorption chillers
 
 inputs:
 model   name of core model
-in      dictionary with miscellaneous input data
+cfg     dictionary with configuration input data
 tm      dictionary with time series data
 bdg     dictionary with building data
 topo    dictionary with topology of thermal connections
@@ -15,7 +15,7 @@ chp     dictionary with CHP data
 abp     dictionary with absorption chiller data
 
 """
-function abp_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,
+function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,
     chp::Dict,abp::Dict)
 
     # unitary fuel consumption by absorption chiller [0,1]
@@ -23,7 +23,7 @@ function abp_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
     # unitary cooling generated in absorption chiller (0,1)
     @variable(model, 1 >= vABPac[t=1:tm["P"],a=1:abp["N"]] >= 0)
     # investment in absorption chiller at investment window {0,1}
-    @variable(model, bABPty[i=1:in["IT"],a=1:abp["N"]], Bin)
+    @variable(model, bABPty[i=1:cfg["IT"],a=1:abp["N"]], Bin)
     # existing absorption chiller along simulation {0,1}
     @variable(model, bABP_u[t=1:tm["P"],a=1:abp["N"]], Bin)
 
@@ -71,13 +71,13 @@ function abp_chillers!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::D
 
     # maximum available space for absorption chillers {0,Babp}
     @constraint(model, eABPbdg,
-        sum(bABPty[i,a] for i=1:in["IT"],a=1:abp["N"]) <= bdg["Babp"])
+        sum(bABPty[i,a] for i=1:cfg["IT"],a=1:abp["N"]) <= bdg["Babp"])
     # only one investment per time window for absorption chillers {0,1}
-    @constraint(model, eABPw[a=1:abp["N"]], sum(bABPty[i,a] for i=1:in["IT"]) <= 1)
+    @constraint(model, eABPw[a=1:abp["N"]], sum(bABPty[i,a] for i=1:cfg["IT"]) <= 1)
     # maximum cooling provided by absorption chiller (0,1)
      @constraint(model, eABPac[t=1:tm["P"],a=1:abp["N"]], vABPac[t,a] <= bABP_u[t,a])
     # investment in absorption chiller {0,1}
-    for i1=1:in["IT"]
+    for i1=1:cfg["IT"]
     	 @constraint(model, eABPb[t=tm["IW"][i1]:tm["P"],a=1:abp["N"]],
     		bABP_u[t,a] == sum(bABPty[i2,a] for i2=1:i1))
     end
