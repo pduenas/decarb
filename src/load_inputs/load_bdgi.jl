@@ -49,7 +49,7 @@ function load_bdgi(path::AbstractString)
     bdg["Bksouth"] = df_bdg.pBksouth[1] # south lateral solar heat gain factor [%]
     bdg["Bchp"] = df_bdg.pBchp[1]       # available CHP space {0,z}
     bdg["Bhvac"] = df_bdg.pBhvac[1]     # available HVAC space {0,z}
-    bdg["Babs"] = df_bdg.pBabs[1]       # available ABS space {0,z}
+    bdg["Babp"] = df_bdg.pBabp[1]       # available ABP space {0,z}
     bdg["Bwh"] = df_bdg.pBwh[1]         # available WH space {0,z}
     bdg["Bpv"] = df_bdg.pBpv[1]         # available PV (roof) surface [m2]
     bdg["Btilt"] = df_bdg.pBtilt[1] 	# PV tilt (roof) angle [°]

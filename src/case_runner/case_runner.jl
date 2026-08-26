@@ -74,7 +74,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("   \u231B elapsed time ... ", round(a6-a5; digits=2), " seconds\n")
 
     println("   \u23E9 defining absorption chiller model")
-    abs_chillers!(model,in,tm,bdg,topo,sp,chp,abp)
+    abp_chillers!(model,in,tm,bdg,topo,sp,chp,abp)
     a7 = time()			# elapsed time
     println("   \u231B elapsed time ... ", round(a7-a6; digits=2), " seconds\n")
 
@@ -132,7 +132,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     # read model outputs
     df_chp = read_thermal(model,sp,"chp",chp)
     df_hvac = read_thermal(model,sp,"hvac",hvac)
-    df_abs = read_thermal(model,sp,"abp",abp)
+    df_abp = read_thermal(model,sp,"abp",abp)
     df_wh = read_thermal(model,sp,"wh",wh)
     df_pv,df_pviw = read_der(model,sp,in,"pv",pv)
     df_bess,df_bessiw = read_der(model,sp,in,"bess",bess)
@@ -150,7 +150,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("\u23E9 writing outputs")
     write_status(path,6)
 
-    write_outputs(path,tm["Date"],tm["IW"],df_chp,df_hvac,df_abs,df_wh,df_pv,df_pviw,df_bess,
+    write_outputs(path,tm["Date"],tm["IW"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_pviw,df_bess,
         df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
     a18 = time()		# elapsed time

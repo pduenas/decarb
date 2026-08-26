@@ -54,9 +54,9 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
 
     # outputs from absorption chillers
     if n_abp>0
-        ABS_AC = round.(sum(value.(model[:vABS_AC][:,a]) for a=1:n_abp), digits=2)
+        ABP_AC = round.(sum(value.(model[:vABP_AC][:,a]) for a=1:n_abp), digits=2)
     else
-        ABS_AC = zeros(Float64, tm["P"])
+        ABP_AC = zeros(Float64, tm["P"])
     end
 
     # solar heat gains
@@ -80,7 +80,7 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
         WHsoc = zeros(Float64, tm["P"])
     end
 
-    df = DataFrame(Temp=Tin,HVACht=HVAC_HT,HVACac=HVAC_AC,CHPht=CHP_HT,ABSac=ABS_AC,
+    df = DataFrame(Temp=Tin,HVACht=HVAC_HT,HVACac=HVAC_AC,CHPht=CHP_HT,ABPac=ABP_AC,
         IHGp=Qihg_P,IHGl=Qihg_L,IHGe=Qihg_E,SHG=Qshg,HWdem=HWdem,HWns=NSHW,WHsoc=WHsoc,
         WHhw=WHhw,HWchp=CHP_HW)
 

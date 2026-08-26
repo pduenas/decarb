@@ -1,17 +1,17 @@
 """
-load_topo(path::AbstractString,chp::Dict,abs::Dict)
+load_topo(path::AbstractString,chp::Dict,abp::Dict)
 
 Loads topo.csv file from path directory and stores values in a dictionary object
 
 inputs:
 path    string path to working directory
 chp     dictionary with CHP catalog
-abs     dictionary with absorption chiller catalog
+abp     dictionary with absorption chiller catalog
 
 returns topo-type inputs in dictionary object
 """
 
-function load_topo(path::AbstractString,chp::Dict,abs::Dict)
+function load_topo(path::AbstractString,chp::Dict,abp::Dict)
 
     # declare dictionary object to store parameters
     topo = Dict()
@@ -39,8 +39,8 @@ function load_topo(path::AbstractString,chp::Dict,abs::Dict)
 
     # create heating topology connections
     topo["chp_bdg"] = create_chp_bdg(topo,chp)
-    topo["chp_abs"] = create_chp_abs(topo,chp,abs)
-    topo["chp_fire"] = create_chp_fire(topo,chp,abs)
+    topo["chp_abp"] = create_chp_abp(topo,chp,abp)
+    topo["chp_fire"] = create_chp_fire(topo,chp,abp)
 
     return topo
 
@@ -69,31 +69,31 @@ function create_chp_bdg(topo,chp)
 
 end
 
-function create_chp_abs(topo,chp,abs)
+function create_chp_abp(topo,chp,abp)
 
     # rows: chp units | cols: absorption chillers
-    chpabs = zeros(chp["N"],abs["N"])
+    chpabp = zeros(chp["N"],abp["N"])
 
     for i=1:topo["N"]
         for c=1:chp["N"]
-            for a=1:abs["N"]
+            for a=1:abp["N"]
                 if chp["ty"][c][1:end-2]!=topo["up"][i] || 
-                    abs["ty"][a][1:end-2]!=topo["lo"][i]
+                    abp["ty"][a][1:end-2]!=topo["lo"][i]
                     continue
                 end
-                chpabs[c,a] = topo["eff"][i]
+                chpabp[c,a] = topo["eff"][i]
             end
         end
     end
 
-    return chpabs
+    return chpabp
 
 end
 
-function create_chp_fire(topo,chp,abs)
+function create_chp_fire(topo,chp,abp)
 
     # dim1: chp units | dim2: absorption chillers, hot air, hot water | dim3: gaseous, liquid
-    chpfire = zeros(chp["N"],abs["N"]+2,2)
+    chpfire = zeros(chp["N"],abp["N"]+2,2)
 
     for i=1:topo["N"]
         if topo["fuel"][i] == "G"
@@ -104,9 +104,9 @@ function create_chp_fire(topo,chp,abs)
             continue
         end
         if topo["in"][i] == "hot air"
-            dim2 = abs["N"]+1
+            dim2 = abp["N"]+1
         elseif topo["in"][i] == "hot water"
-            dim2 = abs["N"]+2
+            dim2 = abp["N"]+2
         else
             dim2 = 0
         end
@@ -116,9 +116,9 @@ function create_chp_fire(topo,chp,abs)
             end
         elseif dim2 == 0
             for c=1:chp["N"]
-                for a=1:abs["N"]
+                for a=1:abp["N"]
                     chpfire[chp["ty"][c][1:end-2]==topo["up"][i],
-                            abs["ty"][a][1:end-2]==topo["up"][i],dim3] .= topo["fcf"][i]*topo["mx"][i]
+                            abp["ty"][a][1:end-2]==topo["up"][i],dim3] .= topo["fcf"][i]*topo["mx"][i]
                 end
             end
         end

@@ -1,7 +1,7 @@
 """
 electric_vehicles!(model::Model,in::Dict,tm::Dict,bdg::Dict,sp::Dict,ev::Dict)
 
-Creates variables, expressions and constraints associated to BESS modules
+Creates variables, expressions and constraints associated to EV modules
 
 inputs:
 model   name of core model

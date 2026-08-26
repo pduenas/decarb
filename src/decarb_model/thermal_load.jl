@@ -1,6 +1,6 @@
 """
 thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,hvac::Dict,
-    abs::Dict,wh::Dict)
+    abp::Dict,wh::Dict)
 
 Creates variables, expressions and constraints associated with thermal load balance
 
@@ -12,12 +12,12 @@ bdg     dictionary with building data
 topo    dictionary with topology of thermal connections
 chp     dictionary with CHP data
 hvac    dictionary with HVAC data
-abs     dictionary with absorption chiller data
+abp     dictionary with absorption chiller data
 wh      dictionary with water heater data
 
 """
 function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,
-    hvac::Dict,abs::Dict,wh::Dict)
+    hvac::Dict,abp::Dict,wh::Dict)
 
     # load temperature variables
     vTin = model[:vTin]
@@ -41,7 +41,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     @expression(model, vQ_HTAC[t=1:tm["P"]],
         sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) + 
         sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0)) - 
-        sum(model[:vABS_AC][t,a] for a=1:abs["N"]))
+        sum(model[:vABP_AC][t,a] for a=1:abp["N"]))
 
     # calculate internal heat gains from occupancy, lighting and electrical equipment
     Q_IHG = tm["Qihg_P"] + tm["Qihg_L"] + tm["Qihg_E"]

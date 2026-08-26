@@ -25,9 +25,9 @@ function load_sp(path::AbstractString,in::Dict)
     sp["CHP0"] = collect(skipmissing(df_sp.pCHP0))      # CHP equipment
     sp["CHPz0"] = collect(skipmissing(df_sp.pCHPz0))    # CHP existing units [0,...,n]
     sp["CHPyn"] = collect(skipmissing(df_sp.pCHPyn))    # enable investment in CHP
-    sp["ABS0"] = collect(skipmissing(df_sp.pABS0))      # absorption chiller equipment
-    sp["ABSz0"] = collect(skipmissing(df_sp.pABSz0))    # absorption chiller existing units [0,...,n]
-    sp["ABSyn"] = collect(skipmissing(df_sp.pABSyn))    # enable investment in absorption chiller
+    sp["ABP0"] = collect(skipmissing(df_sp.pABP0))      # absorption chiller equipment
+    sp["ABPz0"] = collect(skipmissing(df_sp.pABPz0))    # absorption chiller existing units [0,...,n]
+    sp["ABPyn"] = collect(skipmissing(df_sp.pABPyn))    # enable investment in absorption chiller
     sp["HVAC0"] = collect(skipmissing(df_sp.pHVAC0))    # HVAC equipment
     sp["HVACz0"] = collect(skipmissing(df_sp.pHVACz0))  # HVAC existing units [0,...,n]
     sp["HVACyn"] = collect(skipmissing(df_sp.pHVACyn))  # enable investment in HVAC
@@ -52,10 +52,10 @@ function load_sp(path::AbstractString,in::Dict)
     sp["CHPz0"] = sp["CHPz0"][maskCHP]
     sp["CHPyn"] = sp["CHPyn"][maskCHP]
 
-    maskABS = .!((sp["ABS0"].=="0") .& (sp["ABSz0"].==0) .& (sp["ABSyn"].=="0"))
-    sp["ABS0"] = sp["ABS0"][maskABS]
-    sp["ABSz0"] = sp["ABSz0"][maskABS]
-    sp["ABSyn"] = sp["ABSyn"][maskABS]
+    maskABP = .!((sp["ABP0"].=="0") .& (sp["ABPz0"].==0) .& (sp["ABPyn"].=="0"))
+    sp["ABP0"] = sp["ABP0"][maskABP]
+    sp["ABPz0"] = sp["ABPz0"][maskABP]
+    sp["ABPyn"] = sp["ABPyn"][maskABP]
 
     maskHVAC = .!((sp["HVAC0"].=="0") .& (sp["HVACz0"].==0) .& (sp["HVACyn"].=="0"))
     sp["HVAC0"] = sp["HVAC0"][maskHVAC]
@@ -89,7 +89,7 @@ function load_sp(path::AbstractString,in::Dict)
     # disable potential for investment when investment windows do not exist
     if in["b_inv"]==false
         sp["CHPyn"] .= "NO"
-        sp["ABSyn"] .= "NO"
+        sp["ABPyn"] .= "NO"
         sp["HVACyn"] .= "NO"
         sp["WHyn"] .= "NO"
         sp["PVyn"] .= "NO"

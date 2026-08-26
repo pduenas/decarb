@@ -27,11 +27,11 @@ function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64,n
 
     # outputs from absorption chiller
     if n_abp > 0
-        ABS_G = round.(value.(model[:vABS_G])./tm["TM"], digits=2)
-        ABS_L = round.(value.(model[:vABS_L])./tm["TM"], digits=2)
+        ABP_G = round.(value.(model[:vABP_G])./tm["TM"], digits=2)
+        ABP_L = round.(value.(model[:vABP_L])./tm["TM"], digits=2)
     else
-        ABS_G = zeros(Float64, tm["P"])
-        ABS_L = zeros(Float64, tm["P"])
+        ABP_G = zeros(Float64, tm["P"])
+        ABP_L = zeros(Float64, tm["P"])
     end
 
     # outputs from water heaters
@@ -52,7 +52,7 @@ function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64,n
         TH_L = zeros(Float64, tm["P"])
     end
 
-    df = DataFrame(Gchp=CHP_G,Gabs=ABS_G,Gwh=WH_G,Gth=TH_G,Lchp=CHP_L,Labs=ABS_L,Lwh=WH_L,Lth=TH_L)
+    df = DataFrame(Gchp=CHP_G,Gabp=ABP_G,Gwh=WH_G,Gth=TH_G,Lchp=CHP_L,Labp=ABP_L,Lwh=WH_L,Lth=TH_L)
     
     return df
 

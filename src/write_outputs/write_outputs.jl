@@ -2,14 +2,14 @@
 
 
 
-function write_outputs(path::String,tmDate,tmIW,df_chp,df_hvac,df_abs,df_wh,df_pv,df_pviw,
+function write_outputs(path::String,tmDate,tmIW,df_chp,df_hvac,df_abp,df_wh,df_pv,df_pviw,
     df_bess,df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,
     df_econ)
 
     dfEQ1 = df_econ
     dfEQ1 = something.(dfEQ1,"0")                   # fix missing values
 
-    dfEQ2 = vcat(df_chp,df_hvac,df_abs,df_wh,df_pv,df_bess,df_wind)
+    dfEQ2 = vcat(df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,df_wind)
     delete!(dfEQ2,findall(isnothing.(dfEQ2.Eq)))    # fix zero values
 
     dfTS = hcat(DataFrame(Date=tmDate),df_elec,df_fuel,df_indoor,df_dual)

@@ -10,18 +10,18 @@ tm      dictionary with time series data
 sp      dictionary with equipment selection
 bdg     dictionary with building data
 
-returns catalog inputs: chp, abs, hvac, wh in dictionary objects
+returns catalog inputs: chp, abp, hvac, wh in dictionary objects
 """
 
 function load_extended_catalog(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
 
     chp = load_chp(path,sp,bdg)
-    abs = load_abs(path,sp,bdg)
+    abp = load_abp(path,sp,bdg)
     hvac = load_hvac(path,tm,sp,bdg)
     wh = load_wh(path,sp,bdg)
     ev = load_ev(path,tm,sp)
 
-    return chp,abs,hvac,wh,ev
+    return chp,abp,hvac,wh,ev
 
 end
 
