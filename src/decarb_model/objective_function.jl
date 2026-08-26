@@ -1,5 +1,5 @@
 """
-objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,hvac::Dict,
+objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abp::Dict,hvac::Dict,
     wh::Dict,pv::Dict,bess::Dict,ev::Dict,wind::Dict)
 
 Creates variables, expressions and constraints associated with the objective function
@@ -9,7 +9,7 @@ model   name of core model
 in      dictionary with miscellaneous input data
 tm      dictionary with time series data
 chp     dictionary with CHP data
-abs     dictionary with absorption chiller data
+abp     dictionary with absorption chiller data
 hvac    dictionary with HVAC data
 wh      dictionary with water heater data
 pv      dictionary with PV data
@@ -18,7 +18,7 @@ ev      dictionary with EV data
 wind    dictionary with wind turbine data
 
 """
-function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,hvac::Dict,
+function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abp::Dict,hvac::Dict,
     wh::Dict,pv::Dict,bess::Dict,ev::Dict,wind::Dict)
 
     # cost of non-served electricity [$]
@@ -36,8 +36,8 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     @expression(model, vQearn[t=1:tm["P"]], tm["TM"][t]*tm["QcostSell"][t]*model[:vQsell][t])
     # cost of purchased fuel [$]
     @expression(model, vGLcost[t=1:tm["P"]], 
-        tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABS_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
-        tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABS_L][t]+model[:vWH_L][t]+model[:vTH_L][t]))
+        tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
+        tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]))
     
     # penalties for driver type: range anxious (-1), indifferent (0), battery concious (1)
     @expression(model, vEVpen,
@@ -57,10 +57,10 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
         sum(b[i,h]*(tm["H"]-tm["IW"][i])/8760*hvac["inv"][h]*in["IR"]/
         (1-(1+in["IR"])^(-hvac["life"][h]))*model[:bHVACty][i,h] for i=1:in["IT"],h=1:hvac["N"]))
     # annualized cost of absorption chiller during time scope [$]
-    b = has_upper_bound.(model[:bABSty]).==true     # for potential investments
-    @expression(model, vABSinv, 
-        sum(b[i,a]*(tm["H"]-tm["IW"][i])/8760*abs["inv"][a]*in["IR"]/
-        (1-(1+in["IR"])^(-abs["life"][a]))*model[:bABSty][i,a] for i=1:in["IT"],a=1:abs["N"]))
+    b = has_upper_bound.(model[:bABPty]).==true     # for potential investments
+    @expression(model, vABPinv, 
+        sum(b[i,a]*(tm["H"]-tm["IW"][i])/8760*abp["inv"][a]*in["IR"]/
+        (1-(1+in["IR"])^(-abp["life"][a]))*model[:bABPty][i,a] for i=1:in["IT"],a=1:abp["N"]))
     # annualized cost of water heater during time scope [$]
     b = has_upper_bound.(model[:bWHty]).==true     # for potential investments
     @expression(model, vWHinv, 
@@ -85,7 +85,7 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     # total fixed O&M costs (+) [$]
     @expression(model, COST_FOM,
         sum(chp["fom"][c]*model[:bCHPty][i,c]*tm["H"]/8760 for i=1:in["IT"],c=1:chp["N"]) +
-    	sum(abs["fom"][a]*model[:bABSty][i,a]*tm["H"]/8760 for i=1:in["IT"],a=1:abs["N"]) +
+    	sum(abp["fom"][a]*model[:bABPty][i,a]*tm["H"]/8760 for i=1:in["IT"],a=1:abp["N"]) +
     	sum(hvac["fom"][h]*model[:bHVACty][i,h]*tm["H"]/8760 for i=1:in["IT"],h=1:hvac["N"]) +
     	sum(wh["fom"][w]*model[:bWHty][i,w]*tm["H"]/8760 for i=1:in["IT"],w=1:wh["N"]) +
     	sum(pv["fom"][v]*model[:zPV][i,v]*tm["H"]/8760 for i=1:in["IT"],v=1:pv["N"]) +
@@ -94,7 +94,7 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     # total variable O&M costs (+) [$]
     @expression(model, COST_VOM,
         sum(chp["vom"][c]*model[:vCHP_Q][t,c] for t=1:tm["P"],c=1:chp["N"]) +
-        sum(abs["vom"][a]*model[:vABS_AC][t,a] for t=1:tm["P"],a=1:abs["N"]) +
+        sum(abp["vom"][a]*model[:vABP_AC][t,a] for t=1:tm["P"],a=1:abp["N"]) +
         sum(hvac["vom"][h]*model[:vHVAC_HTAC][t,h] for t=1:tm["P"],h=1:hvac["N"]) +
         sum(wh["vom"][w]*model[:vWH_HW][t,w] for t=1:tm["P"],w=1:wh["N"]))
     
@@ -105,14 +105,14 @@ function objective_function!(model::Model,in::Dict,tm::Dict,chp::Dict,abs::Dict,
     @expression(model, COST_NS, 
         sum(vNSEcost[t]+vNSTcost[t]+vNSHWcost[t]+vNSEVcost[t] for t=1:tm["P"]))
     # total annualized costs
-    @expression(model, COST_INV, vCHPinv+vHVACinv+vABSinv+vWHinv+vPVinv+vWINDinv+vBESSinv + COST_FOM)
+    @expression(model, COST_INV, vCHPinv+vHVACinv+vABPinv+vWHinv+vPVinv+vWINDinv+vBESSinv + COST_FOM)
     # total costs [$]
     @expression(model, COST, COST_VAR + COST_NS + COST_INV + vEVpen)
 
     # CO2 emissions from building [ton]
     @expression(model, CO2_B, 
-        sum(in["Gco2"]*(model[:vCHP_G][t]+model[:vABS_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
-            in["Lco2"]*(model[:vCHP_L][t]+model[:vABS_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
+        sum(in["Gco2"]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
+            in["Lco2"]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
             for t=1:tm["P"])/1e6)
 
     # CO2 emissions from grid purchases [kg]

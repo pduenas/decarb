@@ -1,4 +1,4 @@
-Date,dem,sell,hvac_HT,hvac_AC,Qwh,bess_UP,ev_UP,buy,pv,wind,chp,bess_DN,ev_DN,nse,bess_SOC,ev_SOC,Gchp,Gabs,Gwh,Gth,Lchp,Labs,Lwh,Lth,Temp,HVACht,HVACac,CHPht,ABSac,IHGp,IHGl,IHGe,SHG,HWdem,HWns,WHsoc,WHhw,HWchp,dualQ,dualT,dualHW
+Date,dem,sell,hvac_HT,hvac_AC,Qwh,bess_UP,ev_UP,buy,pv,wind,chp,bess_DN,ev_DN,nse,bess_SOC,ev_SOC,Gchp,Gabp,Gwh,Gth,Lchp,Labp,Lwh,Lth,Temp,HVACht,HVACac,CHPht,ABPac,IHGp,IHGl,IHGe,SHG,HWdem,HWns,WHsoc,WHhw,HWchp,dualQ,dualT,dualHW
 01/01/2018 00:00,0.27512999,0.0,1.56,0.0,6.36,0.0,0.0,8.2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,17.97,3.48,0.0,0.0,0.0,0.3,0.08,0.19,0.0,0.04,0.0,12.0,0.04,0.0,0.22,-0.7851,0.2316
 01/01/2018 01:00,0.21685996000000002,0.0,0.0,0.0,0.0,0.0,0.0,0.22,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,17.95,0.0,0.0,0.0,0.0,0.3,0.06,0.16,0.0,0.04,0.0,11.96,0.04,0.0,0.22,0.7926,0.2316
 01/01/2018 02:00,0.18993,0.0,0.0,0.0,0.0,0.0,0.0,0.19,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,17.88,0.0,0.0,0.0,0.0,0.3,0.05,0.14,0.0,0.04,0.0,11.92,0.04,0.0,0.22,0.7995,0.2316

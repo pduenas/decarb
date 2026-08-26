@@ -28,10 +28,10 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict)
         sp_0 = sp["HVAC0"]
         sp_z0 = sp["HVACz0"]
     elseif equip=="abp"
-        unit = vec(value.(model[:bABSty]))
-        sp_yn = sp["ABSyn"]
-        sp_0 = sp["ABS0"]
-        sp_z0 = sp["ABSz0"]
+        unit = vec(value.(model[:bABPty]))
+        sp_yn = sp["ABPyn"]
+        sp_0 = sp["ABP0"]
+        sp_z0 = sp["ABPz0"]
     elseif equip=="wh"
         unit = vec(value.(model[:bWHty]))
         sp_yn = sp["WHyn"]
