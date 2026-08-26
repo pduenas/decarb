@@ -1,12 +1,12 @@
 """
-thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,hvac::Dict,
+thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,hvac::Dict,
     abp::Dict,wh::Dict)
 
 Creates variables, expressions and constraints associated with thermal load balance
 
 inputs:
 model   name of core model
-in      dictionary with miscellaneous input data
+cfg     dictionary with configuration input data
 tm      dictionary with time series data
 bdg     dictionary with building data
 topo    dictionary with topology of thermal connections
@@ -16,7 +16,7 @@ abp     dictionary with absorption chiller data
 wh      dictionary with water heater data
 
 """
-function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,
+function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::Dict,
     hvac::Dict,abp::Dict,wh::Dict)
 
     # load temperature variables
@@ -25,7 +25,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     vTlo = model[:vTlo]
 
     # disable discomfort temperature if indicated
-    if in["NSTcost"]==0
+    if cfg["NSTcost"]==0
         fix.(vTup,0; force=true)
         fix.(vTlo,0; force=true)
     else
@@ -55,7 +55,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     #   3- heating/cooling balance and internal heat gains
     @constraint(model, eTbal0,      # initial period
         vTin[1] == 
-        in["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-in["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*(vQ_HTAC[1]+Q_IHG[1]))
+        cfg["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-cfg["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*(vQ_HTAC[1]+Q_IHG[1]))
     @constraint(model, eTbal[t=2:tm["P"]],
         vTin[t] == 
         vTin[t-1] + bdg["Bk1"]*(tm["Tout"][t-1]-vTin[t-1]) + bdg["Bk2"]*Q_R[t] + bdg["Bk3"]*(vQ_HTAC[t]+Q_IHG[t]))
@@ -64,7 +64,7 @@ function thermal_load!(model::Model,in::Dict,tm::Dict,bdg::Dict,topo::Dict,chp::
     @variable(model, 1 >= vNShw[t=1:tm["P"]] >= 0)
 
     # disable discomfort hot water if indicated
-    in["NSHWcost"]==0 ? fix.(vNShw,0; force=true) : println("   \u2139  Discomfort hot water allowed")
+    cfg["NSHWcost"]==0 ? fix.(vNShw,0; force=true) : println("   \u2139  Discomfort hot water allowed")
 
     # domestic hot water balance [kWh]
     @constraint(model, eHWbal[t=1:tm["P"]], 

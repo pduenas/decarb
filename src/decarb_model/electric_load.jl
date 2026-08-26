@@ -1,12 +1,12 @@
 """
-electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::Dict,pv::Dict,
+electric_load!(model::Model,cfg::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::Dict,pv::Dict,
     bess::Dict,ev::Dict)
 
 Creates variables, expressions and constraints associated with electric load balance
 
 inputs:
 model   name of core model
-in      dictionary with miscellaneous input data
+cfg     dictionary with configuration input data
 tm      dictionary with time series data
 chp     dictionary with CHP data
 hvac    dictionary with HVAC data
@@ -17,22 +17,22 @@ bess    dictionary with BESS data
 ev      dictionary with EV data
 
 """
-function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::Dict,
+function electric_load!(model::Model,cfg::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::Dict,
     pv::Dict,wind::Dict,bess::Dict,ev::Dict)
 
     # unitary non-served electricity [0,1]
     @variable(model, 1 >= vNSEq[t=1:tm["P"]] >= 0)
     # peak power demand [kW]
-    @variable(model, vQmx[n=1:in["QmxTM"]] >= 0)
+    @variable(model, vQmx[n=1:cfg["QmxTM"]] >= 0)
     # purchased electricity [kW]
-    @variable(model, in["QmxBuy"] >= vQbuy[t=1:tm["P"]] >= 0)
+    @variable(model, cfg["QmxBuy"] >= vQbuy[t=1:tm["P"]] >= 0)
     # sold electricity [kW]
-    @variable(model, in["QmxSell"] >= vQsell[t=1:tm["P"]] >= 0)
+    @variable(model, cfg["QmxSell"] >= vQsell[t=1:tm["P"]] >= 0)
     # purchase/sale electricity mode {0,1}
     @variable(model, bQbs[t=1:tm["P"]], Bin)
 
     # disable non-served energy if indicated
-    in["NSEcost"]==0 ? fix.(vNSEq,0; force=true) : println("   \u2139  Non-served energy allowed")
+    cfg["NSEcost"]==0 ? fix.(vNSEq,0; force=true) : println("   \u2139  Non-served energy allowed")
 
     # non-served electricity [kWh]
     @expression(model, vNSE_Q[t=1:tm["P"]], tm["TM"][t]*(tm["Qlight"][t]+tm["Qequip"][t])*vNSEq[t])
@@ -54,11 +54,11 @@ function electric_load!(model::Model,in::Dict,tm::Dict,chp::Dict,hvac::Dict,wh::
     # electricity balance [kWh]
     @constraint(model, eQbal[t=1:tm["P"]], vQgen[t]+tm["TM"][t]*(vQbuy[t]-vQsell[t])+vNSE_Q[t] == vQdem[t])
     # peak power load over time scope [kW]
-    @constraint(model, eDmx[t=1:tm["P"],n=1:in["QmxTM"]; tm["Qmx"][t]==n && tm["QmxCost"][t]>0],
+    @constraint(model, eDmx[t=1:tm["P"],n=1:cfg["QmxTM"]; tm["Qmx"][t]==n && tm["QmxCost"][t]>0],
         vQmx[n] >= vQbuy[t])
     # purchase electricity mode [kW]
-    @constraint(model, eQbuy[t=1:tm["P"]], vQbuy[t] <= in["QmxBuy"]*bQbs[t])
+    @constraint(model, eQbuy[t=1:tm["P"]], vQbuy[t] <= cfg["QmxBuy"]*bQbs[t])
     # sell electricity mode [kW]
-    @constraint(model, eQsell[t=1:tm["P"]], vQsell[t] <= in["QmxSell"]*(1-bQbs[t]))
+    @constraint(model, eQsell[t=1:tm["P"]], vQsell[t] <= cfg["QmxSell"]*(1-bQbs[t]))
 
 end

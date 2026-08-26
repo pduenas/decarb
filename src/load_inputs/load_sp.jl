@@ -1,16 +1,16 @@
 """
-load_sp(path::AbstractString,in::Dict)
+load_sp(path::AbstractString,cfg::Dict)
 
 Loads sp.csv file from path directory and stores values in a dictionary object
 
 inputs:
 path    string path to working directory
-b_inv   boolean flag to reveal investment option
+cfg     dictionary with configuration data
 
 returns sp-type inputs in dictionary object
 """
 
-function load_sp(path::AbstractString,in::Dict)
+function load_sp(path::AbstractString,cfg::Dict)
 
     # declare dictionary object to store parameters
     sp = Dict()
@@ -87,7 +87,7 @@ function load_sp(path::AbstractString,in::Dict)
     sp["EVz0"] = sp["EVz0"][maskEV]
 
     # disable potential for investment when investment windows do not exist
-    if in["b_inv"]==false
+    if cfg["b_inv"]==false
         sp["CHPyn"] .= "NO"
         sp["ABPyn"] .= "NO"
         sp["HVACyn"] .= "NO"

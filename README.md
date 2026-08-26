@@ -32,7 +32,7 @@ This project builds and solves a mixed-integer optimization model to evaluate en
 │   ├── chp.csv
 │   ├── ev.csv
 │   ├── hvac.csv
-│   ├── in.csv
+│   ├── cfg.csv
 │   ├── pv.csv
 │   ├── sp.csv
 │   ├── tm.csv

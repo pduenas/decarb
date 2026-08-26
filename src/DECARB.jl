@@ -30,7 +30,7 @@ using HiGHS
 include(joinpath("case_runner","case_runner.jl"))
 
 # Load input data
-include(joinpath("load_inputs","load_in.jl"))
+include(joinpath("load_inputs","load_cfg.jl"))
 include(joinpath("load_inputs","load_sp.jl"))
 include(joinpath("load_inputs","load_tm.jl"))
 include(joinpath("load_inputs","load_bdgi.jl"))

@@ -1,17 +1,17 @@
 """
-load_tm(path::AbstractString,in::Dict,bdg::Dict)
+load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
 
 Loads tm.csv file from path directory and stores values in a dictionary object
 
 inputs:
 path    string path to working directory
-in      dictionary with miscellaneous data
+cfg     dictionary with configuration data
 bdg     dictionary with building data
 
 returns tm-type inputs in dictionary object
 """
 
-function load_tm(path::AbstractString,in::Dict,bdg::Dict)
+function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
 
     # declare dictionary object to store parameters
     tm = Dict()
@@ -55,7 +55,7 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
     # convert date times into UTC
     tm["Putc"] = convert_to_utc(tm,bdg)
 
-    prepend!(tm["Date"],[in["P0"]])     # add initial date
+    prepend!(tm["Date"],[cfg["P0"]])     # add initial date
 
     # calculate period durations in hours
     tm["TM"] = calculate_durations(tm)
@@ -66,20 +66,20 @@ function load_tm(path::AbstractString,in::Dict,bdg::Dict)
     tm["P"] = length(tm["Date"])        # number of periods
 
     # enable or disable temperature control
-    in["b_temp"]==true ? tm["Ton"]=tm["Ton"] : tm["Ton"].=0
+    cfg["b_temp"]==true ? tm["Ton"]=tm["Ton"] : tm["Ton"].=0
 
     # allow initial free installation
     tm["IW"] = 1
     # when investments are allowed
-    if in["b_inv"]==true
+    if cfg["b_inv"]==true
         # create investment windows
-        tm["IW"] = investment_windows(in["IT"],tm["H"],tm["TM"])
+        tm["IW"] = investment_windows(cfg["IT"],tm["H"],tm["TM"])
     end
 
-    if in["QmxTM"]==0
+    if cfg["QmxTM"]==0
         tm["QmxCostN"] = zeros(Float64, tm["P"])
     else
-        tm["QmxCostN"] = calculate_peak_charge(in["QmxTM"],tm["Qmx"],tm["QmxCost"],tm["P"])
+        tm["QmxCostN"] = calculate_peak_charge(cfg["QmxTM"],tm["Qmx"],tm["QmxCost"],tm["P"])
     end
 
     tm["Qihg_P"],tm["Qihg_L"],tm["Qihg_E"] = calculate_internal_heat_gain(tm["Bppl"],
