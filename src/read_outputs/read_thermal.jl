@@ -39,7 +39,7 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict)
         sp_z0 = sp["WHz0"]
     end
 
-    n_unit = UInt8(sum(unit, dims=1)[1])	# number of existing equips
+    n_unit = UInt64(sum(unit, dims=1)[1])	# number of existing equips
 
     if n_unit>0
         type = type[findall(unit -> unit!=0, unit)]
@@ -48,11 +48,11 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict)
         for n=1:n_unit
             type[n] = type[n][1:hyphen[n][1]-1]
         end
-        quantity = zeros(Int8,n_unit)
+        quantity = zeros(Int64,n_unit)
         for n=1:n_unit
             quantity[n] = sum(type.==type[n])
         end
-        new = zeros(Int8,n_unit)
+        new = zeros(Int64,n_unit)
         for n in findall(sp_yn.!="0")
             name = type.==sp_0[n]
             if any(name)

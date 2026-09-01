@@ -1,6 +1,34 @@
+"""
+write_outputs(path::String,tmDate,tmIW,df_chp,df_hvac,df_abp,df_wh,df_pv,df_pviw,
+    df_bess,df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,
+    df_econ)
 
+Writes optimization model results to CSV files in the output directory
 
+inputs:
+path        string path to working directory
+tmDate      date/time vector for time series data [DateTime]
+tmIW        indices of intra-hour values
+df_chp      combined heat and power dataframe
+df_hvac     HVAC units dataframe
+df_abp      absorption chillers dataframe
+df_wh       water heaters dataframe
+df_pv       photovoltaic panels dataframe
+df_pviw     PV intra-hour values dataframe
+df_bess     battery energy storage dataframe
+df_bessiw   BESS intra-hour values dataframe
+df_wind     wind turbines dataframe
+df_windiw   wind intra-hour values dataframe
+df_elec     electric dispatch dataframe
+balance     electrical balance array
+df_fuel     fuel consumption dataframe
+df_indoor   indoor temperature dataframe
+df_dual     dual variables dataframe
+df_econ     economic results dataframe
 
+returns:
+writes four CSV files to path/out/: eq1.csv (economics), eq2.csv (equipment), ts.csv (time series), iw.csv (intra-hour)
+"""
 
 function write_outputs(path::String,tmDate,tmIW,df_chp,df_hvac,df_abp,df_wh,df_pv,df_pviw,
     df_bess,df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,

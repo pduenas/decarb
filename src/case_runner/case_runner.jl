@@ -1,3 +1,20 @@
+"""
+run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::Bool)
+
+Executes the complete DECARB optimization workflow for a distributed energy system
+
+The function orchestrates all stages of the DECARB model: loading input data, configuring
+the optimization model with the specified solver, building the model constraints and 
+objective function, solving the optimization problem, reading solution outputs, and
+writing results to CSV files. The function also updates the status of the simulation in screen
+and in a status.txt file throughout the execution.
+
+inputs:
+path                    string path to working directory containing in/ subdirectory
+i_solver                solver selection flag: 1=Gurobi, 2=HiGHS
+b_relax_integrality     boolean flag to relax integrality constraints on integer variables
+
+"""
 
 function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::Bool)
 
