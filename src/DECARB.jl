@@ -10,7 +10,6 @@ using CSV
 using DataFrames
 using JuMP
 using Dates
-using Libdl
 using AstroLib
 using TimeZones
 
