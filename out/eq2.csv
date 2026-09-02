@@ -1,3 +1,3 @@
-Eq,Inv,Qty,New,CAPEX
-Electricity ASHP SEER 13 7.7 HSPF,14911.95474,1,0,0.0
-Electric Standard,4000.0,1,0,0.0
+Eq,Inv,Qty,New,CAPEX,Date
+Electricity ASHP SEER 13 7.7 HSPF,14911.95474,1,1,14911.95474,01/01/2018 00:00
+Electric Standard,4000.0,1,1,4000.0,01/01/2018 00:00
