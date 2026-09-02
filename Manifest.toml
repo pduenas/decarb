@@ -2,7 +2,7 @@
 
 julia_version = "1.12.7"
 manifest_format = "2.0"
-project_hash = "d1e65e120c7834e97dd1735afbb8653d69e4d066"
+project_hash = "818433b590a1f1b5570b0cd8a72b6c1b6cd8febe"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra"]
@@ -100,7 +100,7 @@ uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.2.0"
 
 [[deps.DECARB]]
-deps = ["AstroLib", "CSV", "DataFrames", "Dates", "Gurobi", "JuMP", "Libdl", "TimeZones"]
+deps = ["AstroLib", "CSV", "DataFrames", "Dates", "Gurobi", "HiGHS", "JuMP", "TimeZones"]
 path = "."
 uuid = "987cfde4-73f7-40fc-a81b-2f2fe31fdba5"
 version = "0.1.0"

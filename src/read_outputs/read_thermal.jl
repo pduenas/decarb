@@ -1,5 +1,5 @@
 """
-read_thermal(model::Model,sp::Dict,equip::String,attr:Dict)
+read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
 
 Reads thermal component outputs from model and load them into dataframe
 
@@ -8,42 +8,49 @@ model   optimization model object
 sp      dictionary with equipment selection
 equip   character vector with equipment type
 attr    dictionary of equipment attributes
+tmDate  date/time vector for all periods
+tmIW    investment window period indices
 
 returns dataframes of outputs
 """
 
-function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict)
+function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
 
     # read specific output and attrs
     type = attr["ty"]
     cost = attr["inv"]
     if equip=="chp"
-        unit = vec(value.(model[:bCHPty]))
+        unit = value.(model[:bCHPty])
         sp_yn = sp["CHPyn"]
         sp_0 = sp["CHP0"]
         sp_z0 = sp["CHPz0"]
     elseif equip=="hvac"
-        unit = vec(value.(model[:bHVACty]))
+        unit = value.(model[:bHVACty])
         sp_yn = sp["HVACyn"]
         sp_0 = sp["HVAC0"]
         sp_z0 = sp["HVACz0"]
     elseif equip=="abp"
-        unit = vec(value.(model[:bABPty]))
+        unit = value.(model[:bABPty])
         sp_yn = sp["ABPyn"]
         sp_0 = sp["ABP0"]
         sp_z0 = sp["ABPz0"]
     elseif equip=="wh"
-        unit = vec(value.(model[:bWHty]))
+        unit = value.(model[:bWHty])
         sp_yn = sp["WHyn"]
         sp_0 = sp["WH0"]
         sp_z0 = sp["WHz0"]
     end
 
-    n_unit = UInt64(sum(unit, dims=1)[1])	# number of existing equips
+    n_unit = UInt64(sum(unit))	# number of existing equips
 
     if n_unit>0
-        type = type[findall(unit -> unit!=0, unit)]
-        cost = cost[findall(unit -> unit!=0, unit)]
+        idx = findall(!iszero, unit)
+        eq = [i[2] for i in idx]
+        win = [i[1] for i in idx]
+        # Map investment window number to period index, then to date
+        date = [tmDate[tmIW[w]] for w in win]
+        type = type[eq]
+        cost = cost[eq]
         hyphen = findlast.("-",type)
         for n=1:n_unit
             type[n] = type[n][1:hyphen[n][1]-1]
@@ -60,9 +67,9 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict)
             end
         end
         capex = cost.*new
-        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex)
+        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
     else
-        return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing)
+        return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
     end
 
 end

@@ -147,13 +147,13 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     write_status(path,5)
 
     # read model outputs
-    df_chp = read_thermal(model,sp,"chp",chp)
-    df_hvac = read_thermal(model,sp,"hvac",hvac)
-    df_abp = read_thermal(model,sp,"abp",abp)
-    df_wh = read_thermal(model,sp,"wh",wh)
-    df_pv,df_pviw = read_der(model,sp,cfg,"pv",pv)
-    df_bess,df_bessiw = read_der(model,sp,cfg,"bess",bess)
-    df_wind,df_windiw = read_der(model,sp,cfg,"wind",wind)
+    df_chp = read_thermal(model,sp,"chp",chp,tm["Date"],tm["IW"])
+    df_hvac = read_thermal(model,sp,"hvac",hvac,tm["Date"],tm["IW"])
+    df_abp = read_thermal(model,sp,"abp",abp,tm["Date"],tm["IW"])
+    df_wh = read_thermal(model,sp,"wh",wh,tm["Date"],tm["IW"])
+    df_pv = read_der(model,sp,cfg,"pv",pv,tm["Date"],tm["IW"])
+    df_bess = read_der(model,sp,cfg,"bess",bess,tm["Date"],tm["IW"])
+    df_wind = read_der(model,sp,cfg,"wind",wind,tm["Date"],tm["IW"])
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
         bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"],collect(wh["fuel"]))
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])
@@ -167,8 +167,8 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("\u23E9 writing outputs")
     write_status(path,6)
 
-    write_outputs(path,tm["Date"],tm["IW"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_pviw,df_bess,
-        df_bessiw,df_wind,df_windiw,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
+    write_outputs(path,tm["Date"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,
+        df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
     a18 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
