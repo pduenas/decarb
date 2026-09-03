@@ -70,6 +70,9 @@ function bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::
     @constraint(model, eBESSbal[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
         vBESSsoc[t,s]-vBESSsoc[t-1,s] == vBESSup[t,s]*bess["effu"][s]-vBESSdn[t,s]/bess["effd"][s] +
     	sum(cfg["BESSsoc0"][1]*zBESS[i,s] for i=1:cfg["IT"] if t==tm["IW"][i]))
+    # fix initial SOC [0,z]
+    @constraint(model, eBESSi[s=1:bess["N"]; bess["zmx0"][s]>0],
+    	vBESSsoc[0,s] == cfg["BESSsoci"][1]*sum(zBESS[i,s] for i=1:cfg["IT"] if t==tm["IW"][1]))
     # fix final SOC [0,z]
     @constraint(model, eBESSf[s=1:bess["N"]; bess["zmx0"][s]>0],
     	vBESSsoc[tm["P"],s] == cfg["BESSsocf"][1]*sum(zBESS[i,s] for i=1:cfg["IT"]))
