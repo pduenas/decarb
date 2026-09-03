@@ -70,7 +70,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
     @constraint(model, eWHbdg,
         sum(bWHty[i,w] for i=1:cfg["IT"],w=1:wh["N"] if wh["mx"][w]>0) <= bdg["Bwh"])
     # only one investment per time window in water heaters {0,1}
-    @constraint(model, eWHw[w=1:wh["N"], wh["mx"][w]>0],
+    @constraint(model, eWHw[w=1:wh["N"]; wh["mx"][w]>0],
         sum(bWHty[i,w] for i=1:cfg["IT"]) <= 1)
     # maximum heat provided by water heater [0,1]
     @constraint(model, eWHmx[t=1:tm["P"],w=1:wh["N"]; wh["mx"][w]>0],
