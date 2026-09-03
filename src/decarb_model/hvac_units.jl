@@ -50,18 +50,18 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
     # electricity unitary consumption for cooling [0,1]
     @variable(model, 1 >= vHVACac[t=1:tm["P"], h=1:hvac["N"]] >= 0)
 
-    # auxiliary variables for heating/cooling control
-    @variable(model, dHeat[t=1:tm["P"]] >= 0)
-    @variable(model, dCool[t=1:tm["P"]] >= 0)
-    @constraint(model, [t=1:tm["P"]], dHeat[t] >= vTin[t] - tm["Tout"][t])
-    @constraint(model, [t=1:tm["P"]], dCool[t] >= tm["Tout"][t] - vTin[t])
+    # auxiliary variables for heating/cooling derating capacity against indoor temperature
+    @variable(model, vTdiffHT[t=1:tm["P"]] >= 0)
+    @variable(model, vTdiffAC[t=1:tm["P"]] >= 0)
+    @constraint(model, [t=1:tm["P"]], vTdiffHT[t] >= vTin[t] - tm["Tout"][t])
+    @constraint(model, [t=1:tm["P"]], vTdiffAC[t] >= tm["Tout"][t] - vTin[t])
 
     # maximum heat provided by HVAC (0,1)
     @constraint(model, eHVACmxHT[t=1:tm["P"], h=1:hvac["N"]; hvac["HVmx"][h]>0],
-        1-hvac["HVmx_"][h]*dHeat[t] >= vHVACht[t,h])
+        1 - hvac["HVmx_"][h]*vTdiffHT[t] >= vHVACht[t,h])
     # maximum cold provided by HVAC (0,1)
     @constraint(model, eHVACmxAC[t=1:tm["P"], h=1:hvac["N"]; hvac["ACmx"][h]>0],
-        1-hvac["ACmx_"][h]*dCool[t] >= vHVACac[t,h])
+        1 - hvac["ACmx_"][h]*vTdiffAC[t] >= vHVACac[t,h])
 
     # electricity consumption for heating [kWh]
     @expression(model, vHVAC_HT[t=1:tm["P"],h=1:hvac["N"]],
