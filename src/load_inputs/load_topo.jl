@@ -112,13 +112,16 @@ function create_chp_fire(topo,chp,abp)
         end
         if dim2 != 0
             for c=1:chp["N"]
-                chpfire[chp["ty"][c][1:end-2]==topo["up"][i],dim2,dim3] .= topo["fcf"][i]*topo["mx"][i]
+                if chp["ty"][c][1:end-2]==topo["up"][i]
+                    chpfire[c,dim2,dim3] = topo["fcf"][i]*topo["mx"][i]
+                end
             end
         elseif dim2 == 0
             for c=1:chp["N"]
                 for a=1:abp["N"]
-                    chpfire[chp["ty"][c][1:end-2]==topo["up"][i],
-                            abp["ty"][a][1:end-2]==topo["up"][i],dim3] .= topo["fcf"][i]*topo["mx"][i]
+                    if chp["ty"][c][1:end-2]==topo["up"][i] && abp["ty"][a][1:end-2]==topo["lo"][i]
+                        chpfire[c,a,dim3] = topo["fcf"][i]*topo["mx"][i]
+                    end
                 end
             end
         end
