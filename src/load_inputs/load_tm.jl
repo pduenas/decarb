@@ -116,7 +116,7 @@ function investment_windows(IT,H,TM)
     TM_cum = reverse(cumsum(reverse(TM)))
 
     for i in IH
-        push!(IW,findfirst(TM_cum.==i))
+        push!(IW,argmin(abs.(TM_cum.-i)))
     end
 
     # investment always happening in first simulation hour
