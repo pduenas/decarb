@@ -7,29 +7,37 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
 
     optimize!(model)    # solve model
     s = termination_status(model)
-    println("  \u2139  ", s)
+    CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
 
-    if s != MOI.OPTIMAL
-        CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
-        compute_conflict!(model)
-        if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-            println("\n❗ IIS detected — infeasible constraints:\n")
-            open(joinpath(path, "iis_constraints.txt"), "w") do io
-                for (F, S) in list_of_constraint_types(model)
-                    F == VariableRef && continue
-                    for con in all_constraints(model, F, S)
-                        cs = get_attribute(con, MOI.ConstraintConflictStatus())
-                        if cs == MOI.IN_CONFLICT
-                            label = name(con) == "" ? string(con) : name(con)
-                            println(io, "[IN_CONFLICT] ", label)
-                            println("  ❌ ", label)
+    if !is_solved_and_feasible(model; allow_local = true)
+        if MOI.supports(JuMP.backend(model), MOI.ConflictStatus())
+            try
+                compute_conflict!(model)
+                if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+                    println("\n❗ IIS detected — infeasible constraints:\n")
+                    open(joinpath(path, "iis_constraints.txt"), "w") do io
+                        for (F, S) in list_of_constraint_types(model)
+                            F == VariableRef && continue
+                            for con in all_constraints(model, F, S)
+                                cs = get_attribute(con, MOI.ConstraintConflictStatus())
+                                if cs == MOI.IN_CONFLICT
+                                    label = name(con) == "" ? string(con) : name(con)
+                                    println(io, "[IN_CONFLICT] ", label)
+                                    println("  ❌ ", label)
+                                end
+                            end
                         end
                     end
                 end
+            catch e
+                @warn "Conflict computation unavailable" exception=e
             end
         end
-        error("\u2757  Model is not optimal. Check input data.\n")
+        error("❗  Model has no feasible solution. Check input data.\n(status = $(s))")
     end
+
+    # only reached when feasible; relative_gap is meaningless/unavailable when infeasible
+    @info "termination = $(s), gap = $(round(relative_gap(model)*100, digits=1))%"
 
     # relax integrality to get dual information
     if b_relax_integrality==false
