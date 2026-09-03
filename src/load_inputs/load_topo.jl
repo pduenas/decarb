@@ -50,6 +50,7 @@ function create_chp_bdg(topo,chp)
 
     # rows: chp units | col1: hot air | col2: hot water
     chpbdg = zeros(chp["N"],2)
+    hyphen = findlast.("-",chp["ty"])
 
     for i=1:topo["N"]
         if topo["in"][i] == "hot air"
@@ -58,7 +59,8 @@ function create_chp_bdg(topo,chp)
             col = 2
         end
         for c=1:chp["N"]
-            if chp["ty"][c][1:end-2]!=topo["up"][i]
+            isnothing(hyphen[c]) && continue
+            if chp["ty"][c][1:hyphen[c][1]-1]!=topo["up"][i]
                 continue
             end
             chpbdg[c,col] = topo["eff"][i]
@@ -73,12 +75,16 @@ function create_chp_abp(topo,chp,abp)
 
     # rows: chp units | cols: absorption chillers
     chpabp = zeros(chp["N"],abp["N"])
+    hyphen_c = findlast.("-",chp["ty"])
+    hyphen_a = findlast.("-",abp["ty"])
 
     for i=1:topo["N"]
         for c=1:chp["N"]
+            isnothing(hyphen_c[c]) && continue
             for a=1:abp["N"]
-                if chp["ty"][c][1:end-2]!=topo["up"][i] || 
-                    abp["ty"][a][1:end-2]!=topo["lo"][i]
+                isnothing(hyphen_a[a]) && continue
+                if chp["ty"][c][1:hyphen_c[c][1]-1]!=topo["up"][i] || 
+                    abp["ty"][a][1:hyphen_a[a][1]-1]!=topo["lo"][i]
                     continue
                 end
                 chpabp[c,a] = topo["eff"][i]
@@ -94,6 +100,8 @@ function create_chp_fire(topo,chp,abp)
 
     # dim1: chp units | dim2: absorption chillers, hot air, hot water | dim3: gaseous, liquid
     chpfire = zeros(chp["N"],abp["N"]+2,2)
+    hyphen_c = findlast.("-",chp["ty"])
+    hyphen_a = findlast.("-",abp["ty"])
 
     for i=1:topo["N"]
         if topo["fuel"][i] == "G"
@@ -112,14 +120,17 @@ function create_chp_fire(topo,chp,abp)
         end
         if dim2 != 0
             for c=1:chp["N"]
-                if chp["ty"][c][1:end-2]==topo["up"][i]
+                isnothing(hyphen_c[c]) && continue
+                if chp["ty"][c][1:hyphen_c[c][1]-1]==topo["up"][i]
                     chpfire[c,dim2,dim3] = topo["fcf"][i]*topo["mx"][i]
                 end
             end
         elseif dim2 == 0
             for c=1:chp["N"]
+                isnothing(hyphen_c[c]) && continue
                 for a=1:abp["N"]
-                    if chp["ty"][c][1:end-2]==topo["up"][i] && abp["ty"][a][1:end-2]==topo["lo"][i]
+                    isnothing(hyphen_a[a]) && continue
+                    if chp["ty"][c][1:hyphen_c[c][1]-1]==topo["up"][i] && abp["ty"][a][1:hyphen_a[a][1]-1]==topo["lo"][i]
                         chpfire[c,a,dim3] = topo["fcf"][i]*topo["mx"][i]
                     end
                 end
