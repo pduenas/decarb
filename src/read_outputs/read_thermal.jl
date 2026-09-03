@@ -47,7 +47,6 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         idx = findall(!iszero, unit)
         eq = [i[2] for i in idx]
         win = [i[1] for i in idx]
-        # Map investment window number to period index, then to date
         date = [tmDate[tmIW[w]] for w in win]
         type = type[eq]
         cost = cost[eq]
