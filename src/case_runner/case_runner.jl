@@ -12,11 +12,13 @@ and in a status.txt file throughout the execution.
 inputs:
 path                    string path to working directory containing in/ subdirectory
 i_solver                solver selection flag: 1=Gurobi, 2=HiGHS
+mip_gap                 MIP gap for the optimization problem
+time_limit              time limit for the optimization problem
 b_relax_integrality     boolean flag to relax integrality constraints on integer variables
 
 """
 
-function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::Bool)
+function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i_solver::Int64,b_relax_integrality::Bool)
 
     println("\u250F\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513")
     println("\u2503 DECARB model v1.0 \u2503")
@@ -56,12 +58,14 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     # load configuration options for selected solver
     if i_solver==1
         set_optimizer(model,Gurobi.Optimizer)
-        configure_gurobi(model)
+        configure_gurobi(model,mip_gap,time_limit)
         println("   \u2139  Gurobi called satisfactorily")
     elseif i_solver==2
         set_optimizer(model,HiGHS.Optimizer)
-        configure_highs(model)
+        configure_highs(model,mip_gap,time_limit)
         println("   \u2139  HiGHS called satisfactorily")
+    else
+        error("❗  Invalid solver selection. Choose 1=Gurobi or 2=HiGHS.")
     end
 
     a2 = time()			# elapsed time
@@ -167,6 +171,7 @@ function run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::B
     println("\u23E9 writing outputs")
     write_status(path,6)
 
+    mkpath(joinpath(path,"out"))        # create output directory if it does not exist
     write_outputs(path,tm["Date"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,
         df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
