@@ -6,8 +6,7 @@ Executes the complete DECARB optimization workflow for a distributed energy syst
 The function orchestrates all stages of the DECARB model: loading input data, configuring
 the optimization model with the specified solver, building the model constraints and 
 objective function, solving the optimization problem, reading solution outputs, and
-writing results to CSV files. The function also updates the status of the simulation in screen
-and in a status.txt file throughout the execution.
+writing results to CSV files.
 
 inputs:
 path                    string path to working directory containing in/ subdirectory
@@ -27,7 +26,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     a0 = time()	    # start timer
 
     println("\u23E9 loading inputs")
-    write_status(path,1)
     
     # load inputs file
     path2in = joinpath(path,"in")
@@ -50,7 +48,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     println("   \u231B elapsed time ... ", round(a1-a0; digits=2), " seconds\n")
 
     println("\u23E9 configuring model")
-    write_status(path,2)
 
     # Define the optimization model and solver
     model = Model()
@@ -72,7 +69,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     println("   \u231B elapsed time ... ", round(a2-a1; digits=2), " seconds\n")
 
     println("\u23E9 building model")
-    write_status(path,3)
 
     println("   \u23E9 defining heat connections")
     heat_connections!(model,topo,tm,chp,abp)
@@ -140,7 +136,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     println("   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
 
     println("\u23E9 solving model")
-    write_status(path,4)
 
     solve_model!(path,model,b_relax_integrality)
 
@@ -148,7 +143,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     println("   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
 
     println("\u23E9 reading outputs")
-    write_status(path,5)
 
     # read model outputs
     df_chp = read_thermal(model,sp,"chp",chp,tm["Date"],tm["IW"])
@@ -169,7 +163,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     println("   \u231B elapsed time ... ", round(a17-a16; digits=2), " seconds\n")
 
     println("\u23E9 writing outputs")
-    write_status(path,6)
 
     mkpath(joinpath(path,"out"))        # create output directory if it does not exist
     write_outputs(path,tm["Date"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,
@@ -177,36 +170,5 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     a18 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
-
-end
-
-
-
-"""
-write_status(path::AbstractString,opt::UInt8)
-
-updates the simulation status
-
-input:
-path    string path to working directory
-opt     integer option with simulation status
-"""
-function write_status(path::AbstractString,opt::Int64)
-
-    st = open(joinpath(path,"status.txt"),"w")
-    if opt==1
-        write(st,"reading inputs")
-    elseif opt==2
-        write(st,"configuring model")
-    elseif opt==3
-        write(st,"building model")
-    elseif opt==4
-        write(st,"solving model")
-    elseif opt==5
-        write(st,"reading outputs")
-    elseif opt==6
-        write(st,"writing outputs")
-    end
-    close(st)
 
 end

@@ -60,11 +60,11 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
     if any(chp["fuel"].=="G")
         @expression(model, vCHP_G[t=1:tm["P"]],
             sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="G") +
+                if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="G" && chp["fcf"][c]>0) +
             sum(vCHP_HT[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,1]>0) +
+                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,1]>0 && chp["fcf"][c]>0) +
             sum(vCHP_HW[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,2]>0))
+                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="G" && topo["chp_bdg"][c,2]>0 && chp["fcf"][c]>0))
     else
         @variable(model, vCHP_G[t=1:tm["P"]] == 0)
     end
@@ -73,11 +73,11 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
     if any(chp["fuel"].=="L")
         @expression(model, vCHP_L[t=1:tm["P"]],
             sum(vCHP_Q[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="L") +
+                if chp["mx"][c]>0 && chp["h2p"][c]>0 && chp["fuel"][c]=="L" && chp["fcf"][c]>0) +
             sum(vCHP_HT[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,1]>0) +
+                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,1]>0 && chp["fcf"][c]>0) +
             sum(vCHP_HW[t,c]/chp["fcf"][c] for c=1:chp["N"]
-                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,2]>0))
+                if chp["mx"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && topo["chp_bdg"][c,2]>0 && chp["fcf"][c]>0))
     else
         @variable(model, vCHP_L[t=1:tm["P"]] == 0)
     end

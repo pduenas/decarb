@@ -50,9 +50,9 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
     ev["kwh"] = zeros(tm["P"],ev["N"])
     ev["time"] = zeros(tm["P"],ev["N"])
 
-    names = ev_names(sp["EV0"],sp["EVz0"])
+    ty_names = ev_names(sp["EV0"],sp["EVz0"])
 
-    for (col,name) in enumerate(names)
+    for (col,name) in enumerate(ty_names)
         # find index where electric vehicle type is found
         idx = findfirst(x -> x == name, ev["ty"])
         i = 1   # initialize counter

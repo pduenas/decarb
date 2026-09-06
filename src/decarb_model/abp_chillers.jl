@@ -49,7 +49,8 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     set_upper_bound.(vABPq[:,abp["fuel"].=="0"],0)
 
     # fuel consumption for cooling [kWh]
-    @expression(model, vABP_Q[t=1:tm["P"],a=1:abp["N"]], tm["TM"][t]*abp["mx"][a]*vABPq[t,a]/abp["ac"][a])
+    @expression(model, vABP_Q[t=1:tm["P"],a=1:abp["N"]; abp["ac"][a]>0],
+        tm["TM"][t]*abp["mx"][a]*vABPq[t,a]/abp["ac"][a])
     # cooling provided by absorption chiller [kWh]
     @expression(model, vABP_AC[t=1:tm["P"],a=1:abp["N"]], tm["TM"][t]*abp["mx"][a]*vABPac[t,a])
 
