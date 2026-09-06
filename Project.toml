@@ -1,6 +1,6 @@
 name = "DECARB"
 uuid = "987cfde4-73f7-40fc-a81b-2f2fe31fdba5"
-version = "0.1.0"
+version = "1.0"
 authors = ["Pablo Duenas <36854223+pduenas@users.noreply.github.com>"]
 
 [deps]

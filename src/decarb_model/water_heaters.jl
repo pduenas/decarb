@@ -89,9 +89,9 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
         wh["eff"][w]*vWHq[t,w] - vWHhw[t,w])
     # fix initial tank level [0,1]
     @constraint(model, eWHi[w=1:wh["N"]; wh["tank"][w]>0],
-        vWHsoc[0,w] == cfg["WHsto0"][1]*bWH_u[1,w])
+        vWHsoc[0,w] == cfg["WHsto0"]*bWH_u[1,w])
     # fix final tank level [0,1]
     @constraint(model, eWHf[w=1:wh["N"]; wh["tank"][w]>0],
-        vWHsoc[tm["P"],w] == cfg["WHstof"][1]*bWH_u[tm["P"],w])
+        vWHsoc[tm["P"],w] == cfg["WHstof"]*bWH_u[tm["P"],w])
 
 end

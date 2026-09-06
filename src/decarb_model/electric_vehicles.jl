@@ -1,5 +1,5 @@
 """
-electric_vehicles!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,ev::Dict)
+electric_vehicles!(model::Model,cfg::Dict,tm::Dict,ev::Dict)
 
 Creates variables, expressions and constraints associated to EV modules
 

@@ -25,7 +25,7 @@ function load_bdgi(path::AbstractString)
 
     bdg["Balt"] = df_bdg.pBalt[1]       # altitude above sea level [m]
     bdg["Blon"] = df_bdg.pBlon[1]		# longitude [°]
-    bdg["Blat"] = df_bdg.pBlat[1]		# longitude [°]
+    bdg["Blat"] = df_bdg.pBlat[1]		# latitude [°]
     bdg["Btz"] = df_bdg.pBtz[1]		    # time zone
     bdg["Bventy"] = df_bdg.pBventy[1]   # ventilation strategy {0,1}
     bdg["Bvent"] = df_bdg.pBvent[1]     # ventilation requirement [l/s/person]
