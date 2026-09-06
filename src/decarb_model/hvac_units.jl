@@ -53,8 +53,8 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
     # auxiliary variables for heating/cooling derating capacity against indoor temperature
     @variable(model, vTdiffHT[t=1:tm["P"]] >= 0)
     @variable(model, vTdiffAC[t=1:tm["P"]] >= 0)
-    @constraint(model, [t=1:tm["P"]], vTdiffHT[t] >= vTin[t] - tm["Tout"][t])
-    @constraint(model, [t=1:tm["P"]], vTdiffAC[t] >= tm["Tout"][t] - vTin[t])
+    @constraint(model, eTdiffHT[t=1:tm["P"]], vTdiffHT[t] >= vTin[t] - tm["Tout"][t])
+    @constraint(model, eTdiffAC[t=1:tm["P"]], vTdiffAC[t] >= tm["Tout"][t] - vTin[t])
 
     # maximum heat provided by HVAC (0,1)
     @constraint(model, eHVACmxHT[t=1:tm["P"], h=1:hvac["N"]; hvac["HVmx"][h]>0],
