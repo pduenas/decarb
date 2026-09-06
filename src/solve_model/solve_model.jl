@@ -1,3 +1,17 @@
+"""
+solve_model!(path::AbstractString,model::Model,b_relax_integrality::Bool)
+
+Optimizes the model, checks feasibility, and writes an IIS report if infeasible. If the
+model is feasible and b_relax_integrality is false, integer/binary variables are fixed
+at their solution values and the model is re-solved relaxed to obtain dual information
+
+inputs:
+path                    string path to working directory
+model                   optimization model object
+b_relax_integrality     boolean flag to relax integrality constraints on integer variables
+
+"""
+
 function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Bool)
     
     # relax integrality {true,false}

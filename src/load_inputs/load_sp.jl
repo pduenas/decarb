@@ -47,40 +47,12 @@ function load_sp(path::AbstractString,cfg::Dict)
     sp["EVz0"] = collect(skipmissing(df_sp.pEVz0))      # EV existing types [0,...,n]
 
     # For each equipment group, filter rows if all three corresponding columns are zero
-    maskCHP = .!((sp["CHP0"].=="0") .& (sp["CHPz0"].==0) .& (sp["CHPyn"].=="0"))
-    sp["CHP0"] = sp["CHP0"][maskCHP]
-    sp["CHPz0"] = sp["CHPz0"][maskCHP]
-    sp["CHPyn"] = sp["CHPyn"][maskCHP]
-
-    maskABP = .!((sp["ABP0"].=="0") .& (sp["ABPz0"].==0) .& (sp["ABPyn"].=="0"))
-    sp["ABP0"] = sp["ABP0"][maskABP]
-    sp["ABPz0"] = sp["ABPz0"][maskABP]
-    sp["ABPyn"] = sp["ABPyn"][maskABP]
-
-    maskHVAC = .!((sp["HVAC0"].=="0") .& (sp["HVACz0"].==0) .& (sp["HVACyn"].=="0"))
-    sp["HVAC0"] = sp["HVAC0"][maskHVAC]
-    sp["HVACz0"] = sp["HVACz0"][maskHVAC]
-    sp["HVACyn"] = sp["HVACyn"][maskHVAC]
-
-    maskWH = .!((sp["WH0"].=="0") .& (sp["WHz0"].==0) .& (sp["WHyn"].=="0"))
-    sp["WH0"] = sp["WH0"][maskWH]
-    sp["WHz0"] = sp["WHz0"][maskWH]
-    sp["WHyn"] = sp["WHyn"][maskWH]
-
-    maskPV = .!((sp["PV0"].=="0") .& (sp["PVz0"].==0) .& (sp["PVyn"].=="0"))
-    sp["PV0"] = sp["PV0"][maskPV]
-    sp["PVz0"] = sp["PVz0"][maskPV]
-    sp["PVyn"] = sp["PVyn"][maskPV]
-
-    maskWIND = .!((sp["WIND0"].=="0") .& (sp["WINDz0"].== 0) .& (sp["WINDyn"].=="0"))
-    sp["WIND0"] = sp["WIND0"][maskWIND]
-    sp["WINDz0"] = sp["WINDz0"][maskWIND]
-    sp["WINDyn"] = sp["WINDyn"][maskWIND]
-
-    maskBESS = .!((sp["BESS0"].=="0") .& (sp["BESSz0"].==0) .& (sp["BESSyn"].=="0"))
-    sp["BESS0"] = sp["BESS0"][maskBESS]
-    sp["BESSz0"] = sp["BESSz0"][maskBESS]
-    sp["BESSyn"] = sp["BESSyn"][maskBESS]
+    for prefix in ("CHP","ABP","HVAC","WH","PV","WIND","BESS")
+        mask = .!((sp["$(prefix)0"].=="0") .& (sp["$(prefix)z0"].==0) .& (sp["$(prefix)yn"].=="0"))
+        sp["$(prefix)0"] = sp["$(prefix)0"][mask]
+        sp["$(prefix)z0"] = sp["$(prefix)z0"][mask]
+        sp["$(prefix)yn"] = sp["$(prefix)yn"][mask]
+    end
 
     maskEV = .!((sp["EV0"].=="0") .& (sp["EVz0"].==0))
     sp["EV0"] = sp["EV0"][maskEV]
@@ -88,13 +60,9 @@ function load_sp(path::AbstractString,cfg::Dict)
 
     # disable potential for investment when investment windows do not exist
     if cfg["b_inv"]==false
-        sp["CHPyn"] .= "NO"
-        sp["ABPyn"] .= "NO"
-        sp["HVACyn"] .= "NO"
-        sp["WHyn"] .= "NO"
-        sp["PVyn"] .= "NO"
-        sp["WINDyn"] .= "NO"
-        sp["BESSyn"] .= "NO"
+        for prefix in ("CHP","ABP","HVAC","WH","PV","WIND","BESS")
+            sp["$(prefix)yn"] .= "NO"
+        end
     end
 
     return sp
