@@ -1,6 +1,6 @@
 """
 read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    HVmx::Matrix{Float64},ACmx::Matrix{Float64},WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
+    WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
 
 Reads time series outputs related to indoor demands for temperature and hot water and
     load them into dataframe

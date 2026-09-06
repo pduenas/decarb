@@ -63,9 +63,6 @@ function load_cfg(path::AbstractString)
     # enable or disable temperature control
     cfg["b_temp"] = cfg["Tmode"]
 
-    # interest rate corrected by frequency of payments during year
-    cfg["IR"] = cfg["IR"]*1
-
     return cfg
 
 end

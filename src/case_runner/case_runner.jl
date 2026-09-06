@@ -19,9 +19,10 @@ b_relax_integrality     boolean flag to relax integrality constraints on integer
 
 function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i_solver::Int64,b_relax_integrality::Bool)
 
-    println("\u250F\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513")
-    println("\u2503 DECARB model v1.0 \u2503")
-    println("\u2517\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u251B\n")
+    title = " DECARB model v$(pkgversion(DECARB)) "
+    println("\u250F" * "\u2501"^length(title) * "\u2513")
+    println("\u2503" * title * "\u2503")
+    println("\u2517" * "\u2501"^length(title) * "\u251B\n")
 
     a0 = time()	    # start timer
 

@@ -47,37 +47,37 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, vQmxCost, sum(tm["QmxCostN"][n]*model[:vQmx][n] for n=1:cfg["QmxTM"]))
 
     # annualized cost of CHP during time scope [$]
-    b = has_upper_bound.(model[:bCHPty]).==true     # for potential investments
+    b = has_upper_bound.(model[:bCHPty])     # for potential investments
     @expression(model, vCHPinv,
         sum(b[i,c]*(tm["H"]-tm["IW"][i])/8760*chp["inv"][c]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-chp["life"][c]))*model[:bCHPty][i,c] for i=1:cfg["IT"],c=1:chp["N"]))
     # annualized cost of HVAC during time scope [$]
-    b = has_upper_bound.(model[:bHVACty]).==true    # for potential investments
+    b = has_upper_bound.(model[:bHVACty])    # for potential investments
     @expression(model, vHVACinv,
         sum(b[i,h]*(tm["H"]-tm["IW"][i])/8760*hvac["inv"][h]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-hvac["life"][h]))*model[:bHVACty][i,h] for i=1:cfg["IT"],h=1:hvac["N"]))
     # annualized cost of absorption chiller during time scope [$]
-    b = has_upper_bound.(model[:bABPty]).==true     # for potential investments
+    b = has_upper_bound.(model[:bABPty])     # for potential investments
     @expression(model, vABPinv, 
         sum(b[i,a]*(tm["H"]-tm["IW"][i])/8760*abp["inv"][a]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-abp["life"][a]))*model[:bABPty][i,a] for i=1:cfg["IT"],a=1:abp["N"]))
     # annualized cost of water heater during time scope [$]
-    b = has_upper_bound.(model[:bWHty]).==true     # for potential investments
+    b = has_upper_bound.(model[:bWHty])     # for potential investments
     @expression(model, vWHinv, 
         sum(b[i,w]*(tm["H"]-tm["IW"][i])/8760*wh["inv"][w]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-wh["life"][w]))*model[:bWHty][i,w] for i=1:cfg["IT"],w=1:wh["N"]))
     # annualized cost of PV during time scope [$]
-    b = has_upper_bound.(model[:zPV]).==true       # for potential investments
+    b = has_upper_bound.(model[:zPV])       # for potential investments
         @expression(model, vPVinv,
         sum(b[i,v]*(tm["H"]-tm["IW"][i])/8760*pv["inv"][v]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-pv["life"][v]))*model[:zPV][i,v] for i=1:cfg["IT"],v=1:pv["N"]))
     # annualized cost of wind turbine during time scope [$]
-    b = has_upper_bound.(model[:zWIND]).==true     # for potential investments
+    b = has_upper_bound.(model[:zWIND])     # for potential investments
         @expression(model, vWINDinv, 
         sum(b[i,d]*(tm["H"]-tm["IW"][i])/8760*wind["inv"][d]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-wind["life"][d]))*model[:zWIND][i,d] for i=1:cfg["IT"],d=1:wind["N"]))
     # annualized cost of electricity storage during time scope [$]
-    b = has_upper_bound.(model[:zBESS]).==true     # for potential investments
+    b = has_upper_bound.(model[:zBESS])     # for potential investments
         @expression(model, vBESSinv, 
         sum(b[i,s]*(tm["H"]-tm["IW"][i])/8760*bess["inv"][s]*cfg["IR"]/
         (1-(1+cfg["IR"])^(-bess["life"][s]))*model[:zBESS][i,s] for i=1:cfg["IT"],s=1:bess["N"]))
@@ -113,7 +113,7 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, CO2_B, 
         sum(cfg["Gco2"]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
             cfg["Lco2"]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
-            for t=1:tm["P"])/1e6)
+            for t=1:tm["P"])/1e3)
 
     # CO2 emissions from grid purchases [kg]
     @expression(model, CO2_E, sum(tm["TM"][t]*model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"]))
