@@ -7,7 +7,6 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
 
     optimize!(model)    # solve model
     s = termination_status(model)
-    CSV.write(joinpath(path,"status.csv"),DataFrame(status=[s]);header=false)
 
     if !is_solved_and_feasible(model; allow_local = true)
         if MOI.supports(JuMP.backend(model), MOI.ConflictStatus())
@@ -15,7 +14,7 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
                 compute_conflict!(model)
                 if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
                     println("\n❗ IIS detected — infeasible constraints:\n")
-                    open(joinpath(path, "iis_constraints.txt"), "w") do io
+                    open(joinpath(path,"out","iis_constraints.txt"), "w") do io
                         for (F, S) in list_of_constraint_types(model)
                             F == VariableRef && continue
                             for con in all_constraints(model, F, S)

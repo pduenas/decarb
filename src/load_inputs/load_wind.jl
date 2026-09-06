@@ -59,8 +59,10 @@ function calculate_wind_output(nP,Wms,Qmx,Qmn,SPmn,SPmx,nD)
     for d=1:nD
         for t=1:nP
             # interpolate output if wind speed within operation range
-            if Wms[t]<=SPmx[d] && Wms[t]>=SPmn[d]
+            if Wms[t]<=SPmx[d] && Wms[t]>=SPmn[d] && SPmx[d]!=SPmn[d]
                 Q[t,d] = (Qmx[d]-Qmn[d])/(SPmx[d]-SPmn[d])*(Wms[t]-SPmn[d])+Qmn[d]
+            elseif SPmn[d]==SPmx[d]
+                error("❗  Wind turbine $(d) has identical minimum and maximum wind speed.")
             end
         end
     end

@@ -157,10 +157,10 @@ function calculate_sun_position(utc,alt,lat,lon)
     jd = datetime2julian.(utc)                  # julian date
     ra,dec = sunpos(jd)                         # equatorial coordinates
     out = eq2hor.(ra,dec,jd,lat,lon,alt)        # horizontal coordinates
-        alt = [t[1] for t in out]
-        az  = [t[2] for t in out]
-    ele = max.(alt*pi/180,0)                    # elevation [rad]
-    azi = (ele.!=0).*az*pi/180                  # azimuth [rad]
+    sun_alt = [t[1] for t in out]
+    sun_az  = [t[2] for t in out]
+    ele = max.(sun_alt*pi/180,0)                # elevation [rad]
+    azi = (ele.!=0).*sun_az*pi/180              # azimuth [rad]
 
     return ele,azi
 

@@ -40,10 +40,11 @@ function write_outputs(path::String,tmDate,df_chp,df_hvac,df_abp,df_wh,df_pv,
     dfTS = hcat(DataFrame(Date=tmDate),df_elec,df_fuel,df_indoor,df_dual)
     dfTS = something.(dfTS,"0")                     # fix missing values
 
-    # write file of imbalances if any
-    if any(balance.!=0)
+    # write file of imbalances if any (warning: cumulative rounding errors)
+    if any(abs.(balance).>0.1)
+        println("❗  Model soluton is unbalanced. See balance.csv file.")
         dfB = DataFrame(Date=tmDate,B_Q=balance)
-        CSV.write(joinpath(path,"balance.csv"),dfB,dateformat="mm/dd/yyyy HH:MM"; header=false)
+        CSV.write(joinpath(path,"out","balance.csv"),dfB,dateformat="mm/dd/yyyy HH:MM"; header=false)
     else
         println("Model soluton is balanced.")
     end

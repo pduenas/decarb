@@ -89,6 +89,8 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
     # Dual-axis tracker: panel normal matches the sun vector for daylight hours.
     elseif pvtck==2
         cosinc = ones(Float64, np)
+    else
+        error("❗  Invalid PV tracking type. Choose 0=fixed, 1=single-axis, or 2=dual-axis.")
     end
 
     incid = acos.(clamp.(cosinc, -1, 1))
