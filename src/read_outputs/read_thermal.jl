@@ -41,10 +41,10 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         sp_z0 = sp["WHz0"]
     end
 
-    n_unit = UInt64(sum(unit))	# number of existing equips
+    idx = findall(!iszero, unit)    # number of existing equips
 
-    if n_unit>0
-        idx = findall(!iszero, unit)
+    if !isempty(idx)
+        n_unit = length(idx)
         eq = [i[2] for i in idx]
         win = [i[1] for i in idx]
         date = [tmDate[tmIW[w]] for w in win]
@@ -59,17 +59,15 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
             quantity[n] = sum(type.==type[n])
         end
         new = zeros(Int64,n_unit)
-        for n in findall(sp_yn.!="0")
-            name = type.==sp_0[n]
-            if any(name)
-                new[name] = quantity[name] .- sp_z0[n]
+        for n in findall(x -> x!="0", sp_yn)
+            name = findall(x -> x==sp_0[n], type)
+            if !isempty(name)
+                first_idx = name[argmin(win[name])]
+                new[first_idx] -= sp_z0[n]
             end
         end
         capex = cost.*new
-        df = DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date,Win=win)
-        df = combine(groupby(df,[:Eq,:Win]), first)
-        select!(df, Not(:Win))
-        return df
+        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
     else
         return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
     end

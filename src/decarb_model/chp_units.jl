@@ -28,7 +28,7 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
     @variable(model, bCHP_u[t=1:tm["P"],c=1:chp["N"]], Bin)
 
     # define bounds of binary investment variable
-    set_upper_bound.(bCHPty[1,:],0)
+    set_upper_bound.(bCHPty,0)
     for c in findall(sp["CHP0"].!="0")
         # fix already installed CHP units
         for u=1:sp["CHPz0"][c]
@@ -38,7 +38,7 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
         # release potential installed CHP units
         if sp["CHPyn"][c] == "YES"
             for u=(sp["CHPz0"][c]+1):bdg["Bchp"]
-                set_upper_bound.(bCHPty[1,chp["ty"].==string(sp["CHP0"][c],'-',u)],1)
+                set_upper_bound.(bCHPty[:,chp["ty"].==string(sp["CHP0"][c],'-',u)],1)
             end
         end
     end
