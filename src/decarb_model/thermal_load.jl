@@ -40,7 +40,7 @@ function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp:
     # thermal gain from active equipment [kWh]
     @expression(model, vQ_HTAC[t=1:tm["P"]],
         sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) + 
-        sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0)) - 
+        sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0)) - 
         sum(model[:vABP_AC][t,a] for a=1:abp["N"]; init=0.0))
 
     # calculate internal heat gains from occupancy, lighting and electrical equipment
@@ -68,7 +68,7 @@ function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp:
 
     # domestic hot water balance [kWh]
     @constraint(model, eHWbal[t=1:tm["P"]], 
-        sum(model[:vWH_HW][t,w] for w=1:wh["N"] if wh["mx"][w]>0) + 
+        sum(model[:vWH_HW][t,w] for w=1:wh["N"] if wh["mx_eff"][w]>0) + 
         sum(model[:vCHP_HW][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,2])) == 
         tm["HWdem"][t]*(1-vNShw[t]))
 

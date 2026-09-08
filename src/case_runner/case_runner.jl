@@ -1,5 +1,5 @@
 """
-run_decarb!(path::AbstractString,i_solver::Int64,b_relax_integrality::Bool)
+run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i_solver::Int64,b_relax_integrality::Bool)
 
 Executes the complete DECARB optimization workflow for a distributed energy system
 
@@ -10,9 +10,9 @@ writing results to CSV files.
 
 inputs:
 path                    string path to working directory containing in/ subdirectory
-i_solver                solver selection flag: 1=Gurobi, 2=HiGHS
 mip_gap                 MIP gap for the optimization problem
 time_limit              time limit for the optimization problem
+i_solver                solver selection flag: 1=Gurobi, 2=HiGHS
 b_relax_integrality     boolean flag to relax integrality constraints on integer variables
 
 """
@@ -151,9 +151,9 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     df_hvac = read_thermal(model,sp,"hvac",hvac,tm["Date"],tm["IW"])
     df_abp = read_thermal(model,sp,"abp",abp,tm["Date"],tm["IW"])
     df_wh = read_thermal(model,sp,"wh",wh,tm["Date"],tm["IW"])
-    df_pv = read_der(model,sp,cfg,"pv",pv,tm["Date"],tm["IW"])
-    df_bess = read_der(model,sp,cfg,"bess",bess,tm["Date"],tm["IW"])
-    df_wind = read_der(model,sp,cfg,"wind",wind,tm["Date"],tm["IW"])
+    df_pv = read_der(model,sp,"pv",pv,tm["Date"],tm["IW"])
+    df_bess = read_der(model,sp,"bess",bess,tm["Date"],tm["IW"])
+    df_wind = read_der(model,sp,"wind",wind,tm["Date"],tm["IW"])
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
         bess["N"],ev["N"],wind["N"],bess["mx"],ev["mx"],collect(wh["fuel"]))
     df_fuel = read_fuel(model,tm,chp["N"],abp["N"],wh["N"],topo["N"])

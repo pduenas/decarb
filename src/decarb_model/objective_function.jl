@@ -115,8 +115,8 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
             cfg["Lco2"]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
             for t=1:tm["P"])/1e3)
 
-    # CO2 emissions from grid purchases [kg]
-    @expression(model, CO2_E, sum(tm["TM"][t]*model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"]))
+    # CO2 emissions from grid purchases [ton]
+    @expression(model, CO2_E, sum(tm["TM"][t]*model[:vQbuy][t]*tm["Qco2"][t] for t=1:tm["P"])/1e3)
 
     # Define the objective function
     @objective(model,Min,COST)

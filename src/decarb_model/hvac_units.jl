@@ -38,9 +38,12 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
             end
         end
     end
+
     # correct maximum capacity for non-existing or disabled HVAC units
-    hvac["HVmx"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
-    hvac["ACmx"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
+    hvac["HVmx_eff"] = copy(hvac["HVmx"])
+    hvac["ACmx_eff"] = copy(hvac["ACmx"])
+    hvac["HVmx_eff"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
+    hvac["ACmx_eff"][iszero.(upper_bound.(bHVACty[1,:]))] .= 0
 
     # load temperature variables
     vTin = model[:vTin]
@@ -57,40 +60,40 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
     @constraint(model, eTdiffAC[t=1:tm["P"]], vTdiffAC[t] >= tm["Tout"][t] - vTin[t])
 
     # maximum heat provided by HVAC (0,1)
-    @constraint(model, eHVACmxHT[t=1:tm["P"], h=1:hvac["N"]; hvac["HVmx"][h]>0],
+    @constraint(model, eHVACmxHT[t=1:tm["P"], h=1:hvac["N"]; hvac["HVmx_eff"][h]>0],
         1 - hvac["HVmx_"][h]*vTdiffHT[t] >= vHVACht[t,h])
     # maximum cold provided by HVAC (0,1)
-    @constraint(model, eHVACmxAC[t=1:tm["P"], h=1:hvac["N"]; hvac["ACmx"][h]>0],
+    @constraint(model, eHVACmxAC[t=1:tm["P"], h=1:hvac["N"]; hvac["ACmx_eff"][h]>0],
         1 - hvac["ACmx_"][h]*vTdiffAC[t] >= vHVACac[t,h])
 
     # electricity consumption for heating [kWh]
     @expression(model, vHVAC_HT[t=1:tm["P"],h=1:hvac["N"]],
-        tm["TM"][t]*hvac["HVmx"][h]*vHVACht[t,h]/hvac["HVeff_k"][t,h])
+        tm["TM"][t]*hvac["HVmx_eff"][h]*vHVACht[t,h]/hvac["HVeff_k"][t,h])
     # electricity consumption for cooling [kWh]
     @expression(model, vHVAC_AC[t=1:tm["P"],h=1:hvac["N"]],
-        tm["TM"][t]*hvac["ACmx"][h]*vHVACac[t,h]/hvac["ACeff_k"][t,h])    
+        tm["TM"][t]*hvac["ACmx_eff"][h]*vHVACac[t,h]/hvac["ACeff_k"][t,h])    
     # heat(+)/cool(-) provided by HVAC [kWh]
     @expression(model, vHVAC_HTAC[t=1:tm["P"],h=1:hvac["N"]],
-        tm["TM"][t]*(hvac["HVmx"][h]*vHVACht[t,h]-hvac["ACmx"][h]*vHVACac[t,h]))
+        tm["TM"][t]*(hvac["HVmx_eff"][h]*vHVACht[t,h]-hvac["ACmx_eff"][h]*vHVACac[t,h]))
     
     # maximum available space for HVAC units [0,Bhvac]
     @constraint(model, eHVACbdg,
-    	sum(bHVACty[i,h] for i=1:cfg["IT"],h=1:hvac["N"] if hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0) <= bdg["Bhvac"])
+    	sum(bHVACty[i,h] for i=1:cfg["IT"],h=1:hvac["N"] if hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0) <= bdg["Bhvac"])
     # only one investment per time window for HVAC units {0,1}
-    @constraint(model, eHVACw[h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
+    @constraint(model, eHVACw[h=1:hvac["N"]; hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0],
         sum(bHVACty[i,h] for i=1:cfg["IT"]) <= 1)
     # heating/cooling mode of HVAC unit {0,1}
-    @constraint(model, eHVAChtac[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
+    @constraint(model, eHVAChtac[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0],
         bHVACht[t,h]+bHVACac[t,h] <= bHVAC_u[t,h])
     # investment in HVAC unit {0,1}
     for i1=1:cfg["IT"]
-    	 @constraint(model, eHVACb[t=tm["IW"][i1]:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0 || hvac["ACmx"][h]>0],
+    	 @constraint(model, eHVACb[t=tm["IW"][i1]:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0],
     		bHVAC_u[t,h] == sum(bHVACty[i2,h] for i2=1:i1))
     end
     # maximum heat provided by HVAC (0,1)
-    @constraint(model, eHVACht[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx"][h]>0],
+    @constraint(model, eHVACht[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0],
         vHVACht[t,h] <= bHVACht[t,h])
     # maximum cold provided by HVAC (0,1)
-    @constraint(model, eHVACac[t=1:tm["P"],h=1:hvac["N"]; hvac["ACmx"][h]>0],
+    @constraint(model, eHVACac[t=1:tm["P"],h=1:hvac["N"]; hvac["ACmx_eff"][h]>0],
         vHVACac[t,h] <= bHVACac[t,h])
 end

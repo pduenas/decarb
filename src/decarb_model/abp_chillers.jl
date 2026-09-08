@@ -42,17 +42,19 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
             end
         end
     end
+
     # correct maximum capacity for non-existing or disabled absorption chillers
-    abp["mx"][iszero.(upper_bound.(bABPty[1,:]))] .= 0
+    abp["mx_eff"] = copy(abp["mx"])
+    abp["mx_eff"][iszero.(upper_bound.(bABPty[1,:]))] .= 0
 
     # zero fuel consumption when disabled
     set_upper_bound.(vABPq[:,abp["fuel"].=="0"],0)
 
     # fuel consumption for cooling [kWh]
     @expression(model, vABP_Q[t=1:tm["P"],a=1:abp["N"]; abp["ac"][a]>0],
-        tm["TM"][t]*abp["mx"][a]*vABPq[t,a]/abp["ac"][a])
+        tm["TM"][t]*abp["mx_eff"][a]*vABPq[t,a]/abp["ac"][a])
     # cooling provided by absorption chiller [kWh]
-    @expression(model, vABP_AC[t=1:tm["P"],a=1:abp["N"]], tm["TM"][t]*abp["mx"][a]*vABPac[t,a])
+    @expression(model, vABP_AC[t=1:tm["P"],a=1:abp["N"]], tm["TM"][t]*abp["mx_eff"][a]*vABPac[t,a])
 
     # gaseous fuel purchased by absorption chillers [kWh]
     if any(abp["fuel"].=="G")
@@ -87,9 +89,9 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     # allowed cooling to building from absorption chiller {0,1}
     @constraint(model, eABPacbdg[t=1:tm["P"],a=1:abp["N"]], vABPac[t,a] <= model[:bBDGac][t])
     # heat consumption by absorption chiller [0,1]
-    @constraint(model, eABPq[t=1:tm["P"],a=1:abp["N"]; abp["mx"][a]>0],
+    @constraint(model, eABPq[t=1:tm["P"],a=1:abp["N"]; abp["mx_eff"][a]>0],
         vABPac[t,a] <= vABPq[t,a] + 
-        sum(topo["chp_abp"][c,a]*chp["mx"][c]*model[:vCHPabp][t,c,a]/abp["mx"][a] for c=1:chp["N"] if topo["chp_abp"][c,a]>0) +
-        sum(topo["chp_fire"][c,a,f]*model[:vCHPfire][t,c,a,f]/abp["mx"][a] for c=1:chp["N"],f=1:2 if topo["chp_fire"][c,a,f]>0))
+        sum(topo["chp_abp"][c,a]*chp["mx_eff"][c]*model[:vCHPabp][t,c,a]/abp["mx_eff"][a] for c=1:chp["N"] if topo["chp_abp"][c,a]>0) +
+        sum(topo["chp_fire"][c,a,f]*model[:vCHPfire][t,c,a,f]/abp["mx_eff"][a] for c=1:chp["N"],f=1:2 if topo["chp_fire"][c,a,f]>0))
 
 end

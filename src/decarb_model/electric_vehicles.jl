@@ -23,28 +23,29 @@ function electric_vehicles!(model::Model,cfg::Dict,tm::Dict,ev::Dict)
     # excursion below minimum state-of-charge of electric vehicle [0,1]
     @variable(model, cfg["EVmnsoc"] >= vEVlo[t=1:tm["P"],e=1:ev["N"]] >= 0)    
 
-    # correct maximum capacity for non-existing or disabled CHP units
+    # correct maximum capacity for non-existing or disabled EVs
+    ev["mx_eff"] = copy(ev["mx"])
     for e = 1:ev["N"]
         if all(ev["time"][:,e].==0)
-            ev["mx"][e] = 0
+            ev["mx_eff"][e] = 0
         end
     end
 
     # electricity charged in electric vehicle [kWh]
-    @expression(model, vEV_UP[t=1:tm["P"],e=1:ev["N"]], ev["mx"][e]*vEVup[t,e])
+    @expression(model, vEV_UP[t=1:tm["P"],e=1:ev["N"]], ev["mx_eff"][e]*vEVup[t,e])
     # electricity discharged from electric vehicle [kWh]
-    @expression(model, vEV_DN[t=1:tm["P"],e=1:ev["N"]], ev["mx"][e]*vEVdn[t,e])
+    @expression(model, vEV_DN[t=1:tm["P"],e=1:ev["N"]], ev["mx_eff"][e]*vEVdn[t,e])
 
     # maximum charging of electric vehicle [0,1]
-    @constraint(model, eEVup[t=1:tm["P"],e=1:ev["N"]; ev["mx"][e]>0],
-        vEVup[t,e] <= tm["TM"][t]*ev["up"][e]/ev["mx"][e]*bEV[t,e])
+    @constraint(model, eEVup[t=1:tm["P"],e=1:ev["N"]; ev["mx_eff"][e]>0],
+        vEVup[t,e] <= tm["TM"][t]*ev["up"][e]/ev["mx_eff"][e]*bEV[t,e])
     # maximum discharging from electric vehicle [0,1]
-    @constraint(model, eEVdn[t=1:tm["P"],e=1:ev["N"]; ev["mx"][e]>0],
-        vEVdn[t,e] <= tm["TM"][t]*ev["dn"][e]/ev["mx"][e]*(1-bEV[t,e]))
+    @constraint(model, eEVdn[t=1:tm["P"],e=1:ev["N"]; ev["mx_eff"][e]>0],
+        vEVdn[t,e] <= tm["TM"][t]*ev["dn"][e]/ev["mx_eff"][e]*(1-bEV[t,e]))
     # electricity stored balance in electric vehicle [0,1]
-    @constraint(model, eEVbal[t=1:tm["P"],e=1:ev["N"]; ev["mx"][e]>0],
+    @constraint(model, eEVbal[t=1:tm["P"],e=1:ev["N"]; ev["mx_eff"][e]>0],
         vEVsoc[t,e] - (t==1 ? cfg["EVsoc0"] : vEVsoc[t-1,e]) == 
-        vEVup[t,e]*ev["effu"][e]-vEVdn[t,e]/ev["effd"][e]-ev["kwh"][t,e]/ev["mx"][e])
+        vEVup[t,e]*ev["effu"][e]-vEVdn[t,e]/ev["effd"][e]-ev["kwh"][t,e]/ev["mx_eff"][e])
     # charging allowed when electric vehicle plugged in
     @constraint(model, eEVupok[t=1:tm["P"],e=1:ev["N"]; ev["time"][t,e]==0],
         vEVup[t,e] == 0)
@@ -52,7 +53,7 @@ function electric_vehicles!(model::Model,cfg::Dict,tm::Dict,ev::Dict)
     @constraint(model, eEVdnok[t=1:tm["P"],e=1:ev["N"]; ev["time"][t,e]==0 || cfg["EVv2g"]==0],
         vEVdn[t,e] == 0)
     # allowed excursion of minimum state-of-charge for electric vehicle
-    @constraint(model, eEVlo[t=1:tm["P"],e=1:ev["N"]; ev["mx"][e]>0],
+    @constraint(model, eEVlo[t=1:tm["P"],e=1:ev["N"]; ev["mx_eff"][e]>0],
         vEVsoc[t,e] >= cfg["EVmnsoc"]-vEVlo[t,e])
 
 end

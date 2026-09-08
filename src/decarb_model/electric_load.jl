@@ -41,15 +41,15 @@ function electric_load!(model::Model,cfg::Dict,tm::Dict,chp::Dict,hvac::Dict,wh:
         tm["TM"][t]*(tm["Qlight"][t]+tm["Qequip"][t]) + 
         sum(model[:vHVAC_HT][t,h]+model[:vHVAC_AC][t,h] for h=1:hvac["N"]; init=0.0) + 
         sum(model[:vBESS_UP][t,s] for s=1:bess["N"] if bess["zmx0"][s]>0) + 
-        sum(model[:vEV_UP][t,e] for e=1:ev["N"] if ev["mx"][e]>0) + 
-        sum(model[:vWH_Q][t,w] for w=1:wh["N"] if wh["mx"][w]>0 && wh["fuel"][w]=="0"))
+        sum(model[:vEV_UP][t,e] for e=1:ev["N"] if ev["mx_eff"][e]>0) + 
+        sum(model[:vWH_Q][t,w] for w=1:wh["N"] if wh["mx_eff"][w]>0 && wh["fuel"][w]=="0"))
     # electricity generated [kWh]
     @expression(model, vQgen[t=1:tm["P"]],
-        sum(model[:vCHP_Q][t,c] for c=1:chp["N"] if chp["mx"][c]>0) + 
+        sum(model[:vCHP_Q][t,c] for c=1:chp["N"] if chp["mx_eff"][c]>0) + 
         sum(model[:vPV_Q][t,v] for v=1:pv["N"] if pv["zmx0"][v]>0) + 
         sum(model[:vWIND_Q][t,d] for d=1:wind["N"] if wind["zmx0"][d]>0) + 
         sum(model[:vBESS_DN][t,s] for s=1:bess["N"] if bess["zmx0"][s]>0) + 
-        sum(model[:vEV_DN][t,e] for e=1:ev["N"] if ev["mx"][e]>0))
+        sum(model[:vEV_DN][t,e] for e=1:ev["N"] if ev["mx_eff"][e]>0))
 
     # electricity balance [kWh]
     @constraint(model, eQbal[t=1:tm["P"]], vQgen[t]+tm["TM"][t]*(vQbuy[t]-vQsell[t])+vNSE_Q[t] == vQdem[t])

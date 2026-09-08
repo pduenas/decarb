@@ -53,9 +53,9 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
     hvac["N"] = size(hvac["ty"],1)      # number of HVAC units
 
     # correct derating coefficients to avoid infeasibility
-    MIN_CAP = 0.02
-    hvac["HVmx_"] = min.(hvac["HVmx_"],MIN_CAP)
-    hvac["ACmx_"] = min.(hvac["ACmx_"],MIN_CAP)
+    MAX_DERATE = 0.02
+    hvac["HVmx_"] = min.(hvac["HVmx_"],MAX_DERATE)
+    hvac["ACmx_"] = min.(hvac["ACmx_"],MAX_DERATE)
 
     hvac["HVeff_k"] = zeros(tm["P"], hvac["N"])
     hvac["ACeff_k"] = zeros(tm["P"], hvac["N"])
