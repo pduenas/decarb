@@ -53,11 +53,9 @@ function create_chp_bdg(topo,chp)
     hyphen = findlast.("-",chp["ty"])
 
     for i=1:topo["N"]
-        if topo["in"][i] == "hot air"
-            col = 1
-        elseif topo["in"][i] == "hot water"
-            col = 2
-        end
+        topo["lo"][i]!="Building" && continue
+        col = topo["in"][i]=="hot air" ? 1 : topo["in"][i]=="hot water" ? 2 : 0
+        col == 0 && continue
         for c=1:chp["N"]
             isnothing(hyphen[c]) && continue
             if chp["ty"][c][1:hyphen[c][1]-1]!=topo["up"][i]

@@ -138,6 +138,7 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     println("\u23E9 solving model")
 
+    mkpath(joinpath(path,"out"))        # create output directory if it does not exist
     solve_model!(path,model,b_relax_integrality)
 
     a16 = time()		# elapsed time
@@ -165,7 +166,6 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     println("\u23E9 writing outputs")
 
-    mkpath(joinpath(path,"out"))        # create output directory if it does not exist
     write_outputs(path,tm["Date"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,
         df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ)
 
