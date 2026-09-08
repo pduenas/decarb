@@ -28,7 +28,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     @variable(model, bABP_u[t=1:tm["P"],a=1:abp["N"]], Bin)
 
     # define bounds of binary investment variable
-    set_upper_bound.(bABPty[1,:],0)
+    set_upper_bound.(bABPty,0)
     for a in findall(sp["ABP0"].!="0")
         # fix already installed absorption chillers
         for u=1:sp["ABPz0"][a]
@@ -38,7 +38,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
         # release potential installed absorption chillers
         if sp["ABPyn"][a] == "YES"
             for u=(sp["ABPz0"][a]+1):bdg["Babp"]
-                set_upper_bound.(bABPty[1,abp["ty"].==string(sp["ABP0"][a],'-',u)],1)
+                set_upper_bound.(bABPty[:,abp["ty"].==string(sp["ABP0"][a],'-',u)],1)
             end
         end
     end

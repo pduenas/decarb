@@ -27,7 +27,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
     @variable(model, bWH_u[t=1:tm["P"],w=1:wh["N"]], Bin)
 
     # define bounds of binary investment variable
-    set_upper_bound.(bWHty[1,:],0)
+    set_upper_bound.(bWHty,0)
     for w in findall(sp["WH0"].!="0")
         # fix already installed water heaters
         for u=1:sp["WHz0"][w]
@@ -37,7 +37,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
         # release potential installed CHP units
         if sp["WHyn"][w] == "YES"
             for u=(sp["WHz0"][w]+1):bdg["Bwh"]
-                set_upper_bound.(bWHty[1,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
+                set_upper_bound.(bWHty[:,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
             end
         end
     end
