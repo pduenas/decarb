@@ -7,8 +7,8 @@
 *.ji
 
 # Documentation build artifacts
-docs/build/
-docs/site/
+/docs/build/
+/docs/site/
 
 # macOS-specific system files
 .DS_Store
@@ -28,23 +28,28 @@ Desktop.ini
 !.env.example
 
 # IDE settings
-.idea/
-.vscode/
+/.idea/
+/.vscode/
 
 # Julia REPL history
-.julia_history
+/.julia_history
 
 # Python cache, if Python scripts are ever used
 __pycache__/
 *.pyc
 
 # Input, output and intermediate files
-bdg_path.txt
-DECARB.xlsm
-in/
-out/
+/bdg_path.txt
+/Manifest.toml
+/DECARB.xlsm
+/in/
+/out/
 
 # Miscellaneous
 *.log
 *.bak
 *.tmp
+*.lp
+*.mps
+repository_snapshot.txt
+repository_tree.txt
