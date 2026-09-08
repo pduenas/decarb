@@ -23,28 +23,26 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
     s = termination_status(model)
 
     if !is_solved_and_feasible(model; allow_local = true)
-        if MOI.supports(JuMP.backend(model), MOI.ConflictStatus())
-            try
-                compute_conflict!(model)
-                if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-                    println("\n❗ IIS detected — infeasible constraints:\n")
-                    open(joinpath(path,"out","iis_constraints.txt"), "w") do io
-                        for (F, S) in list_of_constraint_types(model)
-                            F == VariableRef && continue
-                            for con in all_constraints(model, F, S)
-                                cs = get_attribute(con, MOI.ConstraintConflictStatus())
-                                if cs == MOI.IN_CONFLICT
-                                    label = name(con) == "" ? string(con) : name(con)
-                                    println(io, "[IN_CONFLICT] ", label)
-                                    println("  ❌ ", label)
-                                end
+        try
+            compute_conflict!(model)
+            if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+                println("\n❗ IIS detected — infeasible constraints:\n")
+                open(joinpath(path,"out","iis_constraints.txt"), "w") do io
+                    for (F, S) in list_of_constraint_types(model)
+                        F == VariableRef && continue
+                        for con in all_constraints(model, F, S)
+                            cs = get_attribute(con, MOI.ConstraintConflictStatus())
+                            if cs == MOI.IN_CONFLICT
+                                label = name(con) == "" ? string(con) : name(con)
+                                println(io, "[IN_CONFLICT] ", label)
+                                println("  ❌ ", label)
                             end
                         end
                     end
                 end
-            catch e
-                @warn "Conflict computation unavailable" exception=e
             end
+        catch e
+            @warn "Conflict computation unavailable" exception=e
         end
         error("❗  Model has no feasible solution. Check input data.\n(status = $(s))")
     end
