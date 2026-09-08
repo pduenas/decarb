@@ -69,7 +69,7 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
     cfg["b_temp"]==true ? tm["Ton"]=tm["Ton"] : tm["Ton"].=0
 
     # allow initial free installation
-    tm["IW"] = 1
+    tm["IW"] = Int32[1]
     # when investments are allowed
     if cfg["b_inv"]==true
         # create investment windows

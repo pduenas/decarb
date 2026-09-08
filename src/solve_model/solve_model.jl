@@ -47,8 +47,8 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
         error("❗  Model has no feasible solution. Check input data.\n(status = $(s))")
     end
 
-    # only reached when feasible; relative_gap is meaningless/unavailable when infeasible
-    @info "termination = $(s), gap = $(round(relative_gap(model)*100, digits=1))%"
+    gap = try relative_gap(model) catch; NaN end
+    @info "termination = $(s), gap = $(round(gap*100, digits=1))%"
 
     # relax integrality to get dual information
     if b_relax_integrality==false

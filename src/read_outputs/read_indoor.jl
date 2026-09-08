@@ -69,7 +69,11 @@ function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int
     # hot water
     HWdem = round.(tm["HWdem"], digits=2)
     NSHW = round.(tm["HWdem"].*value.(model[:vNShw]), digits=2)
-    WHhw = round.(sum(value.(model[:vWH_HW][:,w]) for w=1:n_wh), digits=2)
+    if n_wh>0
+        WHhw = round.(sum(value.(model[:vWH_HW][:,w]) for w=1:n_wh), digits=2)
+    else
+        WHhw = zeros(Float64, tm["P"])
+    end
 
     # outputs from water heaters
     if n_wh>0

@@ -1,5 +1,5 @@
 """
-write_outputs(path::String,tmDate,df_chp,df_hvac,df_abp,df_wh,df_pv,
+write_outputs(path::AbstractString,tmDate,df_chp,df_hvac,df_abp,df_wh,df_pv,
     df_bess,df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,
     df_econ)
 
@@ -27,7 +27,7 @@ writes three CSV files to path/out/: eq1.csv (economics), eq2.csv (equipment), t
 Date columns are formatted as mm/dd/yyyy HH:MM for readability
 """
 
-function write_outputs(path::String,tmDate,df_chp,df_hvac,df_abp,df_wh,df_pv,
+function write_outputs(path::AbstractString,tmDate,df_chp,df_hvac,df_abp,df_wh,df_pv,
     df_bess,df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,
     df_econ)
 
