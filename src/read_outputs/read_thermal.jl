@@ -66,7 +66,10 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
             end
         end
         capex = cost.*new
-        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
+        df = DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date,Win=win)
+        df = combine(groupby(df,[:Eq,:Win]), first)
+        select!(df, Not(:Win))
+        return df
     else
         return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
     end

@@ -1,5 +1,13 @@
 """
-Use this file to configure the Gurobi settings. Add new settings if desired.
+configure_gurobi(model::Model,mip_gap::Float64,time_limit::Float64)
+
+Applies Gurobi solver attributes to the model. Add new settings if desired
+
+inputs:
+model       optimization model object
+mip_gap     relative MIP gap tolerance for termination
+time_limit  maximum solve time in seconds
+
 """
 
 function configure_gurobi(model::Model,mip_gap::Float64,time_limit::Float64)

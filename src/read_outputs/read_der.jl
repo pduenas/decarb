@@ -1,12 +1,11 @@
 """
-read_der(model::Model,sp::Dict,cfg::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
 
 Reads DER component outputs from model and load them into dataframe
 
 inputs:
 model   optimization model object
 sp      dictionary with equipment selection
-cfg     dictionary with miscellaneous data
 equip   character vector with equipment type
 attr    dictionary of equipment attributes
 tmDate  date/time vector for all periods
@@ -15,7 +14,7 @@ tmIW    investment window period indices
 returns dataframes of outputs
 """
 
-function read_der(model::Model,sp::Dict,cfg::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
 
     # read specific output and attributes
     type = attr["ty"]
@@ -47,12 +46,13 @@ function read_der(model::Model,sp::Dict,cfg::Dict,equip::String,attr::Dict,tmDat
         date = [tmDate[tmIW[w]] for w in win]
         type = type[eq]
         cost = cost[eq]
-        quantity = [vals[i] for i in idx]
-        new = zeros(length(quantity))
+        quantity = [vals[i] for i in idx]   # per-window incremental installed quantity
+        new = copy(quantity)
         for n in findall(x -> x!="0", sp_yn)
             name = findall(x -> x==sp_0[n], type)
             if !isempty(name)
-                new[name] = quantity[name] .- sp_z0[n]
+                first_idx = name[argmin(win[name])]
+                new[first_idx] -= sp_z0[n]
             end
         end
         capex = cost.*new
