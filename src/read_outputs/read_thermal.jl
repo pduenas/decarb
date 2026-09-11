@@ -58,7 +58,7 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         for n=1:n_unit
             quantity[n] = sum(type.==type[n])
         end
-        new = zeros(Int64,n_unit)
+        new = copy(quantity)
         for n in findall(x -> x!="0", sp_yn)
             name = findall(x -> x==sp_0[n], type)
             if !isempty(name)

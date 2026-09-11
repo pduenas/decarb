@@ -77,7 +77,7 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
     end
 
     if cfg["QmxTM"]==0
-        tm["QmxCostN"] = zeros(Float64, tm["P"])
+        tm["QmxCostN"] = zeros(Float64, cfg["QmxTM"])
     else
         tm["QmxCostN"] = calculate_peak_charge(cfg["QmxTM"],tm["Qmx"],tm["QmxCost"],tm["P"])
     end

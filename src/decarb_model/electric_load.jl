@@ -39,7 +39,7 @@ function electric_load!(model::Model,cfg::Dict,tm::Dict,chp::Dict,hvac::Dict,wh:
     # electricity demand [kWh]
     @expression(model, vQdem[t=1:tm["P"]],
         tm["TM"][t]*(tm["Qlight"][t]+tm["Qequip"][t]) + 
-        sum(model[:vHVAC_HT][t,h]+model[:vHVAC_AC][t,h] for h=1:hvac["N"]; init=0.0) + 
+        sum(model[:vHVAC_HT][t,h]+model[:vHVAC_AC][t,h] for h=1:hvac["N"]) +
         sum(model[:vBESS_UP][t,s] for s=1:bess["N"] if bess["zmx0"][s]>0) + 
         sum(model[:vEV_UP][t,e] for e=1:ev["N"] if ev["mx_eff"][e]>0) + 
         sum(model[:vWH_Q][t,w] for w=1:wh["N"] if wh["mx_eff"][w]>0 && wh["fuel"][w]=="0"))
