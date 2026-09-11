@@ -14,10 +14,10 @@ abp     dictionary with absorption chiller data
 function heat_connections!(model::Model,topo::Dict,tm::Dict,chp::Dict,abp::Dict)
 
     # energy --heating-- from CHP to building: hot air, hot water [0,efficiency]
-    @variable(model, topo["chp_bdg"][c,l] >= 
+    @variable(model, (!iszero).(topo["chp_bdg"][c,l]) >= 
         vCHPbdg[t=1:tm["P"],c=1:chp["N"],l=1:2] >= 0)
     # energy --heating-- from CHP to absorption chiller [0,efficiency]
-    @variable(model, topo["chp_abp"][c,a] >= 
+    @variable(model, (!iszero).(topo["chp_abp"][c,a]) >= 
         vCHPabp[t=1:tm["P"],c=1:chp["N"],a=1:abp["N"]] >= 0)
     # supplemental gaseous or liquid fuel firing 'f' from CHP to absorption chiller
     #   or hor air, hot water [0,1]
@@ -51,8 +51,8 @@ function heat_connections!(model::Model,topo::Dict,tm::Dict,chp::Dict,abp::Dict)
     @constraint(model, eCHPfireA[t=1:tm["P"],c=1:chp["N"],a=1:abp["N"],f=1:2; (!iszero).(topo["chp_fire"][c,a,f])],
         vCHPfire[t,c,a,f] <= bCHPabp[c,a])
     # unique type of firing fuel in CHP {0,1} f=1:Gas, f=2:Liquid
-    @constraint(model, eCHPfire[t=1:tm["P"],c=1:chp["N"],a=1:abp["N"]+2,f=1:2; (!iszero).(topo["chp_fire"][c,a,f])],
-        vCHPfire[t,c,a,f] <= bCHPfire[c,f])
+    @constraint(model, eCHPfire[t=1:tm["P"],c=1:chp["N"],l=1:abp["N"]+2,f=1:2; (!iszero).(topo["chp_fire"][c,l,f])],
+        vCHPfire[t,c,l,f] <= bCHPfire[c,f])
     @constraint(model, eCHPfireF[c=1:chp["N"]; any(!iszero, topo["chp_fire"][c,:,:])],
         sum(bCHPfire[c,f] for f=1:2) <= 1)
     # unique active link from CHP to absorption chiller, and viceversa {0,1}

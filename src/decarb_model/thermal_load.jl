@@ -41,7 +41,7 @@ function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp:
     @expression(model, vQ_HTAC[t=1:tm["P"]],
         sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) + 
         sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0)) - 
-        sum(model[:vABP_AC][t,a] for a=1:abp["N"]; init=0.0))
+        sum(model[:vABP_AC][t,a] for a=1:abp["N"]))
 
     # calculate internal heat gains from occupancy, lighting and electrical equipment
     Q_IHG = tm["Qihg_P"] + tm["Qihg_L"] + tm["Qihg_E"]

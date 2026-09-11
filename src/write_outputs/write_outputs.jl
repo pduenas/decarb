@@ -7,14 +7,14 @@ Writes optimization model results to CSV files in the output directory
 
 inputs:
 path        string path to working directory
-tmDate      date/time vector for time series data [DateTime]
-df_chp      combined heat and power dataframe (includes Date, Win columns)
-df_hvac     HVAC units dataframe (includes Date, Win columns)
-df_abp      absorption chillers dataframe (includes Date, Win columns)
-df_wh       water heaters dataframe (includes Date, Win columns)
-df_pv       photovoltaic panels dataframe (includes Date, Win columns)
-df_bess     battery energy storage dataframe (includes Date, Win columns)
-df_wind     wind turbines dataframe (includes Date, Win columns)
+tmDate      date/time vector for time series data
+df_chp      combined heat and power dataframe
+df_hvac     HVAC units dataframe
+df_abp      absorption chillers dataframe
+df_wh       water heaters dataframe
+df_pv       photovoltaic panels dataframe
+df_bess     battery energy storage dataframe
+df_wind     wind turbines dataframe
 df_elec     electric dispatch dataframe
 balance     electrical balance array
 df_fuel     fuel consumption dataframe
