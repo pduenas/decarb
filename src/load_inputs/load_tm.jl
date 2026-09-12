@@ -96,7 +96,16 @@ end
 
 
 function convert_to_utc(tm::Dict,bdg::Dict)
-    return DateTime.(ZonedDateTime.(tm["Date"],TimeZone(bdg["Btz"])),UTC)
+    tz = TimeZone(bdg["Btz"])
+    return map(tm["Date"]) do dt
+        try
+            DateTime(ZonedDateTime(dt, tz, 1), UTC)
+        catch e
+            e isa TimeZOnes.NonExistentTimeError || rethrow()
+            @warn "local time does not exist (DST gap); resolved via preceding minute" datetime=dt
+            DateTime(ZonedDateTime(dt - Minute(1), tz, 1), UTC) + Minute(1)
+        end
+    end
 end
 
 function calculate_durations(tm::Dict)
