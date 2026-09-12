@@ -15,6 +15,8 @@ time_limit              time limit for the optimization problem
 i_solver                solver selection flag: 1=Gurobi, 2=HiGHS
 b_relax_integrality     boolean flag to relax integrality constraints on integer variables
 
+returns named tuple with the solved model and all input dictionaries
+
 """
 
 function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i_solver::Int64,b_relax_integrality::Bool)
@@ -171,5 +173,7 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     a18 = time()		# elapsed time
     println("   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
+
+    return (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo)
 
 end
