@@ -1,14 +1,13 @@
 """
-water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,wh::Dict)
+water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::Dict)
 
-Creates variables, expressions and constraints associated to CHP units
+Creates variables, expressions and constraints associated to water heaters
 
 inputs:
 model   name of core model
 cfg     dictionary with configuration input data
 tm      dictionary with time series data
 bdg     dictionary with building data
-topo    dictionary with topology of thermal connections
 sp      dictionary with equipment selection data
 wh      dictionary with WH data
 

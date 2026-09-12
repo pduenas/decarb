@@ -48,26 +48,22 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         eq = [i[2] for i in idx]
         win = [i[1] for i in idx]
         date = [tmDate[tmIW[w]] for w in win]
-        type = type[eq]
+        unit_type = type[eq]
         cost = cost[eq]
-        hyphen = findlast.("-",type)
-        for n=1:n_unit
-            type[n] = type[n][1:hyphen[n][1]-1]
-        end
-        quantity = zeros(Int64,n_unit)
-        for n=1:n_unit
-            quantity[n] = sum(type.==type[n])
-        end
+        hyphen = findlast.("-", unit_type)
+        base_type = [isnothing(hyphen[n]) ? unit_type[n] : unit_type[n][1:hyphen[n][1]-1]
+            for n=1:n_unit]
+        quantity = ones(Int64,n_unit)
         new = copy(quantity)
         for n in findall(x -> x!="0", sp_yn)
-            name = findall(x -> x==sp_0[n], type)
-            if !isempty(name)
-                first_idx = name[argmin(win[name])]
+            matching = findall(x -> x==sp_0[n], base_type)
+            if !isempty(matching)
+                first_idx = matching[argmin(win[matching])]
                 new[first_idx] -= sp_z0[n]
             end
         end
         capex = cost.*new
-        return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
+        return DataFrame(Eq=unit_type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
     else
         return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
     end

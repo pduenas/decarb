@@ -1,5 +1,5 @@
 """
-hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dict,hvac::Dict)
+hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Dict)
 
 Creates variables, expressions and constraints associated to HVAC units
 

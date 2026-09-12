@@ -6,7 +6,7 @@ Loads cfg.csv file from path directory and stores values in a dictionary object
 inputs:
 path    string path to working directory
 
-returns in-type inputs in dictionary object
+returns configuration inputs in dictionary object
 """
 
 function load_cfg(path::AbstractString)

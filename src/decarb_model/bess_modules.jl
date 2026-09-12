@@ -1,5 +1,5 @@
 """
-bess_module!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::Dict)
+bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::Dict)
 
 Creates variables, expressions and constraints associated to BESS modules
 

@@ -54,7 +54,7 @@ function read_econ(model::Model,tm::Dict)
 
     df_dual = DataFrame(dualQ=Qdual,dualT=Tdual,dualHW=HWdual)
     df_econ = DataFrame(name=["energy_bill";"grid_sales";"grid_purchases";"capacity_charge";"fuel_purchases";
-        "variable_om_cost";"fixed_om_cost";"investment_annuity";"chp_annuity";"hvac_annuity";"abp_annuity";
+        "variable_om_cost";"fixed_om_cost";"equipment_annuity";"chp_annuity";"hvac_annuity";"abp_annuity";
         "water_heater_annuity";"pv_annuity";"wind_annuity";"battery_annuity";"unserved_electricity_cost";
         "unserved_thermal_cost";"unserved_hot_water_cost";"unserved_ev_cost";"direct_emissions";
         "indirect_emissions"],

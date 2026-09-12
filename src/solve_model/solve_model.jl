@@ -22,7 +22,10 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
     optimize!(model)    # solve model
     s = termination_status(model)
 
-    if !is_solved_and_feasible(model; allow_local = true)
+    ok_status = s in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.TIME_LIMIT,
+        MOI.NODE_LIMIT, MOI.SOLUTION_LIMIT, MOI.INTERRUPTED)
+
+    if !(ok_status && primal_status(model) == MOI.FEASIBLE_POINT)
         try
             compute_conflict!(model)
             if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
@@ -65,6 +68,9 @@ function solve_model!(path::AbstractString,model::Model,b_relax_integrality::Boo
         fix.(vALL[vBIN],v_L[vBIN]; force=true)
         # solve relaxed model
         optimize!(model)
+        if primal_status(model) != MOI.FEASIBLE_POINT
+            @warn "relaxed re-solve returned no solution; outputs unreliable" status=termination_status(model)
+        end
     end
 
     has_duals(model)==true ? println("   \u2139  Dual information available.") : 
