@@ -1,31 +1,32 @@
 """
 read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
     n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    EVmx::Vector{Float64},WHfuel::Vector{String})
+    BESSzmx0::Vector{Int16},EVmx::Vector{Float64},WHfuel::Vector{String})
 
 Reads time series outputs related to electric demands and generations and
     load them into dataframe
 
 inputs:
-model   optimization model object
-tm      dictionary with time series data
-n_chp   number of CHP types
-n_hvac  number of HVAC types
-n_wh    number of water heater types
-n_pv    number of PV panel types
-n_bess  number of BESS module types
-n_ev    number of electric vehicle types
-n_wind  number of wind turbine types
-BESSmx  maximum battery capacity
-EVmx    maximum EV battery capacity
-WHfuel  type of fuel in water heater
+model       optimization model object
+tm          dictionary with time series data
+n_chp       number of CHP types
+n_hvac      number of HVAC types
+n_wh        number of water heater types
+n_pv        number of PV panel types
+n_bess      number of BESS module types
+n_ev        number of electric vehicle types
+n_wind      number of wind turbine types
+BESSmx      maximum battery capacity
+BESSzmx0    initial battery capacity
+EVmx        maximum EV battery capacity
+WHfuel      type of fuel in water heater
 
 returns dataframes of outputs
 """
 
 function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
     n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    EVmx::Vector{Float64},WHfuel::Vector{String})
+    BESSzmx0::Vector{Int16},EVmx::Vector{Float64},WHfuel::Vector{String})
 
     Qdem = tm["Qlight"] + tm["Qequip"]
     Qsell = round.(value.(model[:vQsell]), digits=2)
@@ -70,7 +71,8 @@ function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::In
         BESS_DN = round.(sum(value.(model[:vBESS_DN][:,s]) for s=1:n_bess)./tm["TM"], digits=2)
         BESSsoc = zeros(Float64, tm["P"])										 
         for p=1:tm["P"]
-            BESSsoc[p] = round.(sum(BESSmx[s]*value.(model[:vBESSsoc][p,s]) for s=1:n_bess), digits=2)
+            BESSsoc[p] = round.(sum(BESSmx[s]*value.(model[:vBESSsoc][p,s]) 
+                for s=1:n_bess if BESSzmx0[s]>0; init=0.0), digits=2)
         end
     else
         BESS_UP = zeros(Float64, tm["P"])
