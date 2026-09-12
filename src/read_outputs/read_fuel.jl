@@ -1,5 +1,5 @@
 """
-read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64,n_topo::Int64)
+read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
 
 Reads time series outputs related to fuel consumptions and load them into dataframe
 
@@ -9,12 +9,11 @@ tm      dictionary with time series data
 n_chp   number of CHP types
 n_abp   number of absorption chiller types
 n_wh    number of water heater types
-n_topo  number of thermal links
 
 returns dataframes of outputs
 """
 
-function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64,n_topo::Int64)
+function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
 
     # outputs from CHP units
     if n_chp > 0
@@ -43,16 +42,7 @@ function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64,n
         WH_L = zeros(Float64, tm["P"])
     end
 
-    # outputs from thermal links
-    if n_topo > 0
-        TH_G = round.(value.(model[:vTH_G])./tm["TM"], digits=2)
-        TH_L = round.(value.(model[:vTH_L])./tm["TM"], digits=2)
-    else
-        TH_G = zeros(Float64, tm["P"])
-        TH_L = zeros(Float64, tm["P"])
-    end
-
-    df = DataFrame(Gchp=CHP_G,Gabp=ABP_G,Gwh=WH_G,Gth=TH_G,Lchp=CHP_L,Labp=ABP_L,Lwh=WH_L,Lth=TH_L)
+    df = DataFrame(Gchp=CHP_G,Gabp=ABP_G,Gwh=WH_G,Lchp=CHP_L,Labp=ABP_L,Lwh=WH_L)
     
     return df
 

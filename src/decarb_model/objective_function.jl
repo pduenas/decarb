@@ -36,8 +36,8 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, vQearn[t=1:tm["P"]], tm["TM"][t]*tm["QcostSell"][t]*model[:vQsell][t])
     # cost of purchased fuel [$]
     @expression(model, vGLcost[t=1:tm["P"]], 
-        tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
-        tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]))
+        tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]) + 
+        tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]))
     
     # penalties for driver type: range anxious (-1), indifferent (0), battery concious (1)
     @expression(model, vEVpen,
@@ -111,8 +111,8 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
 
     # CO2 emissions from building [ton]
     @expression(model, CO2_B, 
-        sum(cfg["Gco2"]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]+model[:vTH_G][t]) + 
-            cfg["Lco2"]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]+model[:vTH_L][t]) 
+        sum(cfg["Gco2"]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]) + 
+            cfg["Lco2"]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]) 
             for t=1:tm["P"])/1e3)
 
     # CO2 emissions from grid purchases [ton]

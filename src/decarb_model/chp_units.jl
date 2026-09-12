@@ -51,12 +51,10 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
     @expression(model, vCHP_Q[t=1:tm["P"],c=1:chp["N"]], tm["TM"][t]*chp["mx_eff"][c]*vCHP_q[t,c])
     # energy --heating-- generated per link by CHP to building [kWh]
     @expression(model, vCHP_HT[t=1:tm["P"],c=1:chp["N"]; (!iszero).(topo["chp_bdg"][c,1])],
-        tm["TM"][t] * (chp["mx_eff"][c]*topo["chp_bdg"][c,1]*model[:vCHPbdg][t,c,1] +
-                       sum(topo["chp_fire"][c,abp["N"]+1,f]*model[:vCHPfire][t,c,abp["N"]+1,f] for f=1:2)))
+        tm["TM"][t] * chp["mx_eff"][c]*topo["chp_bdg"][c,1]*model[:vCHPbdg][t,c,1])
     # energy --hot water-- generated per link by CHP [kWh]
     @expression(model, vCHP_HW[t=1:tm["P"],c=1:chp["N"]; (!iszero).(topo["chp_bdg"][c,2])],
-        tm["TM"][t] * (chp["mx_eff"][c]*topo["chp_bdg"][c,2]*model[:vCHPbdg][t,c,2] +
-                       sum(topo["chp_fire"][c,abp["N"]+2,f]*model[:vCHPfire][t,c,abp["N"]+2,f] for f=1:2)))
+        tm["TM"][t] * chp["mx_eff"][c]*topo["chp_bdg"][c,2]*model[:vCHPbdg][t,c,2])
 
     # gaseous fuel purchased by CHP units [kWh]
     if any(chp["fuel"].=="G")

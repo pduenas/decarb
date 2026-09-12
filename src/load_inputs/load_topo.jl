@@ -19,8 +19,7 @@ function load_topo(path::AbstractString,chp::Dict,abp::Dict)
     path2file = joinpath(path,"topo.csv")
 
     # load file into dataframe with predefined types
-    df_topo = CSV.File(path2file;delim=',',types=[String,String,String,String,Float64,
-                    Float64,Float64]) |> DataFrame
+    df_topo = CSV.File(path2file;delim=',',types=[String,String,String,Float64]) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.up), df_topo)
@@ -30,9 +29,6 @@ function load_topo(path::AbstractString,chp::Dict,abp::Dict)
     topo["up"] = df_topo.up         # upper link of equipment
     topo["lo"] = df_topo.lo         # lower link of equipment or building
     topo["in"] = df_topo.in         # input product to lower link
-    topo["fuel"] = df_topo.fuel     # existing supplemental firing {G,D}
-    topo["mx"] = df_topo.mx         # nominal capacity [kW]
-    topo["fcf"] = df_topo.fcf       # fuel conversion factor
     topo["eff"] = df_topo.eff       # efficiency of connection
 
     topo["N"] = size(topo["up"],1)  # number of thermal links
@@ -40,7 +36,6 @@ function load_topo(path::AbstractString,chp::Dict,abp::Dict)
     # create heating topology connections
     topo["chp_bdg"] = create_chp_bdg(topo,chp)
     topo["chp_abp"] = create_chp_abp(topo,chp,abp)
-    topo["chp_fire"] = create_chp_fire(topo,chp,abp)
 
     return topo
 
@@ -91,51 +86,5 @@ function create_chp_abp(topo,chp,abp)
     end
 
     return chpabp
-
-end
-
-function create_chp_fire(topo,chp,abp)
-
-    # dim1: chp units | dim2: absorption chillers, hot air, hot water | dim3: gaseous, liquid
-    chpfire = zeros(chp["N"],abp["N"]+2,2)
-    hyphen_c = findlast.("-",chp["ty"])
-    hyphen_a = findlast.("-",abp["ty"])
-
-    for i=1:topo["N"]
-        if topo["fuel"][i] == "G"
-            dim3 = 1
-        elseif topo["fuel"][i] == "L"
-            dim3 = 2
-        else
-            continue
-        end
-        if topo["in"][i] == "hot air"
-            dim2 = abp["N"]+1
-        elseif topo["in"][i] == "hot water"
-            dim2 = abp["N"]+2
-        else
-            dim2 = 0
-        end
-        if dim2 != 0
-            for c=1:chp["N"]
-                isnothing(hyphen_c[c]) && continue
-                if chp["ty"][c][1:hyphen_c[c][1]-1]==topo["up"][i]
-                    chpfire[c,dim2,dim3] = topo["fcf"][i]*topo["mx"][i]
-                end
-            end
-        elseif dim2 == 0
-            for c=1:chp["N"]
-                isnothing(hyphen_c[c]) && continue
-                for a=1:abp["N"]
-                    isnothing(hyphen_a[a]) && continue
-                    if chp["ty"][c][1:hyphen_c[c][1]-1]==topo["up"][i] && abp["ty"][a][1:hyphen_a[a][1]-1]==topo["lo"][i]
-                        chpfire[c,a,dim3] = topo["fcf"][i]*topo["mx"][i]
-                    end
-                end
-            end
-        end
-    end
-
-    return chpfire
 
 end
