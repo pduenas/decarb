@@ -9,4 +9,6 @@ time_limit = 300.0
 # define integrality
 b_relax_integrality = false
 
-run_decarb!(dirname(@__FILE__),mip_gap,time_limit,i_solver,b_relax_integrality)
+run_decarb!(dirname(@__FILE__),mip_gap,time_limit,i_solver,b_relax_integrality);
+
+nothing
