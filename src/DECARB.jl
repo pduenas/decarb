@@ -13,8 +13,6 @@ using Dates
 using AstroLib
 using TimeZones
 
-# uncomment your solver
-using Gurobi
 using HiGHS
 
 # Launch DECARB process
