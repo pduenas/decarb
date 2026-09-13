@@ -36,6 +36,7 @@ include(joinpath("load_inputs","load_pv.jl"))
 include(joinpath("load_inputs","load_wind.jl"))
 include(joinpath("load_inputs","load_bess.jl"))
 include(joinpath("load_inputs","load_ev.jl"))
+include(joinpath("load_inputs","validate_inputs.jl"))
 
 # Configure solver settings
 include(joinpath("configure_solver","configure_gurobi.jl"))

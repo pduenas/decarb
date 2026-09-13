@@ -33,6 +33,8 @@ extend_catalog(df::DataFrame,ty::String,z0::UInt8,yn::String,bdg::UInt8)
 
 function extend_catalog(df,ty,z0,yn,bdg)
 
+    validate_selection(ty, df.ty, "equipment")
+
     for i in findall(yn.=="YES" .|| yn.=="NO")
         # for all potential investment in units
         if yn[i] == "YES"
