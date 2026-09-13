@@ -101,9 +101,9 @@ function convert_to_utc(tm::Dict,bdg::Dict)
         try
             DateTime(ZonedDateTime(dt, tz, 1), UTC)
         catch e
-            e isa TimeZOnes.NonExistentTimeError || rethrow()
-            @warn "local time does not exist (DST gap); resolved via preceding minute" datetime=dt
-            DateTime(ZonedDateTime(dt - Minute(1), tz, 1), UTC) + Minute(1)
+            e isa TimeZones.NonExistentTimeError || rethrow()
+            @warn "local time does not exist during a DST transition; using the preceding instant" datetime=dt
+            DateTime(ZonedDateTime(dt - Minute(1), tz, 1), UTC)
         end
     end
 end
