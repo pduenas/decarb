@@ -28,7 +28,8 @@ function read_econ(model::Model,tm::Dict)
     end
 
     # Read values for economic variables
-    C_VAR = -round.(value.(model[:COST_VAR]), digits=2)
+    C_TOTAL = round.(value.(model[:COST]), digits=2)
+    C_VAR = round.(value.(model[:COST_VAR]), digits=2)
     Qearn = round.(sum(value.(model[:vQearn][t]) for t=1:tm["P"]), digits=2)
     Qcost = round.(sum(value.(model[:vQcost][t]) for t=1:tm["P"]), digits=2)
     QmxCost = round.(value.(model[:vQmxCost]), digits=2)
@@ -49,16 +50,16 @@ function read_econ(model::Model,tm::Dict)
     NSEVcost = round.(sum(value.(model[:vNSEVcost][t]) for t=1:tm["P"]), digits=2)
 
     # Read values for direct and indirect emissions
-    Bco2 = round.(value.(model[:CO2_B]), digits=2)
-    Eco2 = round.(value.(model[:CO2_E]), digits=2)
+    Bco2 = round.(value.(model[:CO2_B]), digits=3)
+    Eco2 = round.(value.(model[:CO2_E]), digits=3)
 
     df_dual = DataFrame(dualQ=Qdual,dualT=Tdual,dualHW=HWdual)
-    df_econ = DataFrame(name=["energy_bill";"grid_sales";"grid_purchases";"capacity_charge";"fuel_purchases";
+    df_econ = DataFrame(name=["total_cost";"energy_bill";"grid_sales";"grid_purchases";"capacity_charge";"fuel_purchases";
         "variable_om_cost";"fixed_om_cost";"equipment_annuity";"chp_annuity";"hvac_annuity";"abp_annuity";
         "water_heater_annuity";"pv_annuity";"wind_annuity";"battery_annuity";"unserved_electricity_cost";
         "unserved_thermal_cost";"unserved_hot_water_cost";"unserved_ev_cost";"direct_emissions";
         "indirect_emissions"],
-        eq=[C_VAR;Qearn;Qcost;QmxCost;GLcost;Cvom;Cfom;C_INV;CinvCHP;CinvHVAC;CinvABP;CinvWH;
+        eq=[C_TOTAL;C_VAR;Qearn;Qcost;QmxCost;GLcost;Cvom;Cfom;C_INV;CinvCHP;CinvHVAC;CinvABP;CinvWH;
         CinvPV;CinvWIND;CinvBESS;NSEcost;NSTcost;NSHWcost;NSEVcost;Bco2;Eco2])
     
     return df_dual,df_econ
