@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use DECARB in published work, please cite the software release.
+type: software
+title: "DECARB: Distributed Energy Consumption in Responsive Buildings"
+authors:
+  - family-names: Duenas
+    given-names: Pablo
+version: 1.0.0
+license: AGPL-3.0-only
+repository-code: https://github.com/pduenas/decarb
