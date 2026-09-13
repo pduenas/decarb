@@ -59,7 +59,7 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     # load configuration options for selected solver
     if i_solver==1
-        set_optimizer(model,Gurobi.Optimizer)
+        set_optimizer(model,gurobi_optimizer(GurobiBackend()))
         configure_gurobi(model,mip_gap,time_limit)
         println("   \u2139  Gurobi called satisfactorily")
     elseif i_solver==2
@@ -178,4 +178,23 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
 
     return (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo)
 
+end
+
+
+"""
+    run_decarb!(path; mip_gap=1e-2, time_limit=300.0, solver=:highs,
+                relax_integrality=false)
+
+Run a DECARB case using keyword options. `solver` may be `:highs` or `:gurobi`.
+The Gurobi package must be installed and loaded separately when `solver=:gurobi`.
+"""
+function run_decarb!(path::AbstractString; mip_gap::Real=1e-2,
+    time_limit::Real=300.0, solver::Symbol=:highs,
+    relax_integrality::Bool=false)
+
+    solver_id = solver === :gurobi ? 1 : solver === :highs ? 2 :
+        throw(ArgumentError("solver must be :highs or :gurobi"))
+
+    return run_decarb!(path, Float64(mip_gap), Float64(time_limit),
+        Int64(solver_id), relax_integrality)
 end

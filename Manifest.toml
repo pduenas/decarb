@@ -2,7 +2,7 @@
 
 julia_version = "1.12.7"
 manifest_format = "2.0"
-project_hash = "32a88f99383cd2ab7e10bf84f75e78b4c87067a9"
+project_hash = "a87e01a5861388c9e010be8aedfe6263c55d25b7"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra"]
@@ -104,12 +104,10 @@ deps = ["AstroLib", "CSV", "DataFrames", "Dates", "HiGHS", "JuMP", "TimeZones"]
 path = "."
 uuid = "987cfde4-73f7-40fc-a81b-2f2fe31fdba5"
 version = "1.0.0"
+weakdeps = ["Gurobi"]
 
     [deps.DECARB.extensions]
     DECARBGurobiExt = "Gurobi"
-
-    [deps.DECARB.weakdeps]
-    Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
@@ -205,6 +203,18 @@ weakdeps = ["StaticArrays"]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 version = "1.11.0"
+
+[[deps.Gurobi]]
+deps = ["Gurobi_jll", "Libdl", "MathOptInterface", "PrecompileTools"]
+git-tree-sha1 = "e782c2eefd482d08daa344caf9a4660b69eb0de8"
+uuid = "2e9cd046-0924-5485-92f1-d5272153d98b"
+version = "1.9.3"
+
+[[deps.Gurobi_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "e501476eeb5db84ef187dfd460dcbc401c08aa91"
+uuid = "c018c7e6-a5b0-4aea-8f80-9c1ef9991411"
+version = "13.0.3"
 
 [[deps.HiGHS]]
 deps = ["HiGHS_jll", "LinearAlgebra", "MathOptIIS", "MathOptInterface", "OpenBLAS32_jll", "PrecompileTools", "SparseArrays"]

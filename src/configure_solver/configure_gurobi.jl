@@ -10,6 +10,14 @@ time_limit  maximum solve time in seconds
 
 """
 
+struct GurobiBackend end
+
+function gurobi_optimizer(::Any)
+    error("Gurobi support is optional. Install and load it with " *
+          "`import Pkg; Pkg.add(\"Gurobi\"); using Gurobi, DECARB` before " *
+          "selecting the Gurobi solver.")
+end
+
 function configure_gurobi(model::Model,mip_gap::Float64,time_limit::Float64)
     set_optimizer_attribute(model, "AggFill", 0)
     set_optimizer_attribute(model, "DisplayInterval", 1)
