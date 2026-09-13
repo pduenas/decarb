@@ -43,6 +43,8 @@ function run_decarb!(path::AbstractString,mip_gap::Float64,time_limit::Float64,i
     bess = load_bess(path2in)
     topo = load_topo(path2in,chp,abp)
 
+    validate_inputs(cfg,sp,bdg,tm,chp,abp,hvac,wh,pv,wind,bess,ev,topo)
+
     cfg["b_inv"]==false  ? println("   \u2139  investments prevented") : println("   \u2139  investments allowed")
 
     cfg["b_temp"]==false ? println("   \u2139  temperature disabled")  : println("   \u2139  temperature enabled")
