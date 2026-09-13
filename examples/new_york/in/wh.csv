@@ -1,0 +1,16 @@
+ty,mx,fcf,fuel,eff,tank,inv,fom,vom,life
+Electric Heat Pump 80 gal,22,0.333333,0,0.95,11,4000,0,0,12
+Electric Premium,24,1.05263158,0,0.95,12,4000,0,0,12
+Electric Standard,24,1.08695652,0,0.95,12,4000,0,0,12
+Electric Tankless,44,1.08695652,0,0.95,0,4000,0,0,12
+FIXME Fuel Oil Indirect,24,1.61290323,L,0.95,12,4000,0,0,12
+Fuel Oil Premium,24,1.47058824,L,0.95,12,4000,0,0,12
+Fuel Oil Standard,24,1.61290323,L,0.95,12,4000,0,0,12
+Natural Gas Premium,24,1.49253731,G,0.95,12,4000,0,0,12
+Natural Gas Standard,24,1.69491525,G,0.95,12,4000,0,0,12
+Natural Gas Tankless,44,1.69491525,G,0.95,0,4000,0,0,12
+Other Fuel,24,1.66666667,L,0.95,12,4000,0,0,12
+Propane Premium,24,1.49253731,L,0.95,12,4000,0,0,12
+Propane Standard,24,1.69491525,L,0.95,12,4000,0,0,12
+Propane Tankless,44,1.69491525,L,0.95,0,4000,0,0,12
+0,0,0.0,0,0.0,0,0,0,0,0

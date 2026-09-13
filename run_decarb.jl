@@ -1,21 +1,21 @@
 """
-Use this file to run DECARB cases by indicating each path to building input
-data in file bdg_path.txt, one building per row
+Batch driver for DECARB cases.
+
+List one case directory per line in `bdg_path.txt`. A case directory contains
+an `in/` subdirectory. Blank lines and lines beginning with `#` are ignored.
+Pass a different list file as the first command-line argument if needed.
 """
 
-# save current path
-wd = pwd()      # path to input paths
+using DECARB
 
-# load packages
-using CSV, DataFrames
+list_file = isempty(ARGS) ? joinpath(@__DIR__, "bdg_path.txt") : abspath(ARGS[1])
+isfile(list_file) || error("case list not found: $(list_file)")
 
-# save paths in dataframe
-df_bdg_path = CSV.File(joinpath(wd,"bdg_path.txt")) |> DataFrame
+lines = strip.(readlines(list_file))
+case_paths = filter(line -> !isempty(line) && !startswith(line, "#"), lines)
 
-# run DECARB for each building
-for i in 1:size(df_bdg_path,1)
-    bdg = df_bdg_file[i,:]
-    empty!(ARGS)
-    push!(ARGS,bdg[1])
-    include(joinpath(wd,"src","DECARB.jl"))
+for raw_path in case_paths
+    path = strip(raw_path, ['\"', '\''])
+    case = basename(normpath(path)) == "in" ? dirname(normpath(path)) : normpath(path)
+    DECARB.run_decarb!(case; solver=:highs)
 end

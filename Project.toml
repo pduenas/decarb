@@ -13,6 +13,9 @@ HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
+[extensions]
+DECARBGurobiExt = "Gurobi"
+
 [compat]
 AstroLib = "0.4"
 CSV = "0.10"
@@ -23,3 +26,9 @@ HiGHS = "1.24.1"
 JuMP = "1.31"
 TimeZones = "1.22"
 julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

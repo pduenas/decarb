@@ -17,4 +17,7 @@ which keeps the "inactive technology" code paths under test.
 
 ```julia
 using DECARB
-DECARB.run_decarb!("examples/minimal", 1e-2, 300.0, 2, false)  # 2 = HiGHS
+DECARB.run_decarb!("examples/minimal"; solver=:highs)
+```
+
+Outputs are written to `examples/minimal/out/`.
