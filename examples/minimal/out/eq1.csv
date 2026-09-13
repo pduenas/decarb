@@ -1,4 +1,5 @@
 name,eq
+total_cost,11.79
 energy_bill,-9.85
 grid_sales,0.0
 grid_purchases,8.96
@@ -18,5 +19,5 @@ unserved_electricity_cost,0.0
 unserved_thermal_cost,0.0
 unserved_hot_water_cost,0.0
 unserved_ev_cost,0.0
-direct_emissions,0.0
-indirect_emissions,0.02
+direct_emissions,0.001849
+indirect_emissions,0.01803

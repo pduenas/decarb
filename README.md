@@ -1,123 +1,162 @@
 # DECARB
 
-DECARB is a Julia-based optimization model for distributed energy systems, building-level thermal and electric coupling, and operational scheduling for decarbonization-oriented energy planning.
+DECARB (Distributed Energy Consumption in Responsive Buildings) is a Julia
+optimization model for planning and operating building- and district-scale
+energy systems. It couples electricity, space conditioning, hot water, fuel,
+distributed generation, storage, and electric vehicles in a mixed-integer
+linear program built with [JuMP](https://jump.dev/).
 
-## Overview
+> DECARB is research software. Review assumptions and validate input data before
+> using results for engineering, policy, or investment decisions.
 
-This project builds and solves a mixed-integer optimization model to evaluate energy system operation and investment decisions across building and district-scale assets, including:
+## Capabilities
 
-- CHP units
-- Heat pumps / HVAC systems
-- Absorption chillers
-- Water heaters
-- PV and wind generation
-- Battery storage
-- Electric vehicles
-- Thermal and electrical demand modeling
-
-## Project structure
-
-```text
-.
-├── LICENSE
-├── Manifest.toml
-├── Project.toml
-├── run.jl
-├── run_decarb.jl
-├── in/
-│   ├── abp.csv
-│   ├── bdg_i.csv
-│   ├── bdg_ii.csv
-│   ├── bess.csv
-│   ├── chp.csv
-│   ├── ev.csv
-│   ├── hvac.csv
-│   ├── cfg.csv
-│   ├── pv.csv
-│   ├── sp.csv
-│   ├── tm.csv
-│   ├── topo.csv
-│   ├── wh.csv
-│   ├── wind.csv
-│   └── ...
-├── out/
-│   └── generated results and reports
-├── src/
-│   ├── DECARB.jl
-│   ├── case_runner/
-│   ├── configure_solver/
-│   ├── decarb_model/
-│   ├── load_inputs/
-│   ├── read_outputs/
-│   ├── solve_model/
-│   └── write_outputs/
-├── docs/
-│   └── formulation.md
-└── README.md
-```
+- Combined heat and power and absorption chillers
+- Heating, ventilation, air conditioning, and water heating
+- Solar PV and wind generation
+- Battery energy storage and electric vehicles
+- Thermal and electrical demand and indoor-temperature dynamics
+- Time-varying tariffs, peak charges, fuel costs, and emissions
+- Existing-equipment dispatch and multi-period investment decisions
 
 ## Requirements
 
-- Julia 1.12 or newer
-- Gurobi and/or HiGHS solver support
-- Required Julia packages listed in [Project.toml](Project.toml)
+- Julia 1.10 or newer
+- HiGHS, installed automatically as the default open-source solver
+- Optional: Gurobi and a valid Gurobi license
 
-## Installation
+## Install and run
 
-1. Clone the repository.
-2. Open the project in Julia.
-3. Activate the environment:
+Clone the repository, then instantiate its Julia environment:
+
+```sh
+julia --project=. -e "using Pkg; Pkg.instantiate()"
+```
+
+Run the bundled 24-hour example:
+
+```sh
+julia --project=. run.jl
+```
+
+Or call the package API:
+
+```julia
+using DECARB
+
+result = DECARB.run_decarb!("examples/minimal";
+    mip_gap=1e-2,
+    time_limit=300.0,
+    solver=:highs,
+    relax_integrality=false,
+)
+```
+
+The returned named tuple contains the solved JuMP model and the loaded input
+dictionaries. The case results are written to its `out/` directory.
+
+### Optional Gurobi support
+
+Gurobi is not required to install or use DECARB. Add and load it explicitly
+before selecting it:
 
 ```julia
 using Pkg
-Pkg.activate(".")
-Pkg.instantiate()
+Pkg.add("Gurobi")
+
+using Gurobi, DECARB
+DECARB.run_decarb!("examples/minimal"; solver=:gurobi)
 ```
 
-4. Ensure the solver libraries are available for your environment.
+Gurobi is proprietary software and has separate installation and licensing
+terms.
 
-## Usage
+## Case format
 
-Run the model from the project root:
+A case directory contains an `in/` directory with these CSV files:
 
-```julia
-include("run.jl")
+| File | Purpose |
+|---|---|
+| `cfg.csv` | Global model, comfort, investment, and solver-independent settings |
+| `tm.csv` | Time series for demand, weather, tariffs, and emissions |
+| `bdg_i.csv`, `bdg_ii.csv` | Building geometry and thermal properties |
+| `sp.csv` | Existing assets and candidate technology selections |
+| `topo.csv` | Thermal connections between equipment and loads |
+| `chp.csv`, `abp.csv`, `hvac.csv`, `wh.csv` | Thermal equipment catalogs |
+| `pv.csv`, `wind.csv`, `bess.csv`, `ev.csv` | Distributed-energy catalogs |
+
+See [`examples/minimal`](examples/minimal) for a complete case.
+
+DECARB writes:
+
+- `out/eq1.csv`: cost and emissions summary
+- `out/eq2.csv`: installed equipment and investment summary
+- `out/ts.csv`: dispatch, temperature, fuel, state-of-charge, and dual time series
+- `out/balance.csv`: written only when the electrical balance tolerance is exceeded
+- `out/iis_constraints.txt`: written when the solver can identify conflicting constraints
+
+For batch execution, list one case directory per line in `bdg_path.txt` and run
+`julia --project=. run_decarb.jl`. A different list file may be supplied as the
+first argument.
+
+## Tests
+
+```sh
+julia --project=. -e "using Pkg; Pkg.test()"
 ```
 
-or:
-
-```julia
-include("run_decarb.jl")
-```
-
-The input files in the [in](in) directory drive the simulation and the model writes outputs to the project output location.
-
-## Configuration
-
-- Edit input CSV files under [in](in)
-- Adjust model settings in the solver configuration modules under [src/configure_solver](src/configure_solver)
-- Update case and scenario logic in the runner components under [src/case_runner](src/case_runner)
-
-## Model notes
-
-The implementation is organized as a modular Julia package that separates:
-
-- input loading
-- model construction
-- solver configuration
-- result reading
-- output writing
-
-This keeps the optimization logic easier to extend and maintain as new technologies or constraints are added.
+The test suite uses HiGHS and does not require proprietary software.
 
 ## Documentation
 
-See [docs/formulation.md](docs/formulation.md) for formulation and modeling notes.
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3. See [LICENSE](LICENSE) for details.
+- [Model formulation](docs/formulation.md)
+- [Community code of conduct](CODE_OF_CONDUCT.md)
 
 ## Contributing
 
-Contributions are welcome. Please open an issue or submit a pull request with a clear explanation of the proposed change.
+Bug reports, documentation fixes, tests, and focused model improvements are
+welcome. Before contributing:
+
+- Search existing issues and pull requests, and open an issue before a large
+  model, schema, or API change.
+- Keep each pull request focused and add tests for behavioral changes.
+- Update this README or the formulation documentation when assumptions,
+  interfaces, inputs, or outputs change.
+- Explain the physical units and source of new parameters. Optimization changes
+  should include a small reproducible case and describe effects on feasibility,
+  objective value, and relevant balances.
+- Do not commit generated outputs, solver dumps, local manifests, confidential
+  data, personal data, export-controlled data, or material you cannot license.
+- Use four-space indentation, descriptive names, public-function docstrings,
+  and platform-independent paths built with `joinpath`.
+
+Run `Pkg.test()` before requesting review. By contributing, you agree that your
+work is licensed under the GNU Affero General Public License v3. Participation
+is also governed by the [code of conduct](CODE_OF_CONDUCT.md).
+
+## Citation
+
+If you use DECARB in published work, cite the software release:
+
+> Pablo Duenas. *DECARB: Distributed Energy Consumption in Responsive
+> Buildings*, version 1.0.0. <https://github.com/pduenas/decarb>
+
+GitHub's **Cite this repository** feature provides additional formats from the
+machine-readable [`CITATION.cff`](CITATION.cff) file.
+
+## Security
+
+Security fixes are applied to the current `main` branch and, when practical,
+the latest published release. Do not open a public issue for a suspected
+vulnerability. Use GitHub's private vulnerability reporting feature or email
+`pduenas@mit.edu` with the subject `DECARB security report`.
+
+Include the affected version or commit, reproduction steps, impact, and any
+suggested mitigation. Allow time for acknowledgement and investigation before
+public disclosure. See [`SECURITY.md`](SECURITY.md) for GitHub's discoverable
+copy of this policy. Ordinary correctness bugs can use the public bug template.
+
+## License
+
+DECARB is licensed under the [GNU Affero General Public License v3](LICENSE).
+Contributions are accepted under the same license.
