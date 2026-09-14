@@ -37,7 +37,7 @@ function bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::
         # set bounds of potential BESS modules
         elseif sp["BESSyn"][s] == "YES"
             set_upper_bound.(zBESS[:,bess["ty"].==sp["BESS0"][s]],bdg["Bbess"])
-            set_lower_bound.(zBESS[:,bess["ty"].==sp["BESS0"][s]],sp["BESSz0"][s])
+            set_lower_bound.(zBESS[1,bess["ty"].==sp["BESS0"][s]],sp["BESSz0"][s])
             bess["zmx0"][bess["ty"].==sp["BESS0"][s]] .= bdg["Bbess"]
         end
     end
@@ -50,31 +50,32 @@ function bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::
     # maximum available space for BESS modules {0,z}
     @constraint(model, eBESSbdg, sum(zBESS[i,s] for i=1:cfg["IT"],s=1:bess["N"]) <= bdg["Bbess"])
     for i1=1:cfg["IT"]
-    	# maximum electricity stored by BESS [0,z]
-    	@constraint(model, eBESSmx[t=tm["IW"][i1]:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    		vBESSsoc[t,s] <= sum(zBESS[i2,s] for i2=1:i1))
-    	# maximum electricity charged to BESS [0,z]
-    	@constraint(model, eBESSup[t=tm["IW"][i1]:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    		vBESSup[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["up"][s]/bess["mx"][s])
-    	# maximum electricity discharged from BESS [0,z]
-    	@constraint(model, eBESSdn[t=tm["IW"][i1]:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    		vBESSdn[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["dn"][s]/bess["mx"][s])
+        tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
+        # maximum electricity stored by BESS [0,z]
+        @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
+            vBESSsoc[t,s] <= sum(zBESS[i2,s] for i2=1:i1))
+        # maximum electricity charged to BESS [0,z]
+        @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
+            vBESSup[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["up"][s]/bess["mx"][s])
+        # maximum electricity discharged from BESS [0,z]
+        @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
+            vBESSdn[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["dn"][s]/bess["mx"][s])
     end
 
     # charge/discharge mode of BESS {0,1}
     @constraint(model, eBESSud[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    	vBESSup[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["up"][s]/bess["mx"][s]*bBESS[t,s])
+        vBESSup[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["up"][s]/bess["mx"][s]*bBESS[t,s])
     @constraint(model, eBESSdu[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
-    	vBESSdn[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["dn"][s]/bess["mx"][s]*(1-bBESS[t,s]))
+        vBESSdn[t,s] <= bess["zmx0"][s]*tm["TM"][t]*bess["dn"][s]/bess["mx"][s]*(1-bBESS[t,s]))
     # electricity stored balance [0,z]
     @constraint(model, eBESSbal[t=1:tm["P"],s=1:bess["N"]; bess["zmx0"][s]>0],
         vBESSsoc[t,s]-vBESSsoc[t-1,s] == vBESSup[t,s]*bess["effu"][s]-vBESSdn[t,s]/bess["effd"][s] +
-    	sum(cfg["BESSsoc0"]*zBESS[i,s] for i=2:cfg["IT"] if t==tm["IW"][i]))
+        sum(cfg["BESSsoc0"]*zBESS[i,s] for i=2:cfg["IT"] if t==tm["IW"][i]))
     # fix initial SOC [0,z]
     @constraint(model, eBESSi[s=1:bess["N"]; bess["zmx0"][s]>0],
-    	vBESSsoc[0,s] == cfg["BESSsoc0"]*zBESS[1,s])
+        vBESSsoc[0,s] == cfg["BESSsoc0"]*zBESS[1,s])
     # fix final SOC [0,z]
     @constraint(model, eBESSf[s=1:bess["N"]; bess["zmx0"][s]>0],
-    	vBESSsoc[tm["P"],s] == cfg["BESSsocf"]*sum(zBESS[i,s] for i=1:cfg["IT"]))
+        vBESSsoc[tm["P"],s] == cfg["BESSsocf"]*sum(zBESS[i,s] for i=1:cfg["IT"]))
 
 end

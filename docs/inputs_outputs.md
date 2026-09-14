@@ -338,7 +338,7 @@ This file has columns `name` and `eq`, with one row per metric.
 
 | `name` | Unit | Description |
 |---|---|---|
-| `total_cost` | $ | Complete objective: energy bill, non-service penalties, annualized equipment cost, and EV driver-preference term. |
+| `total_cost` | $ | Complete objective: energy bill, non-service penalties, annualized new-equipment cost, and EV driver-preference term. Existing equipment capital cost is sunk. |
 | `energy_bill` | $ | Grid purchases minus grid-sale revenue, plus capacity, fuel, variable O&M, and fixed O&M costs. |
 | `grid_sales` | $ | Grid-export revenue, reported as a positive amount. |
 | `grid_purchases` | $ | Grid-import energy cost. |
@@ -346,7 +346,7 @@ This file has columns `name` and `eq`, with one row per metric.
 | `fuel_purchases` | $ | Gaseous- and liquid-fuel cost. |
 | `variable_om_cost` | $ | Variable operation and maintenance cost. |
 | `fixed_om_cost` | $ | Fixed operation and maintenance cost, prorated to the modeled horizon. |
-| `equipment_annuity` | $ | Sum of all time-prorated annualized equipment costs. |
+| `equipment_annuity` | $ | Sum of time-prorated annualized costs for newly purchased equipment; existing equipment capital cost is excluded. |
 | `chp_annuity` | $ | CHP portion of the equipment annuity. |
 | `hvac_annuity` | $ | HVAC portion of the equipment annuity. |
 | `abp_annuity` | $ | Absorption-chiller portion of the equipment annuity. |

@@ -30,7 +30,7 @@ function read_econ(model::Model,tm::Dict)
     # Read values for economic variables
     C_TOTAL = round.(value.(model[:COST]), digits=2)
     C_VAR = round.(value.(model[:COST_VAR]), digits=2)
-    Qearn = round.(sum(value.(model[:vQearn][t]) for t=1:tm["P"]), digits=2)
+    Qearn = -round.(sum(value.(model[:vQearn][t]) for t=1:tm["P"]), digits=2)
     Qcost = round.(sum(value.(model[:vQcost][t]) for t=1:tm["P"]), digits=2)
     QmxCost = round.(value.(model[:vQmxCost]), digits=2)
     GLcost = round.(sum(value.(model[:vGLcost][t]) for t=1:tm["P"]), digits=2)

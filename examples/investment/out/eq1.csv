@@ -14,7 +14,7 @@ abp_annuity,0.0
 water_heater_annuity,477.16
 pv_annuity,7455.15
 wind_annuity,0.0
-battery_annuity,0.0
+battery_annuity,-0.0
 unserved_electricity_cost,0.0
 unserved_thermal_cost,0.0
 unserved_hot_water_cost,0.0

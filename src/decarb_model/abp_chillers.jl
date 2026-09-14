@@ -19,7 +19,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     chp::Dict,abp::Dict)
 
     # unitary fuel consumption by absorption chiller [0,1]
-    @variable(model, 1 >= vABPq[t=1:tm["P"],a=1:abp["N"]] >= 0)    
+    @variable(model, 1 >= vABPq[t=1:tm["P"],a=1:abp["N"]] >= 0)
     # unitary cooling generated in absorption chiller (0,1)
     @variable(model, 1 >= vABPac[t=1:tm["P"],a=1:abp["N"]] >= 0)
     # investment in absorption chiller at investment window {0,1}
@@ -59,7 +59,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     # gaseous fuel purchased by absorption chillers [kWh]
     if any(abp["fuel"].=="G")
         @expression(model, vABP_G[t=1:tm["P"]],
-            sum(vABP_Q[t,a]/abp["fcf"][a] for a=1:abp["N"] 
+            sum(vABP_Q[t,a]/abp["fcf"][a] for a=1:abp["N"]
                 if abp["fcf"][a]>0 && abp["fuel"][a]=="G" && abp["ac"][a]>0))
     else
         @variable(model, vABP_G[t=1:tm["P"]] == 0)
@@ -68,7 +68,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     # liquid fuel purchased by absorption chillers [kWh]
     if any(abp["fuel"].=="L")
         @expression(model, vABP_L[t=1:tm["P"]],
-            sum(vABP_Q[t,a]/abp["fcf"][a] for a=1:abp["N"] 
+            sum(vABP_Q[t,a]/abp["fcf"][a] for a=1:abp["N"]
                 if abp["fcf"][a]>0 && abp["fuel"][a]=="L" && abp["ac"][a]>0))
     else
         @variable(model, vABP_L[t=1:tm["P"]] == 0)
@@ -83,14 +83,15 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
      @constraint(model, eABPac[t=1:tm["P"],a=1:abp["N"]], vABPac[t,a] <= bABP_u[t,a])
     # investment in absorption chiller {0,1}
     for i1=1:cfg["IT"]
-    	 @constraint(model, eABPb[t=tm["IW"][i1]:tm["P"],a=1:abp["N"]],
-    		bABP_u[t,a] == sum(bABPty[i2,a] for i2=1:i1))
+         tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
+          @constraint(model, [t=tm["IW"][i1]:tlast,a=1:abp["N"]],
+            bABP_u[t,a] == sum(bABPty[i2,a] for i2=1:i1))
     end
     # allowed cooling to building from absorption chiller {0,1}
     @constraint(model, eABPacbdg[t=1:tm["P"],a=1:abp["N"]], vABPac[t,a] <= model[:bBDGac][t])
     # heat consumption by absorption chiller [0,1]
     @constraint(model, eABPq[t=1:tm["P"],a=1:abp["N"]; abp["mx_eff"][a]>0],
-        vABPac[t,a] <= vABPq[t,a] + 
+        vABPac[t,a] <= vABPq[t,a] +
         sum(topo["chp_abp"][c,a]*chp["mx_eff"][c]*model[:vCHPabp][t,c,a]/abp["mx_eff"][a] for c=1:chp["N"] if topo["chp_abp"][c,a]>0))
 
 end
