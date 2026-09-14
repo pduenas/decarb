@@ -94,14 +94,24 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
                   "impossible: max(Tmx) equals the indoor upper bound")
     end
 
-    # ---- divide-by-zero guards --------------------------------------------
-    for (d,name,keys) in ((chp,"chp",("fcf",)), (abp,"abp",("fcf","ac")),
-                          (wh,"wh",("fcf","eff")), (pv,"pv",("ar",)),
+    # ---- conversion factors and divide-by-zero guards ---------------------
+    # fcf is a conversion efficiency, not a heat-rate multiplier. A zero is
+    # accepted only for equipment that does not consume fuel directly.
+    for (d,name) in ((chp,"chp"), (abp,"abp"), (wh,"wh"))
+        for i in 1:d["N"]
+            fcf = d["fcf"][i]
+            valid = d["fuel"][i] == "0" ? 0 <= fcf <= 1 : 0 < fcf <= 1
+            valid || push!(err,"$(name).csv row $(i) ($(d["ty"][i])): " *
+                "fcf must be in (0,1] for fuel-consuming equipment, or " *
+                "[0,1] when direct fuel is not used")
+        end
+    end
+    for (d,name,keys) in ((abp,"abp",("ac",)),
+                          (wh,"wh",("eff",)), (pv,"pv",("ar",)),
                           (bess,"bess",("mx","effu","effd")),
                           (ev,"ev",("mx","effu","effd")))
         for k in keys, i in 1:d["N"]
             d[k][i] > 0 && continue
-            k == "fcf" && d["fuel"][i] == "0" && continue   # electric: fcf unused
             push!(err,"$(name).csv row $(i) ($(d["ty"][i])): $(k) must be positive")
         end
     end

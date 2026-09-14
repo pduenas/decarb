@@ -190,7 +190,7 @@ be used consistently across every price and cost field.
 | `ty` | string | Unique CHP type name. |
 | `mx` | kW | Maximum electrical output. |
 | `mn` | fraction | Minimum output as a fraction of capacity. |
-| `fcf` | fraction | Fuel conversion factor; fuel input is output divided by this value. |
+| `fcf` | fraction | Fuel conversion efficiency in `(0,1]`; fuel input is output divided by this value. |
 | `fuel` | code | `G` for gaseous or `L` for liquid fuel. |
 | `tank` | kWh | Reserved on-site thermal storage size; currently inactive. |
 | `h2p` | ratio | Heat-to-power ratio. |
@@ -206,7 +206,7 @@ be used consistently across every price and cost field.
 |---|---|---|
 | `ty` | string | Unique absorption-chiller type name. |
 | `mx` | kW | Maximum cooling capacity. |
-| `fcf` | fraction | Fuel conversion factor. |
+| `fcf` | fraction | Direct-fuel conversion efficiency in `(0,1]`; use `0` when cooling is supplied only by CHP heat. |
 | `fuel` | code | `G` for gaseous or `L` for liquid fuel. |
 | `ac` | fraction | Cooling efficiency. |
 | `inv` | $/unit | Capital cost. |
@@ -235,7 +235,7 @@ be used consistently across every price and cost field.
 |---|---|---|
 | `ty` | string | Unique water-heater type name. |
 | `mx` | kW | Maximum input capacity. |
-| `fcf` | fraction | Fuel conversion factor; required for fuel-fired units. |
+| `fcf` | fraction | Fuel conversion efficiency in `(0,1]` for fuel-fired units; use `0` when not applicable. |
 | `fuel` | code | `0` for electricity, `G` for gaseous fuel, or `L` for liquid fuel. |
 | `eff` | fraction | Hot-water conversion efficiency. |
 | `tank` | kWh | Thermal tank capacity; use `0` for tankless. |
