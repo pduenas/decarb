@@ -131,7 +131,7 @@ who is affiliated with the [MIT Energy Initiative](https://energy.mit.edu/) and
 
 The original version of DECARB was developed at the [MIT Energy Initiative](https://energy.mit.edu/).
 by Pablo Duenas. Other contributors, in order, are Graham
-Turk, Karen Tapia-Ahumada, Leslie Norford, Shaohui Lui, Onur Talu, and Sungho
+Turk, Karen Tapia-Ahumada, Leslie Norford, Shaohui Liu, Onur Talu, and Sungho
 Shin. All contributors are from the MIT Energy Initiative.
 
 ## Contributing
@@ -160,7 +160,7 @@ is also governed by the [code of conduct](CODE_OF_CONDUCT.md).
 
 If you use DECARB in published work, cite the software release:
 
-> P. Duenas, G. Turk, K. Tapia-Ahumada, L. Norford, S. Lui, O. Talu, and S.
+> P. Duenas, G. Turk, K. Tapia-Ahumada, L. Norford, S. Liu, O. Talu, and S.
 > Shin. *DECARB: Distributed Energy Consumption in Responsive Buildings*.
 > Version 1.0.0. <https://github.com/pduenas/decarb>
 
