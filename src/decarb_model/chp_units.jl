@@ -93,14 +93,15 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
         vCHP_q[t,c] <= bCHP_q[t,c])
     # minimum electricity provided by CHP [0,1]
     @constraint(model, eCHPmn[t=1:tm["P"],c=1:chp["N"]; chp["mx_eff"][c]>0 && chp["mn"][c]>0],
-    	vCHP_q[t,c] >= chp["mn"][c]*bCHP_q[t,c])
+        vCHP_q[t,c] >= chp["mn"][c]*bCHP_q[t,c])
     # allowed commitment of CHP unit when existing {0,1}
     @constraint(model, eCHPu[t=1:tm["P"],c=1:chp["N"]; chp["mx_eff"][c]>0],
         bCHP_q[t,c] <= bCHP_u[t,c])
     # investment in CHP unit {0,1}
     for i1=1:cfg["IT"]
-    	 @constraint(model, eCHPb[t=tm["IW"][i1]:tm["P"],c=1:chp["N"]; chp["mx_eff"][c]>0],
-    		bCHP_u[t,c] == sum(bCHPty[i2,c] for i2=1:i1))
+         tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
+          @constraint(model, [t=tm["IW"][i1]:tlast,c=1:chp["N"]; chp["mx_eff"][c]>0],
+            bCHP_u[t,c] == sum(bCHPty[i2,c] for i2=1:i1))
     end
     # disable electricity generation for boilers and furnaces
     @constraint(model, eCHPq0[t=1:tm["P"],c=1:chp["N"]; chp["h2p"][c]==0], vCHP_q[t,c] <= 0)

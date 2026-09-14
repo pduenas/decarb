@@ -181,9 +181,8 @@ end
     @test occursin("fcf must be in (0,1]", sprint(showerror, err))
 end
 
-# Economic summary includes the solved objective and keeps annuity separate
-# from fixed O&M.
-@testset "economic summary" begin
+# Existing equipment incurs fixed O&M, but its capital cost is sunk.
+@testset "economic summary :: existing capital is sunk" begin
     p  = stage()
     e1 = readout(p, "eq1.csv")
     val(n) = only(e1.eq[e1.name .== n])
@@ -191,7 +190,49 @@ end
     @test val("equipment_annuity") ≈ sum(val(n) for n in (
         "chp_annuity", "hvac_annuity", "abp_annuity", "water_heater_annuity",
         "pv_annuity", "wind_annuity", "battery_annuity")) atol = 0.02
+    @test val("equipment_annuity") == 0
+    @test val("fixed_om_cost") > 0
     @test val("equipment_annuity") != val("fixed_om_cost")
+end
+
+# A unit selected by the model is new equipment and must incur both reported
+# CAPEX and a time-prorated annualized investment cost.
+@testset "economic summary :: new equipment pays annuity" begin
+    p = stage(patches = Dict(
+        "cfg.csv" => ["pIT,0" => "pIT,1",
+                      "pNSTcost,1.0" => "pNSTcost,1000.0"],
+        "sp.csv"  => "HP-MINISPLIT,1,NO" => "HP-MINISPLIT,0,YES",
+    ))
+    e1 = readout(p, "eq1.csv")
+    eq2 = readout(p, "eq2.csv")
+    val(n) = only(e1.eq[e1.name .== n])
+    hp = eq2[eq2.Eq .== "HP-MINISPLIT", :]
+
+    @test nrow(hp) == 1
+    @test only(hp.New) == 1
+    @test only(hp.CAPEX) > 0
+    @test val("hvac_annuity") > 0
+    @test val("water_heater_annuity") == 0
+    @test val("pv_annuity") == 0
+end
+
+# Existing integer-count DER stock belongs only to the first investment
+# window; enabling later investment windows must not duplicate it.
+@testset "investment windows :: existing DER stock is not repeated" begin
+    p = stage(patches = Dict(
+        "cfg.csv"   => "pIT,0" => "pIT,2",
+        "sp.csv"    => "PV-MONO,4,NO" => "PV-MONO,4,YES",
+        "bdg_i.csv" => "pBpv,20.0" => "pBpv,7.2",
+    ))
+    e1 = readout(p, "eq1.csv")
+    eq2 = readout(p, "eq2.csv")
+    pv = eq2[eq2.Eq .== "PV-MONO", :]
+
+    @test nrow(pv) == 1
+    @test only(pv.Qty) == 4
+    @test only(pv.New) == 0
+    @test only(pv.CAPEX) == 0
+    @test only(e1.eq[e1.name .== "pv_annuity"]) == 0
 end
 
 end # DECARB.jl
