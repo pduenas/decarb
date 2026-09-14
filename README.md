@@ -112,6 +112,26 @@ The test suite uses HiGHS and does not require proprietary software.
 - [Model formulation](docs/formulation.md)
 - [Inputs and outputs](docs/inputs_outputs.md)
 
+## DECARB Team
+
+The original version of DECARB was developed by [Pablo Duenas](https://github.com/pduenas)
+at the [MIT Energy Initiative](https://energy.mit.edu/), with 
+contributions from Graham Turk, Karen Tapia-Ahumada, Leslie Norford, 
+Shaohui Liu, Onur Talu, and Sungho Shin, all affiliated with the [Massachusetts Institute of Technology](https://www.mit.edu/)
+at the time of development.
+
+DECARB is currently maintained by [Pablo Duenas](https://github.com/pduenas), 
+who is affiliated with the [MIT Energy Initiative](https://energy.mit.edu/) and 
+[Universidad Pontificia Comillas](https://www.comillas.edu/).
+
+
+## DECARB Team
+
+The original version of DECARB was developed at the [MIT Energy Initiative](https://energy.mit.edu/).
+by Pablo Duenas. Other contributors, in order, are Graham
+Turk, Karen Tapia-Ahumada, Leslie Norford, Shaohui Lui, Onur Talu, and Sungho
+Shin. All contributors are from the MIT Energy Initiative.
+
 ## Contributing
 
 Bug reports, documentation fixes, tests, and focused model improvements are
@@ -134,12 +154,13 @@ Run `Pkg.test()` before requesting review. By contributing, you agree that your
 work is licensed under the GNU Affero General Public License v3. Participation
 is also governed by the [code of conduct](CODE_OF_CONDUCT.md).
 
-## Citation
+## Citing DECARB
 
 If you use DECARB in published work, cite the software release:
 
-> Pablo Duenas. *DECARB: Distributed Energy Consumption in Responsive
-> Buildings*, version 1.0.0. <https://github.com/pduenas/decarb>
+> P. Duenas, G. Turk, K. Tapia-Ahumada, L. Norford, S. Lui, O. Talu, and S.
+> Shin. *DECARB: Distributed Energy Consumption in Responsive Buildings*.
+> Version 1.0.0. <https://github.com/pduenas/decarb>
 
 GitHub's **Cite this repository** feature provides additional formats from the
 machine-readable [`CITATION.cff`](CITATION.cff) file.

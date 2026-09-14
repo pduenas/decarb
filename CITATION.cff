@@ -5,6 +5,25 @@ title: "DECARB: Distributed Energy Consumption in Responsive Buildings"
 authors:
   - family-names: Duenas
     given-names: Pablo
+    affiliation: MIT Energy Initiative
+  - family-names: Turk
+    given-names: Graham
+    affiliation: MIT Energy Initiative
+  - family-names: Tapia-Ahumada
+    given-names: Karen
+    affiliation: MIT Energy Initiative
+  - family-names: Norford
+    given-names: Leslie
+    affiliation: MIT Energy Initiative
+  - family-names: Lui
+    given-names: Shaohui
+    affiliation: MIT Energy Initiative
+  - family-names: Talu
+    given-names: Onur
+    affiliation: MIT Energy Initiative
+  - family-names: Shin
+    given-names: Sungho
+    affiliation: MIT Energy Initiative
 version: 1.0.0
 license: AGPL-3.0-only
 repository-code: https://github.com/pduenas/decarb
