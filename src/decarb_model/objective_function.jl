@@ -113,7 +113,8 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, COST_VOM,
         sum(chp["vom"][c]*model[:vCHP_Q][t,c] for t=1:tm["P"],c=1:chp["N"]) +
         sum(abp["vom"][a]*model[:vABP_AC][t,a] for t=1:tm["P"],a=1:abp["N"]) +
-        sum(hvac["vom"][h]*model[:vHVAC_HTAC][t,h] for t=1:tm["P"],h=1:hvac["N"]) +
+        sum(hvac["vom"][h]*model[:vHVAC_HT][t,h] for t=1:tm["P"],h=1:hvac["N"]) +
+        sum(hvac["vom"][h]*model[:vHVAC_AC][t,h] for t=1:tm["P"],h=1:hvac["N"]) +
         sum(wh["vom"][w]*model[:vWH_HW][t,w] for t=1:tm["P"],w=1:wh["N"]))
 
     # total variable costs (+) / total incomes (-) [$]
