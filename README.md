@@ -110,7 +110,7 @@ The test suite uses HiGHS and does not require proprietary software.
 ## Documentation
 
 - [Model formulation](docs/formulation.md)
-- [Community code of conduct](CODE_OF_CONDUCT.md)
+- [Inputs and outputs](docs/inputs_outputs.md)
 
 ## Contributing
 
