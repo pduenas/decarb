@@ -96,6 +96,8 @@ end
     @test sum(ts.Gwh)  > 0
     @test sum(ts.WHhw) > 0
     @test sum(ts.HWns) ≈ 0 atol = 1e-6      # demand fully served
+    active = ts.WHhw .> 0
+    @test ts.Gwh[active] ≈ ts.WHhw[active] ./ (0.95 * 0.82) atol = 0.02
     @test all(iszero, ts.Gchp) && all(iszero, ts.Gabp)
 
     val(n) = only(e1.eq[e1.name .== n])
@@ -163,6 +165,22 @@ end
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Conversion factors are efficiencies: useful output divided by fcf gives
+# purchased fuel, and fuel-consuming equipment cannot exceed unity.
+@testset "validation :: fuel conversion factors are efficiencies" begin
+    err = try
+        stage(patches = Dict(
+            "wh.csv" => "WH-TANKLESS-GAS,12.0,0.82,G" =>
+                        "WH-TANKLESS-GAS,12.0,1.20,G",
+        ))
+        nothing
+    catch e
+        e
+    end
+    @test err isa ErrorException
+    @test occursin("fcf must be in (0,1]", sprint(showerror, err))
+end
+
 # Economic summary includes the solved objective and keeps annuity separate
 # from fixed O&M.
 @testset "economic summary" begin
