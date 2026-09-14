@@ -85,7 +85,9 @@ A case directory contains an `in/` directory with these CSV files:
 | `chp.csv`, `abp.csv`, `hvac.csv`, `wh.csv` | Thermal equipment catalogs |
 | `pv.csv`, `wind.csv`, `bess.csv`, `ev.csv` | Distributed-energy catalogs |
 
-See [`examples/minimal`](examples/minimal) for a complete case.
+See [`examples/minimal`](examples/minimal) for a complete dispatch case and
+[`examples/investment`](examples/investment) for an annual case that starts
+without installed equipment and requires investment.
 
 DECARB writes:
 
