@@ -87,6 +87,19 @@ end
     @test any(!iszero, ts.dualQ)
 end
 
+# Weather, solar gains, internal gains, and HVAC all belong to the current
+# period in the data-driven building-temperature recurrence.
+@testset "thermal recurrence :: current-period outdoor temperature" begin
+    p = stage(patches = Dict(
+        "cfg.csv"    => "pTmode,true" => "pTmode,false",
+        "bdg_ii.csv" => "0.03,0.05,0.15" => "0.5,0.0,0.0",
+    ))
+    ts = readout(p, "ts.csv")
+
+    @test ts.Temp[1] ≈ 9.5 atol = 1e-6
+    @test ts.Temp[2] ≈ 4.0 atol = 1e-6
+end
+
 @testset "minimal :: gas path and emissions" begin
     p  = stage()
     ts = readout(p, "ts.csv")

@@ -66,7 +66,7 @@ Indoor temperature follows a first-order data-driven recurrence:
 
 ```text
 Tin[t] = Tin[t-1]
-       + k1 (Tout[t-1] - Tin[t-1])
+       + k1 (Tout[t] - Tin[t-1])
        + k2 solar_gain[t]
        + k3 (active_heating_cooling[t] + internal_gains[t])
 ```
