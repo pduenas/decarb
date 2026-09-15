@@ -85,6 +85,12 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
     # heating/cooling mode of HVAC unit {0,1}
     @constraint(model, eHVAChtac[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0],
         bHVACht[t,h]+bHVACac[t,h] <= bHVAC_u[t,h])
+    # heating mode in building with HVAC unit {0,1}
+    @constraint(model, eHVAChtbdg[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0],
+        bHVACht[t,h] <= model[:bBDGht][t])
+    # cooling mode in building with HVAC unit {0,1}
+    @constraint(model, eHVACacbdg[t=1:tm["P"],h=1:hvac["N"]; hvac["ACmx_eff"][h]>0],
+        bHVACac[t,h] <= model[:bBDGac][t])
     # investment in HVAC unit {0,1}
     for i1=1:cfg["IT"]
          tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
