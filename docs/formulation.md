@@ -62,18 +62,34 @@ within configured tariff periods.
 
 ## Building temperature
 
-Indoor temperature follows a first-order data-driven recurrence:
+Indoor temperature follows a first-order data-driven recurrence whose input
+coefficients `k1`, `k2`, and `k3` are calibrated at 15-minute resolution. For
+a model period of `TM[t]` hours, define:
+
+```text
+r[t]  = TM[t] / 0.25
+k1[t] = 1 - (1 - k1)^r[t]
+s[t]  = k1[t] / k1
+k2[t] = s[t] k2
+k3[t] = s[t] k3
+```
+
+When `k1 = 0`, `s[t] = r[t]`. This resampling assumes outdoor temperature,
+solar gain, internal gain, and equipment output are constant within each
+period. The resulting recurrence is:
 
 ```text
 Tin[t] = Tin[t-1]
-       + k1 (Tout[t] - Tin[t-1])
-       + k2 solar_gain[t]
-       + k3 (active_heating_cooling[t] + internal_gains[t])
+       + k1[t] (Tout[t] - Tin[t-1])
+       + k2[t] solar_gain[t]
+       + k3[t] (active_heating_cooling_power[t] + internal_gains[t])
 ```
 
 The first period uses the configured initial indoor temperature. Internal gains
 come from occupancy, lighting, and electric equipment. Solar gains are derived
-from irradiance, sun position, and building-envelope geometry.
+from irradiance, sun position, and building-envelope geometry. All three gain
+terms enter as average thermal power in kW; equipment energy produced during a
+period is divided by `TM[t]` before entering the recurrence.
 
 Comfort constraints bound indoor temperature when enabled. Nonnegative slack
 variables represent excursions above and below the comfort band and are

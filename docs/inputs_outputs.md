@@ -136,9 +136,9 @@ This file has one header row and one data row.
 
 | Column | Type/unit | Description |
 |---|---|---|
-| `pBk1` | dimensionless | Outdoor-to-indoor temperature response coefficient. |
-| `pBk2` | deg C/kW | Exterior solar-gain response coefficient. |
-| `pBk3` | deg C/kW | Internal heating/cooling response coefficient. |
+| `pBk1` | dimensionless | Outdoor-to-indoor response coefficient calibrated at 15-minute resolution; must be in `[0,1]`. |
+| `pBk2` | deg C/kW | Exterior solar-power response coefficient calibrated at 15-minute resolution. |
+| `pBk3` | deg C/kW | Internal and equipment thermal-power response coefficient calibrated at 15-minute resolution. |
 
 ### `sp.csv`: equipment selection
 

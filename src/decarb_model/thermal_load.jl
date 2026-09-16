@@ -37,11 +37,11 @@ function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp:
     # maximum indoor temperature [°C]
     @constraint(model, eTmx[t=1:tm["P"]; tm["Ton"][t]==1], vTin[t]-vTup[t] <= tm["Tmx"][t])
 
-    # thermal gain from active equipment [kWh]
+    # average thermal power from active equipment [kW]
     @expression(model, vQ_HTAC[t=1:tm["P"]],
-        sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) +
-        sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0)) -
-        sum(model[:vABP_AC][t,a] for a=1:abp["N"]))
+        (sum(model[:vCHP_HT][t,c] for c=1:chp["N"] if (!iszero).(topo["chp_bdg"][c,1])) +
+         sum(model[:vHVAC_HTAC][t,h] for h=1:hvac["N"] if (hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0)) -
+         sum(model[:vABP_AC][t,a] for a=1:abp["N"]))/tm["TM"][t])
 
     # calculate internal heat gains from occupancy, lighting and electrical equipment
     Q_IHG = tm["Qihg_P"] + tm["Qihg_L"] + tm["Qihg_E"]
@@ -49,16 +49,28 @@ function thermal_load!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,chp:
     # calculate total radiation on roof and external facades
     Q_R = tm["Q_R"]
 
+    # The data-driven coefficients describe a 15-minute transition. Resample
+    # that transition to each model period, assuming weather and thermal power
+    # are constant within the period.
+    0 <= bdg["Bk1"] <= 1 ||
+        error("❗  bdg_ii.pBk1 must be in [0,1] for timestep resampling")
+    calibration_hours = 0.25
+    period_ratio = tm["TM"] ./ calibration_hours
+    Bk1_t = 1 .- (1 - bdg["Bk1"]) .^ period_ratio
+    response_scale = iszero(bdg["Bk1"]) ? period_ratio : Bk1_t ./ bdg["Bk1"]
+    Bk2_t = bdg["Bk2"] .* response_scale
+    Bk3_t = bdg["Bk3"] .* response_scale
+
     # thermal model based on data-driven parameters:
     #   1- indoor to outdoor temperature difference
     #   2- solar radiation on building envelope
     #   3- heating/cooling balance and internal heat gains
     @constraint(model, eTbal0,      # initial period
         vTin[1] ==
-        cfg["Tin0"] + bdg["Bk1"]*(tm["Tout"][1]-cfg["Tin0"]) + bdg["Bk2"]*Q_R[1] + bdg["Bk3"]*(vQ_HTAC[1]+Q_IHG[1]))
+        cfg["Tin0"] + Bk1_t[1]*(tm["Tout"][1]-cfg["Tin0"]) + Bk2_t[1]*Q_R[1] + Bk3_t[1]*(vQ_HTAC[1]+Q_IHG[1]))
     @constraint(model, eTbal[t=2:tm["P"]],
         vTin[t] ==
-        vTin[t-1] + bdg["Bk1"]*(tm["Tout"][t]-vTin[t-1]) + bdg["Bk2"]*Q_R[t] + bdg["Bk3"]*(vQ_HTAC[t]+Q_IHG[t]))
+        vTin[t-1] + Bk1_t[t]*(tm["Tout"][t]-vTin[t-1]) + Bk2_t[t]*Q_R[t] + Bk3_t[t]*(vQ_HTAC[t]+Q_IHG[t]))
 
     # non-served hot water [0,1]
     @variable(model, 1 >= vNShw[t=1:tm["P"]] >= 0)
