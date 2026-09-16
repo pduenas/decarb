@@ -87,17 +87,32 @@ end
     @test any(!iszero, ts.dualQ)
 end
 
-# Weather, solar gains, internal gains, and HVAC all belong to the current
-# period in the data-driven building-temperature recurrence.
-@testset "thermal recurrence :: current-period outdoor temperature" begin
+# Weather and gains belong to the current period. The 15-minute transition
+# coefficients are compounded four times for each one-hour fixture period.
+@testset "thermal recurrence :: current weather and timestep scaling" begin
     p = stage(patches = Dict(
         "cfg.csv"    => "pTmode,true" => "pTmode,false",
         "bdg_ii.csv" => "0.03,0.05,0.15" => "0.5,0.0,0.0",
     ))
     ts = readout(p, "ts.csv")
 
-    @test ts.Temp[1] ≈ 9.5 atol = 1e-6
-    @test ts.Temp[2] ≈ 4.0 atol = 1e-6
+    @test ts.Temp[1] ≈ 0.31 atol = 1e-6
+    @test ts.Temp[2] ≈ -1.39 atol = 1e-6
+end
+
+# Active-equipment outputs are modeled as period energy. The thermal
+# recurrence must divide that energy by the period duration to recover kW.
+@testset "thermal recurrence :: equipment output enters as power" begin
+    p = stage(patches = Dict(
+        "tm.csv" => "2019-01-01T01:00:00" => "2019-01-01T00:15:00",
+    ))
+    ts = readout(p, "ts.csv")
+
+    ihg = ts.IHGp[1] + ts.IHGl[1] + ts.IHGe[1]
+    predicted = 20.0 + 0.03*(-1.0 - 20.0) +
+                0.15*(ts.HVACht[1]/0.25 + ihg)
+    @test ts.HVACht[1] > 0
+    @test ts.Temp[1] ≈ predicted atol = 0.02
 end
 
 @testset "minimal :: gas path and emissions" begin
