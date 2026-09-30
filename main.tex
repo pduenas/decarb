@@ -1,0 +1,1281 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\usepackage{fancyhdr}
+\usepackage[dvipsnames]{xcolor}
+% \usepackage[round]{natbib}
+% \usepackage[colorlinks = true,
+% linkcolor = blue,
+% urlcolor  = blue,
+% citecolor = blue,
+% anchorcolor = blue]{hyperref}
+\usepackage{cleveref}
+\usepackage{pgfgantt}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{float}
+% \usepackage{caption}
+
+\newcommand{\shaohui}[1]{\textcolor{red}{\textbf{SL: #1}}}  % Shaohui Comments
+\newcommand{\Pablo}[1]{\textcolor{blue}{\textbf{PD: #1}}} % Pablo Comments
+
+\title{A Modular Optimization Framework for Building-Level Decarbonization and Energy Management}
+\author{Pablo Duenas-Martinez, Shaohui Liu, Sungho Shin}
+\date{March 2025}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\clearpage
+\section{Introduction}
+
+The decarbonization of the built environment increasingly depends on the ability of buildings to operate as flexible, grid-interactive energy systems. In this context, optimization models are needed to capture the coupling between building thermal dynamics, equipment dispatch, and tariff-driven operational decisions across multiple time scales. A broad range of tools has been developed for this purpose, from high-fidelity building simulation platforms to planning and control models for residential and commercial buildings. However, many existing approaches remain limited in their ability to integrate long-term investment decisions with short-term operational flexibility in a unified framework.~\cite{crawley2001energyplus,trnsys,openstudio,designbuilder,simpkins2014reopt,anderson2017reopt,present2024resstock,parker2023comstock,wilson2022end}
+
+A particularly important direction of recent research concerns the role of buildings as active participants in energy systems. Building-level demand flexibility has been studied in the context of HVAC control, thermal storage, EV charging, and battery dispatch, and recent work has shown that time-varying tariffs can substantially alter the value of such flexibility while preserving indoor comfort and service quality~\cite{moura2015demand,alimohammadisagvand2017influence,pallonetto2016effect,brahman2015optimal,korkas2022nearly,zhao2025dayahead,zhang2024optimal,wang2022designing}. At the same time, distributed resources such as rooftop PV, batteries, heat pumps, and on-site generation increasingly shape the operating envelope of individual buildings and their interactions with the grid. These trends suggest that decarbonization cannot be understood solely through static load profiles or isolated technology adoption choices; it requires models that can capture the joint influence of flexible demand, tariff structures, and distributed energy resources.
+
+Despite this growing literature, several research gaps remain. Existing studies often focus either on detailed building physics or on operational control, but only rarely on a unified formulation that links equipment investment, operational dispatch, and thermal dynamics at the building scale. In addition, many approaches simplify tariff interactions or do not explicitly represent the interaction between demand flexibility and distributed assets such as batteries, EVs, and thermal storage. The resulting gap is particularly visible in applications that require both strategic planning and operational realism, especially when the objective is to evaluate decarbonization pathways under time-varying prices, emissions constraints, and comfort limitations.
+
+To address this gap, we present a modular optimization framework for building-level decarbonization and energy management. The formulation integrates detailed building thermal dynamics with equipment-level investment and dispatch decisions, enabling the analysis of integrated energy systems that include CHP units, HVAC equipment, water heaters, solar PV, wind generation, batteries, and EVs. The model is designed to support both strategic planning and operational studies under realistic tariff structures, emissions constraints, and comfort requirements. By combining physical realism with computational tractability, the framework is intended to provide a flexible basis for evaluating building-level decarbonization pathways across diverse operating horizons and technology portfolios.
+
+The main contributions of this work are threefold. First, we introduce a unified optimization framework that couples building thermal dynamics with investment and operational decisions for a broad set of distributed energy technologies. Second, we explicitly incorporate demand flexibility, tariff effects, and distributed resource interaction within the same formulation, enabling the assessment of building-level decarbonization strategies under realistic economic and operational conditions. Third, we structure the framework in a modular and extensible manner, making it suitable for application to different building archetypes, planning horizons, and technology portfolios. Recent MILP-based studies have begun to combine similar elements in more integrated formulations~\cite{aziz2025integrated,liu2025comparative,wu2025mitigating,zhang2024optimal}, and the present framework contributes to this emerging literature by offering an extensible formulation that links thermal representation, equipment selection, and operational flexibility in a unified setting.
+
+The remainder of the paper is organized as follows. Section~\ref{sec:notation} introduces the notation and model components. Section~\ref{sec:formulation} presents the mathematical formulation of the optimization problem, including the objective function and the main balancing, equipment, and thermal constraints. Section~\ref{sec:case} presents the case-study setup and numerical results, and Section~\ref{sec:conclusion} concludes the paper with a discussion of implications and future directions.
+
+For clarity, all sets, parameters, and decision variables used in the model are defined in the Notation section, which follows this introduction. Detailed individual types of equipment and modules are listed as follows: 
+\begin{itemize}
+    \item Sets of variable types in Section~\ref{sec:sets}, parameters for system configuration from input files in Section~\ref{sec:params}, list of variables in Section~\ref{sec:vals};
+    \item Detailed formulations in Section~\ref{sec:formulation}: 
+    \begin{itemize}
+        \item Objective functions and system/building-level balancing constraints: objective function Section~\ref{sec:obj}, electrical loads Section~\ref{sec:eload}, thermal loads Section~\ref{sec:tload}.
+        \item Individual equipments: CHP units in Section~\ref{sec:chp}, HVACs in \ref{sec:hvac}, absorption chillers in Section~\ref{sec:abc}, water heaters in Section~\ref{sec:wh}, PV panels in Section~\ref{sec:pv}, wind turbines in Section~\ref{sec:wind}, battery energy storage systems in Section~\ref{sec:bess}, EVs in Section~\ref{sec:ev};
+    \end{itemize}
+    \item The thermal configuration of buildings is detailed in Section~\ref{sec:tload}.
+    
+\end{itemize}
+
+
+\section{Notation}
+\label{sec:notation}
+
+\subsection{Sets}
+\label{sec:sets}
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\mathcal{T}\) & Time periods, indexed by \(t\). Time steps are expressed in hours but can have variable durations. \\
+\(\mathcal{N}\) & Peak periods, indexed by \(n\). Peak periods are defined ex-ante and capture hours when network tariff is different. \\
+\(\mathcal{IT}\) & Investment windows, indexed by \(i\). The investment windows indicate the time periods during which investments can be made. \\
+\(\mathcal{CHP}\) & Combined heat and power units, indexed by \(c\). These units convert molecular fuel into electricity and heat. \\
+\(\mathcal{ACH}\) & Absorption chillers, indexed by \(a\). These units convert heat or molecular fuel into cooling. \\
+\(\mathcal{HVAC}\) & Heating, ventilation, and air conditioning systems, indexed by \(h\). These systems convert electricity into heating or cooling. \\
+\(\mathcal{WH}\) & Water heaters, indexed by \(w\). These units use electricity or molecular fuel to produce hot water. \\
+\(\mathcal{PV}\) & Photovoltaic panels, indexed by \(p\). These panels produce electricity from solar energy. \\
+\(\mathcal{WT}\) & Wind turbines, indexed by \(d\). These turbines produce electricity from wind energy. \\
+\(\mathcal{B}\) & Batteries, indexed by \(b\). These devices store and discharge electricity. \\
+\(\mathcal{EV}\) & Electric vehicles, indexed by \(e\). These are similar to batteries but are not continuously available. \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of sets and their descriptions}
+\label{tab:sets}
+\end{center}
+
+\subsection{Parameters}
+\label{sec:params}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{P}_0\) & Initial date and time \\
+\(\text{T}^\text{mode}\) & Temperature control mode {0,1} \\
+\(\text{BESS}^{\text{soc0}}\) & Initial state-of-charge of the BESS [\%] \\
+\(\text{BESS}^{\text{socf}}\) & Final state-of-charge of the BESS [\%] \\
+\(\text{EV}^{\text{soc0}}\) & Initial state-of-charge of the EV [\%] \\
+\(\text{EV}^{\text{mn-soc}}\) & Minimum state-of-charge of the EV [\%] \\
+\(\text{WH}^{\text{sto0}}\) & Initial state of water heater storage [\%] \\
+\(\text{WH}^{\text{stof}}\) & Final state of water heater storage [\%] \\
+\(\text{T}^{\text{in}_0}\) & Initial indoor temperature [\(^\circ\text{C}\)] \\
+\(\text{Q}^\text{mxBuy}\) & Maximum electricity purchase [kW] \\
+\(\text{Q}^\text{mxSell}\) & Maximum electricity sale [kW] \\
+\(\text{ST}\) & Survival time [h] \\
+\(\text{G}^{\text{CO}_2}\) & CO\(_2\) emissions rate of gaseous fuel [kg/kWh] \\
+\(\text{L}^{\text{CO}_2}\) & CO\(_2\) emissions rate of liquid fuel [kg/kWh] \\
+\(\text{CO}_{2}^{\text{mx}}\) & CO\(_2\) emission limit [tons] \\
+\(\text{CO}_{2}^{\text{cost}}\) & CO\(_2\) price offset [\$/ton] \\
+\(\text{CO}_{2}^{\text{ton}}\) & CO\(_2\) amount offset [tons] \\
+\(\text{Q}^\text{mx}\) & Peak capacity charge periods \{0,12\} \\
+\(\text{CNSE}\) & Cost of non-served electricity [\$/kWh] \\
+\(\text{CNST}\) & Cost of temperature discomfort [\$/\(^\circ\text{C}\)-h] \\
+\(\text{CNSHW}\) & Cost of non-served hot water [\$/kWh] \\
+\(\text{CNSEV}\) & Cost of non-served EV state-of-charge [\$/\%] \\
+\(\text{EV}^\text{driver}\) & Type of driver (anxious: -1, indifferent: 0, battery concious: 1) \\
+\(\text{EV}^\text{pen}\) & Penalty on driver type [\$/\%] \\
+\(\text{EV}^\text{v2g}\) & Vehicle-to-grid (V2G) allowed {0,1} \\
+\(\text{IT}\) & Number of investment windows [0, ..., \(n\)] \\
+\(\text{IR}\) & Annual interest rate [\%] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}
+\captionof{table}{General parameters for system configuration}
+\label{tab:general_parameters}
+\end{center}
+
+% \begin{table}[H]
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{Date}_t\) & Date for each time period \(t\) \\
+\(\text{TM}_t\) & Duration of time period \(t\) [h] \\
+\(\text{C}^\text{buy}_t\) & Price of electricity purchase at time \(t\) [\$/kWh] \\
+\(\text{C}^\text{sell}_t\) & Price of electricity sale at time \(t\) [\$/kWh] \\
+\(\text{T}^\text{mx}_t\) & Peak capacity period type at time \(t\) \{0,12\} \\
+\(\text{C}^\text{mx}_t\) & Peak capacity charge at time \(t\) [\$/kW] \\
+\(\text{Q}^\text{co2}_t\) & CO\(_2\) emissions rate of the grid at time \(t\) [kg/kWh] \\
+\(\text{C}^\text{G}_t\) & Price of gaseous fuel at time \(t\) [\$/kWh] \\
+\(\text{C}^\text{L}_t\) & Price of liquid fuel at time \(t\) [\$/kWh] \\
+\(\text{Q}^\text{light}_t\) & Lighting electric load at time \(t\) [kW] \\
+\(\text{Q}^\text{equip}_t\) & Equipment electric load at time \(t\) [kW] \\
+\(\text{T}^\text{out}_t\) & Outdoor temperature at time \(t\) [\(^\circ\text{C}\)] \\
+\(\text{T}^\text{mx}_t\) & Maximum indoor temperature at time \(t\) [\(^\circ\text{C}\)] \\
+\(\text{T}^\text{mn}_t\) & Minimum indoor temperature at time \(t\) [\(^\circ\text{C}\)] \\
+\(\text{T}^\text{on}_t\) & Forced comfort temperature at time \(t\) {0,1} \\
+\(\text{Q}^\text{HW}_t\) & Hot water demand at time \(t\) [kWh] \\
+\(\text{S}^\text{dni}_t\) & Direct normal irradiance at time \(t\) [kW/m\(^2\)] \\
+\(\text{S}^\text{dhi}_t\) & Diffuse horizontal irradiance at time \(t\) [kW/m\(^2\)] \\
+\(\text{W}^\text{speed}_t\) & Wind speed at time \(t\) [m/s] \\
+\(\text{EV}^\text{dem}_t\) & Electric vehicle demand at time \(t\) [km] \\
+\(\text{EV}^\text{tm}_t\) & Electric vehicle charging window at time \(t\) [h] \\
+\(\text{EV}^\text{type}_t\) & Electric vehicle type at time \(t\) \{0, ..., \(n\)\} \\
+\(\text{B}^\text{ppl}_t\) & Building occupancy per time period \(t\) [persons] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of time-related parameters}
+\label{tab:time_period_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{CHP}^\text{list}\) & Chosen CHP units from catalog \\
+\(\text{CHP}^\text{0}\) & Existing CHP units \([0, \ldots, n]\) \\
+\(\text{CHP}^\text{Y/N}\) & Enable investment in CHP (YES/NO) \\
+\(\text{ABS}^\text{list}\) & Chosen absorption chillers from catalog \\
+\(\text{ABS}^\text{0}\) & Existing absorption chillers \([0, \ldots, n]\) \\
+\(\text{ABS}^\text{Y/N}\) & Enable investment in absorption chillers (YES/NO) \\
+\(\text{HVAC}^\text{list}\) & Chosen HVAC systems from catalog \\
+\(\text{HVAC}^\text{0}\) & Existing HVAC systems \([0, \ldots, n]\) \\
+\(\text{HVAC}^\text{Y/N}\) & Enable investment in HVAC systems (YES/NO) \\
+\(\text{WH}^\text{list}\) & Chosen water heaters from catalog \\
+\(\text{WH}^\text{0}\) & Existing water heaters \([0, \ldots, n]\) \\
+\(\text{WH}^\text{Y/N}\) & Enable investment in water heaters (YES/NO) \\
+\(\text{PV}^\text{list}\) & Chosen PV panels from catalog \\
+\(\text{PV}^\text{0}\) & Existing PV panels \([0, \ldots, n]\) \\
+\(\text{PV}^\text{Y/N}\) & Enable investment in PV panels (YES/NO) \\
+\(\text{WIND}^\text{list}\) & Chosen wind turbines from catalog \\
+\(\text{WIND}^\text{0}\) & Existing wind turbines \([0, \ldots, n]\) \\
+\(\text{WIND}^\text{Y/N}\) & Enable investment in wind turbines (YES/NO) \\
+\(\text{BESS}^\text{list}\) & Chosen BESS from catalog \\
+\(\text{BESS}^\text{0}\) & Existing BESS modules \([0, \ldots, n]\) \\
+\(\text{BESS}^\text{Y/N}\) & Enable investment in BESS (YES/NO) \\
+\(\text{EV}^\text{list}\) & Chosen EV types from catalog \\
+\(\text{EV}^\text{0}\) & Existing EV types \([0, \ldots, n]\) \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of space domain parameters}
+\label{tab:space_domain_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{B}^\text{alt}\) & Altitude above sea level [m] \\
+\(\text{B}^\text{lon}\) & Longitude [°] \\
+\(\text{B}^\text{lat}\) & Latitude [°] \\
+\(\text{B}^\text{tz}\) & Time zone \\
+\(\text{B}^\text{ventY/N}\) & Ventilation strategy {0,1} \\
+\(\text{B}^\text{vent}\) & Ventilation requirement [m\(^3\)/h/person] \\
+\(\text{B}^\text{ihg-p}\) & Internal heat gain from people [kW/person] \\
+\(\text{B}^\text{ihg-l}\) & Internal heat gain from lighting [\%] \\
+\(\text{B}^\text{ihg-e}\) & Internal heat gain from equipment [\%] \\
+\(\text{B}^\text{foot}\) & Building footprint surface [m\(^2\)] \\
+\(\text{B}^\text{slab}\) & Number of floor slabs \([0, z]\) \\
+\(\text{B}^\text{t-slab}\) & Slab thickness [m] \\
+\(\text{B}^\text{k-slab}\) & Slab heat transfer coefficient [kW/m\(^2\cdot\)°C] \\
+\(\text{B}^\text{p-slab}\) & Density of slab material [kg/m\(^3\)] \\
+\(\text{B}^\text{cp-slab}\) & Specific heat of slab material [kWh/kg\(\cdot\)°C] \\
+\(\text{B}^\text{k-roof}\) & Roof solar heat gain factor [\%] \\
+\(\text{B}^\text{wall}\) & Surface of wall sections [m\(^2\)] \\
+\(\text{B}^\text{k-wall}\) & Wall section U-value [kW/m\(^2\cdot\)°C] \\
+\(\text{B}^\text{west}\) & West lateral surface [m\(^2\)] \\
+\(\text{B}^\text{k-west}\) & West lateral solar heat gain factor [\%] \\
+\(\text{B}^\text{east}\) & East lateral surface [m\(^2\)] \\
+\(\text{B}^\text{k-east}\) & East lateral solar heat gain factor [\%] \\
+\(\text{B}^\text{north}\) & North lateral surface [m\(^2\)] \\
+\(\text{B}^\text{k-north}\) & North lateral solar heat gain factor [\%] \\
+\(\text{B}^\text{south}\) & South lateral surface [m\(^2\)] \\
+\(\text{B}^\text{k-south}\) & South lateral solar heat gain factor [\%] \\
+\(\text{B}^\text{chp}\) & Available space for CHP units \([0,z]\) \\
+\(\text{B}^\text{hvac}\) & Available space for HVAC units \([0,z]\) \\
+\(\text{B}^\text{abs}\) & Available space for absorption chillers \([0,z]\) \\
+\(\text{B}^\text{wh}\) & Available space for water heaters \([0,z]\) \\
+\(\text{B}^\text{pv}\) & Available PV (roof) surface [m\(^2\)] \\
+\(\text{B}^\text{tilt}\) & PV tilt (roof) angle [rad] \\
+\(\text{B}^\text{azi}\) & PV azimuth (roof) angle [rad] \\
+\(\text{B}^\text{track}\) & PV tracking system \([0, 2]\) \\
+\(\text{B}^\text{wind}\) & Available space for wind turbines \([0,z]\) \\
+\(\text{B}^\text{bess}\) & Available space for BESS \([0,z]\) \\
+\(\text{B}^\text{ev}\) & EV maximum charging capacity [kW] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of building parameters}
+\label{tab:building_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{CHP}^\text{ty}_c\) & Name of CHP unit \(c\) \\
+\(\text{N}^\text{CHP}\) & Number of CHP units in the catalog \\
+\(\text{CHP}^\text{mx}_c\) & Maximum CHP capacity of unit \(c\) [kW] \\
+\(\text{CHP}^\text{mn}_c\) & Minimum output of CHP unit \(c\) [\%] \\
+\(\text{CHP}^\text{hr}_c\) & Thermal efficiency factor of CHP unit \(c\) [\%] \\
+\(\text{CHP}^\text{fuel}_c\) & Type of fuel used by CHP unit \(c\) (gaseous or liquid) \\
+\(\text{CHP}^\text{tank}_c\) & On-site storage tank size for CHP unit \(c\) [kWh] \\
+\(\text{CHP}^\text{h2p}_c\) & Heat-to-power ratio of CHP unit \(c\) \\
+\(\text{CHP}^\text{sup}_c\) & Start-up cost of CHP unit \(c\) [\$/start] \\
+\(\text{CHP}^\text{inv}_c\) & Capital cost of CHP unit \(c\) [\$] \\
+\(\text{CHP}^\text{fom}_c\) & Fixed O\&M cost of CHP unit \(c\) [\$/year] \\
+\(\text{CHP}^\text{vom}_c\) & Variable O\&M cost of CHP unit \(c\) [\$/kWh] \\
+\(\text{CHP}^\text{life}_c\) & Lifetime of CHP unit \(c\) [years] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of CHP unit parameters}
+\label{tab:chp_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{ABS}^\text{ty}_a\) & Name of absorption chiller \(a\) \\
+\(\text{N}^\text{ABS}\) & Number of absorption chillers in the catalog \\
+\(\text{ABS}^\text{mx}_a\) & Maximum capacity of absorption chiller \(a\) [kW] \\
+\(\text{ABS}^\text{hr}_a\) & Thermal efficiency of absorption chiller \(a\) [\%] \\
+\(\text{ABS}^\text{fuel}_a\) & Type of fuel used by absorption chiller \(a\) (gaseous or liquid) \\
+\(\text{ABS}^\text{eff}_a\) & Cooling efficiency of absorption chiller \(a\) \\
+\(\text{ABS}^\text{inv}_a\) & Capital cost of absorption chiller \(a\) [\$] \\
+\(\text{ABS}^\text{fom}_a\) & Fixed O\&M cost of absorption chiller \(a\) [\$/year] \\
+\(\text{ABS}^\text{vom}_a\) & Variable O\&M cost of absorption chiller \(a\) [\$/kWh] \\
+\(\text{ABS}^\text{life}_a\) & Lifetime of absorption chiller \(a\) [years] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of absorption chiller parameters}
+\label{tab:abs_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{HVAC}^\text{ty}_h\) & Name of HVAC system \(h\) \\
+\(\text{N}^\text{HVAC}\) & Number of HVAC units in the catalog \\
+\(\text{HVAC}^\text{Hmx}_h\) & Maximum heating capacity of HVAC system \(h\) [kW] \\
+\(\text{HVAC}^\text{Cmx}_h\) & Maximum cooling capacity of HVAC system \(h\) [kW] \\
+\(\text{HVAC}^\text{Heff}_h\) & Heating efficiency of HVAC system \(h\) \\
+\(\text{HVAC}^\text{Ceff}_h\) & Cooling efficiency of HVAC system \(h\) \\
+\(\text{HVAC}^\text{T0}_h\) & Design temperature of HVAC system \(h\) [°C] \\
+\(\text{HVAC}^\text{HmxL}_h\) & Heating capacity loss of HVAC system \(h\) [kW/°C] \\
+\(\text{HVAC}^\text{CmxL}_h\) & Cooling capacity loss of HVAC system \(h\) [kW/°C] \\
+\(\text{HVAC}^\text{HeffL}_h\) & Heating efficiency loss of HVAC system \(h\) [/°C] \\
+\(\text{HVAC}^\text{CeffL}_h\) & Cooling efficiency loss of HVAC system \(h\) [/°C] \\
+\(\text{HVAC}^\text{inv}_h\) & Capital cost of HVAC system \(h\) [\$] \\
+\(\text{HVAC}^\text{fom}_h\) & Fixed O\&M cost of HVAC system \(h\) [\$/year] \\
+\(\text{HVAC}^\text{vom}_h\) & Variable O\&M cost of HVAC system \(h\) [\$/kWh] \\
+\(\text{HVAC}^\text{life}_h\) & Lifetime of HVAC system \(h\) [years] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of HVAC system parameters}
+\label{tab:hvac_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{WH}^\text{ty}_w\) & Name of water heater \(w\) \\
+\(\text{N}^\text{WH}\) & Number of water heaters in the catalog \\
+\(\text{WH}^\text{mx}_w\) & Maximum capacity of water heater \(w\) [kW or kWh] \\
+\(\text{WH}^\text{hr}_w\) & Thermal efficiency of water heater \(w\) [\%] \\
+\(\text{WH}^\text{fuel}_w\) & Type of fuel used by water heater \(w\) (electric, gaseous or liquid) \\
+\(\text{WH}^\text{eff}_w\) & Efficiency of water heater \(w\) \\
+\(\text{WH}^\text{tank}_w\) & On-site storage tank size for water heater \(w\) [kWh] \\
+\(\text{WH}^\text{inv}_w\) & Capital cost of water heater \(w\) [\$] \\
+\(\text{WH}^\text{fom}_w\) & Fixed O\&M cost of water heater \(w\) [\$/year] \\
+\(\text{WH}^\text{vom}_w\) & Variable O\&M cost of water heater \(w\) [\$/kWh] \\
+\(\text{WH}^\text{life}_w\) & Lifetime of water heater \(w\) [years] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of water heater parameters}
+\label{tab:wh_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{PV}^\text{ty}_p\) & Name of PV panel \(p\) \\
+\(\text{N}^\text{PV}\) & Number of PV panels in the catalog \\
+\(\text{PV}^\text{tech}_p\) & Technology of PV panel \(p\) \\
+\(\text{PV}^\text{mx}_p\) & Module capacity of PV panel \(p\) [kW] \\
+\(\text{PV}^\text{ar}_p\) & Module area of PV panel \(p\) [m\(^2\)] \\
+\(\text{PV}^\text{eff}_p\) & DC/AC efficiency of PV panel \(p\) [\%] \\
+\(\text{PV}^\text{loss}_p\) & System losses for PV panel \(p\) [\%] \\
+\(\text{PV}^\text{fail}_p\) & Failure rate of PV panel \(p\) [\%] \\
+\(\text{PV}^\text{inv}_p\) & Capital cost of PV panel \(p\) [\$] \\
+\(\text{PV}^\text{lc}_p\) & Learning curve for PV panel \(p\) [\%/year] \\
+\(\text{PV}^\text{fom}_p\) & Fixed O\&M cost of PV panel \(p\) [\$/year] \\
+\(\text{PV}^\text{life}_p\) & Lifetime of PV panel \(p\) [years] \\
+\(\text{PV}^\text{zmx}_p\) & Maximum potential number of PV panels \(p\) \([0, z]\) \\
+\(\text{PV}^\text{Smx}_{p,t}\) & Maximum solar potential for PV panel \(p\) at time \(t\) [kW/m\(^2\)] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of PV panel parameters}
+\label{tab:pv_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{WIND}^\text{ty}_d\) & Name of wind turbine \(d\) \\
+\(\text{N}^\text{WIND}\) & Number of wind turbines in the catalog \\
+\(\text{WIND}^\text{mx}_d\) & Maximum output capacity of wind turbine \(d\) [kW] \\
+\(\text{WIND}^\text{mn}_d\) & Minimum output capacity of wind turbine \(d\) [kW] \\
+\(\text{WIND}^\text{vmn}_d\) & Minimum wind speed required by turbine \(d\) [m/s] \\
+\(\text{WIND}^\text{vmx}_d\) & Cutoff wind speed for turbine \(d\) [m/s] \\
+\(\text{WIND}^\text{fail}_d\) & Failure rate of wind turbine \(d\) [\%] \\
+\(\text{WIND}^\text{inv}_d\) & Capital cost of wind turbine \(d\) [\$] \\
+\(\text{WIND}^\text{lc}_d\) & Learning curve for wind turbine \(d\) [\%/year] \\
+\(\text{WIND}^\text{fom}_d\) & Fixed O\&M cost of wind turbine \(d\) [\$/year] \\
+\(\text{WIND}^\text{life}_d\) & Lifetime of wind turbine \(d\) [years] \\
+\(\text{WIND}^\text{Q}_{d,t}\) & Power output of wind turbine \(d\) at time \(t\) [kW] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of wind turbine parameters}
+\label{tab:wind_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{BESS}^\text{ty}_b\) & Name of BESS type \(b\) \\
+\(\text{N}^\text{BESS}\) & Number of BESS in the catalog \\
+\(\text{BESS}^\text{mx}_b\) & Maximum capacity of BESS \(b\) [kWh] \\
+\(\text{BESS}^\text{up}_b\) & Charging rate of BESS \(b\) [kWh/h] \\
+\(\text{BESS}^\text{dn}_b\) & Discharging rate of BESS \(b\) [kWh/h] \\
+\(\text{BESS}^\text{effu}_b\) & Charging efficiency of BESS \(b\) [\%] \\
+\(\text{BESS}^\text{effd}_b\) & Discharging efficiency of BESS \(b\) [\%] \\
+\(\text{BESS}^\text{inv}_b\) & Capital cost of BESS \(b\) [\$] \\
+\(\text{BESS}^\text{lc}_b\) & Learning curve for BESS \(b\) [\%/year] \\
+\(\text{BESS}^\text{fom}_b\) & Fixed O\&M cost of BESS \(b\) [\$/year] \\
+\(\text{BESS}^\text{life}_b\) & Lifetime of BESS \(b\) [years] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of BESS parameters}
+\label{tab:bess_parameters}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(\text{EV}^\text{ty}_e\) & Name of electric vehicle type \(e\) \\
+\(\text{N}^\text{EV}\) & Number of electric vehicles in the catalog \\
+\(\text{EV}^\text{mx}_e\) & Maximum battery capacity of EV \(e\) [kWh] \\
+\(\text{EV}^\text{drv}_e\) & Driving efficiency of EV \(e\) [kWh/km] \\
+\(\text{EV}^\text{cold}_e\) & Winter efficiency penalty for EV \(e\) [\%] \\
+\(\text{EV}^\text{up}_e\) & Charging rate of EV \(e\) [kWh/h] \\
+\(\text{EV}^\text{dn}_e\) & Discharging rate of EV \(e\) [kWh/h] \\
+\(\text{EV}^\text{effu}_e\) & Charging efficiency of EV \(e\) [\%] \\
+\(\text{EV}^\text{effd}_e\) & Discharging efficiency of EV \(e\) [\%] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of EV parameters}
+\label{tab:ev_parameters}
+\end{center}
+
+\subsection{Variables}
+\label{sec:vals}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(b^\text{CHP}_{c,i}\) & Investment in CHP \(c\) at investment window \(i\) \{0,1\} \\
+\(u^\text{CHP}_{c,t}\) & Binary variable indicating an existing CHP \(c\) at time \(t\) \{0,1\} \\
+\(q^\text{CHP}_{c,t}\) & Electricity generated by CHP \(c\) at time \(t\) [kWh] \\
+\(q^\text{CHP-BDG}_{c,l,t}\) & Heating delivered from CHP \(c\) to the building at time \(t\) and load \(l\) [kWh] \\
+\(q^\text{CHP-ABS}_{c,a,t}\) & Heating delivered from CHP \(c\) to absorption chiller \(a\) at time \(t\) [kWh] \\
+\(g^\text{ABS}_{a,t}\) & Gaseous fuel consumption by absorption chiller \(a\) at time \(t\) [kWh] \\
+\(l^\text{ABS}_{a,t}\) & Liquid fuel consumption by absorption chiller \(a\) at time \(t\) [kWh] \\
+\(b^\text{HVAC}_{h,i}\) & Investment in HVAC \(h\) at investment window \(i\) \{0,1\} \\
+\(u^\text{HVAC}_{h,t}\) & Binary variable indicating an existing HVAC \(h\) at time \(t\) \{0,1\} \\
+\(b^\text{heat}_{h,t}\) & Binary variable indicating heating mode of HVAC \(h\) at time \(t\) \{0,1\} \\
+\(b^\text{cool}_{h,t}\) & Binary variable indicating cooling mode of HVAC \(h\) at time \(t\) \{0,1\} \\
+\(q^\text{heat}_{h,t}\) & Electricity consumed for heating by HVAC \(h\) at time \(t\) [kWh] \\
+\(q^\text{cool}_{h,t}\) & Electricity consumed for cooling by HVAC \(h\) at time \(t\) [kWh] \\
+\(b^\text{ABS}_{i,i}\) & Investment variable in absorption chiller \(a\) at investment window \(i\) \{0,1\} \\
+\(u^\text{ABS}_{t,a}\) & Binary variable indicating an existing absorption chiller \(a\) at time \(t\) \{0,1\} \\
+\(q^\text{ABS}_{a,t}\) & Cooling generated by absorption chiller \(a\) at time \(t\) [kWh] \\
+\(g^\text{ABS}_{a,t}\) & Gaseous fuel consumption by absorption chiller \(a\) at time \(t\) [kWh] \\
+\(l^\text{ABS}_{a,t}\) & Liquid fuel consumption by absorption chiller \(a\) at time \(t\) [kWh] \\
+\(q^\text{WH}_{w,t}\) & Heat provided by water heater \(w\) at time \(t\) [kWh] \\
+\(q^\text{WHsoc}_{w,t}\) & Tank level in water heater \(w\) at time \(t\) [kWh] \\
+\(d^\text{WH}_{w,t}\) & Hot water demand covered from water heater \(w\) at time \(t\) [kWh] \\
+\(b^\text{WH}_{w,i}\) & Binary variable for investment in water heater \(w\) at investment window \(i\) \{0,1\} \\
+\(u^\text{WH}_{w,t}\) & Binary variable indicating an existing water heater \(w\) at time \(t\) \{0,1\} \\
+\(g^\text{WH}_{t}\) & Consumption of gaseous fuel by water heaters at time \(t\) [kWh] \\
+\(l^\text{WH}_{t}\) & Consumption of liquid fuel by water heaters at time \(t\) [kWh] \\
+\(q^\text{PV}_{p,t}\) & Electricity generation by PV panel \(p\) at time \(t\) [kWh] \\
+\(z^\text{PV}_{p,i}\) & Investment variable in total PV panels \(p\) at investment window \(i\) \([0, z]\) \\
+\(q^\text{WIND}_{d,t}\) & Electricity generation by wind turbine \(d\) at time \(t\) [kWh]) \\
+\(z^\text{WIND}_{d,i}\) & Investment variable for total wind turbines \(d\) at investment window \(i\) \([0, z]\) \\
+\(q^\text{BESSsoc}_{s,t}\) & State-of-charge of BESS \(s\) at time \(t\) [kWh] \\
+\(q^\text{BESSup}_{s,t}\) & Electricity charged into BESS \(s\) at time \(t\) [kWh] \\
+\(q^\text{BESSdn}_{s,t}\) & Electricity discharged from BESS \(s\) at time \(t\) [kWh] \\
+\(b^\text{BESS}_{s,t}\) & Binary variable for charge/discharge mode of BESS \(s\) at time \(t\) \{0,1\} \\
+\(z^\text{BESS}_{s,i}\) & Investment variable for total BESS \(s\) at investment window \(i\) \([0, z]\) \\
+\(q^\text{EVsoc}_{e,t}\) & State-of-charge of EV \(e\) at time \(t\) [kWh] \\
+\(q^\text{EVup}_{e,t}\) & Electricity charged into EV \(e\) at time \(t\) [kWh] \\
+\(q^\text{EVdn}_{e,t}\) & Electricity discharged from EV \(e\) at time \(t\) [kWh] \\
+\(q^\text{EVlo}_{e,t}\) & Below minimum state-of-charge excursion of EV \(e\) at time \(t\) [kWh] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of variables used in the catalog of equipment}
+\label{tab:variables_catalog}
+\end{center}
+
+\begin{center}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.8\linewidth}}
+\hline
+\textbf{Symbol} & \textbf{Description} \\
+\hline
+\(q^\text{buy}_t\) & Purchased electricity at time \(t\) [kWh] \\
+\(q^\text{sell}_t\) & Electricity sold to the grid at time \(t\) [kWh] \\
+\(q^\text{mx}_n\) & Peak power demand for peak capacity charge period \(n\) [kW] \\
+\(u^\text{NSE}_t\) & Unitary non-served non-controllable electric load at time \(t\) [\%] \\
+\(b^\text{b-s}_t\) & Binary mode variable controlling grid purchase/sale at time \(t\) \\
+\(b^\text{heat}_t\) & Binary variable indicating heating mode in the building at time \(t\) \{0,1\} \\
+\(b^\text{cool}_t\) & Binary variable indicating cooling mode in the building at time \(t\) \{0,1\} \\
+\(vt^\text{in}_t\) & Indoor temperature at time \(t\) [°C] \\
+\(vt^\text{up}_t\) & Excursion above the discomfort temperature threshold at time \(t\) [°C] \\
+\(vt^\text{lo}_t\) & Excursion below the discomfort temperature threshold at time \(t\) [°C] \\
+\(u^\text{NSHW}_t\) & Unitary non-served hot water at time \(t\) [\%] \\
+\hline
+\end{tabular}
+\captionsetup{type=table}\captionof{table}{List of variables used in the balancing constraints}
+\label{tab:variables_balance}
+\end{center}
+
+\section{Formulation}
+\label{sec:formulation}
+
+\subsection{Framework overview / modular architecture}
+\label{sec:framework}
+
+\subsection{Objective Function}
+\label{sec:obj}
+
+The objective function captures the total cost of operating the building’s energy system over the planning horizon. This cost is composed of several components, each representing a different aspect of system operation and investment. The model minimizes the sum of variable costs (associated with energy flows and penalties) and annualized capital and fixed operating costs. The main components are described below.
+
+\begin{enumerate}
+    \item \textbf{Cost of grid operations.} This component accounts for:
+    \begin{itemize}
+        \item \textbf{Electricity purchase cost:} The cost incurred by purchasing electricity from the grid. It is given by 
+        \[
+        cost^\text{buy}_t = \text{C}^\text{buy}_t \cdot q^\text{buy}_t,
+        \]
+        where \(q^\text{buy}_t\) is the electricity purchased, in kWh, at time \(t\), and \(\text{C}^\text{buy}_t\) is the retail tariff, in \$/kWh.
+        \item \textbf{Electricity sale revenue:} The income generated by selling electricity to the grid:
+        \[
+        earn^\text{sell}_t = \text{C}^\text{sell}_t \cdot q^\text{sell}_t,
+        \]
+        where \(q^\text{sell}_t\) is the electricity purchased, in kWh, at time \(t\), and \(\text{C}^\text{sell}_t\) is the buyback tariff, in \$/kWh.
+        \item \textbf{Peak capacity cost:} Costs incurred for peak power subscription are modeled via an expression that aggregates the peak charge costs over all peak-flagged periods:
+        \[
+        cost^\text{peak} = \sum_{n=1}^{n=\text{Q}^\text{mx}} \text{C}^\text{mx}_{n} \cdot q^\text{mx}_n,
+        \]
+        where \(q^\text{mx}_n\) is the peak power consumption, in kW, at peak period \(n\), and \(\text{C}^\text{mx}_n\) is the capacity charge, in \$/kW.
+    \end{itemize}
+
+    \item \textbf{Cost of fuel purchases.} Fuel costs are computed based on the fuel consumption of various fuel-based systems (e.g., CHP, absorption chillers, water heaters, and other thermal devices). Gaseous and liquid fuel costs are aggregated separately:
+    \[
+    cost^\text{fuel}_t = \text{C}^\text{G}_t \cdot \left( g^\text{CHP}_t + g^\text{ABS}_t + g^\text{WH}_t \right)
+    + \text{C}^{L}_t \cdot \left( l^\text{CHP}_t + l^\text{ABS}_t + l^\text{WH}_t \right).
+    \]
+    For instance, \(g^\text{CHP}_t\) and \(l^\text{CHP}_t\) denote the fuel consumption of CHP units using gaseous and liquid fuels, respectively.
+
+
+    \item \textbf{Cost of non-served demand.} The model penalizes unmet demand in four categories, plus characterizes driver's behavior:
+    \begin{itemize}
+        \item \textbf{Non-served electricity:}
+        \[
+        cost^\text{NSE}_t = \text{C}_{NSE} \cdot q^\text{NSE}_t,
+        \]
+        where \(q^\text{NSE}_t\) is the non-served electricity \(t\).
+        \item \textbf{Temperature discomfort:}
+        \[
+        cost^\text{NST}_t = \text{C}_{NST} \cdot \left(vt^\text{up}_t + vt^\text{lo}_t\right),
+        \]
+        penalizing deviations from comfort temperature bounds.
+        \item \textbf{Hot water disruption:}
+        \[
+        cost^\text{NSHW}_t = \text{C}_{NSHW} \cdot \text{Q}^\text{HW}_t \cdot u^\text{NSHW}_t,
+        \]
+        where \(u^\text{NSHW}_t\) is the non-served hot water fraction.
+        \item \textbf{EV undercharged:}
+        \[
+        cost^\text{NSEV}_t = \text{C}_{NSEV} \cdot q^\text{EVlo}_{e,t},
+        \]
+        where \(q^\text{EVlo}_{e,t}\) is the level of battery below minimum start-of-charge.
+        \item \textbf{EV driver behavior:}
+        \[
+        pen^\text{EV} = \sum_{t=1}^{\mathcal{T}}\sum_{e=1}^{\text{N}^\text{EV}} \text{EV}^\text{driver} \cdot \text{EV}^\text{pen} \cdot q^\text{EVsoc}_{e,t},
+        \]
+        capturing penalties related to EV state-of-charge deviations. In particular, when the driver is range‐anxious (\(\text{EV}^\text{driver} = -1\)), the model favors maintaining a higher state-of-charge to ensure adequate driving range. Conversely, when the driver is battery‐conscious, (\(\text{EV}^\text{driver} = 1\)), a lower state-of-charge is preferred to help extend battery life.
+    \end{itemize}
+    
+    \item \textbf{Annualized investment and FO\&M costs.} Capital costs and fixed operation and maintenance (FO\&M) costs for each equipment type are annualized over the equipment’s lifetime. For each technology, the annualized cost is computed by multiplying the investment cost by an annuity factor:
+    \[
+    \text{Ann} = \frac{\text{IR}}{1 - (1+\text{IR})^{-\text{life}}},
+    \]
+    and then scaled by the number of units installed and the fraction of the operating period remaining. For example, for the CHP units:
+    \[
+    inv^\text{CHP} = \sum_{i=1}^\text{IT} \sum_{c=1}^{\text{N}^\text{CHP}} \text{Ann} \cdot \frac{\text{NH} - \text{IW}_i}{8760} \cdot \text{CHP}^\text{inv}_c \cdot b^\text{CHP}_{c,i},
+    \]
+    where NH is the time scope in hours, \(\text{IW}_i\) is the hour at which investment window \(i\) happens, and \(b^\text{CHP}_{c,i}\) is the binary variable indicating an investment in CHP \(c\). There are similar expressions defined for HVAC systems, absorption chillers, water heaters, PV panels, wind turbines, and batteries.
+    
+    Additionally, fixed O\&M costs are computed as:
+    \[
+    fom^\text{CHP} = \sum_{i=1}^\text{IT} \sum_{c=1}^{\text{N}^\text{CHP}} \text{CHP}^\text{fom}_{c} \cdot \frac{\text{NH}}{8760} \cdot b^\text{CHP}_{c,i},
+    \]
+    with similar expressions defined for all equipment types.
+
+    \item \textbf{Variable O\&M costs.} Variable O\&M costs, which depend on the operational activity of the equipment---hence only defined for thermal equipment, are computed from the energy produced or consumed. For instance:
+    \[
+    {vom}^{CHP} = \sum_{t=1}^{\mathcal{T}} \sum_{c=1}^{\text{N}^\text{CHP}} \text{C}^\text{vom}_c \cdot q^\text{CHP}_{c,t}.
+    \]
+
+\end{enumerate}
+
+The total variable cost, \(cost^\text{V}\), includes all time-dependent costs (non-served energy, grid operations, fuel costs, and variable O\&M costs) as well as peak capacity subscription costs:
+\begin{align*}
+cost^\text{V} &= \sum_{t=1}^{\mathcal{T}} \Bigl( cost^\text{buy}_t - earn^\text{sell}_t + cost^\text{fuel}_t + cost^\text{NSE}_t + cost^\text{NST}_t + cost^\text{NSHW}_t + cost^\text{NSEV}_t \Bigr) \\
+&\quad + vom^\text{CHP} + vom^\text{HVAC} + vom^\text{ABS} + vom^\text{WH} + cost^\text{peak}.
+\end{align*}
+
+The fixed costs, \({cost}^\text{F}\), is the sum of the annualized investment costs for all equipment types along with fixed O\&M costs:
+\begin{align*}
+cost^\text{F} &= inv^\text{CHP} + inv^\text{HVAC} + inv^\text{ABS} + inv^\text{WH} + inv^\text{PV} + inv^\text{WIND} + inv^\text{BESS} \\ 
+&\quad + fom^\text{CHP} + fom^\text{HVAC} + fom^\text{ABS} + fom^\text{WH} + fom^\text{PV} + fom^\text{WIND} + fom^\text{BESS}.
+\end{align*}
+
+Finally, the total cost is the sum of variable and investment costs, plus the penalty for EV operation:
+\[
+COST = cost^\text{V} + cost^\text{F} + pen^\text{EV}.
+\]
+The objective of the model is to minimize \(cost\) subject to all operational and investment constraints.
+
+\subsection{Equipment modules}
+\label{sec:equipment_modules}
+
+% Full equipment constraint set moved to Appendix B.
+
+\subsection{Balancing constraints}
+
+\subsection{Carbon accounting}
+
+CHP units are modeled to optimize both electrical and thermal energy production. These units play a critical role in providing on‐site electricity and usable thermal energy (e.g., for space heating and hot water) by converting fuel into both power and heat. The model determines the optimal investment and operational schedule for CHP units so that the building’s energy needs are met at minimum cost, while ensuring that the systems operate within their technical limits. This category also includes boilers and furnaces that produce heat, but not electricity.
+
+\begin{enumerate}
+    \item \textbf{Investment limits:}  
+    This investment accumulation ensures that a CHP unit becomes operational only once it has been installed in one of the previous or current investment windows.
+    \[
+    u^\text{CHP}_{c,t} \leq \sum_{i=1}^{i_1} b^\text{CHP}_{c,i}, \quad \forall c\; i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\}.
+    \]
+    The model enforces limits on the number of CHP units installed by restricting the total investment to the available space:
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{c=1}^{\text{N}^\text{CHP}} b^\text{CHP}_{c,i} \leq \text{B}^\text{chp},
+    \]
+    and it limits the selection to one unit per CHP type:
+    \[
+    \sum_{i=1}^{\text{IT}} b^\text{CHP}_{c,i} \leq 1, \quad \forall c.
+    \]
+    Investment decisions for new CHP units are constrained by the existing installed capacity, \(\text{CHP}^\text{0}\), which sets a lower bound, and by the availability of new investments, indicated by \(\text{CHP}^\text{Y/N}\).
+    
+    \item \textbf{Electricity production:}
+    CHP units generate electricity and produce thermal energy for either space heating or hot water. The electricity production is limited by:
+    \[
+    q^\text{CHP}_{c,t} \leq \text{TM}_t \cdot \text{CHP}^\text{mx}_c \cdot u^\text{CHP}_{c,t} \quad \forall c,t,
+    \]
+    where \(\text{TM}_t\) is the duration of time period \(t\), \(q^\text{CHP}_{c,t}\) is the electricity generation, and \(\text{CHP}^\text{mx}_c\) is the maximum capacity of unit \(c\). 
+
+    The electricity generated by a CHP unit meets also a minimum output level:
+    \[
+    q^\text{CHP}_{c,t} \geq \text{TM}_t \cdot \text{CHP}^\text{mn}_c \cdot u^\text{CHP}_{c,t} \quad \forall c,t.
+    \]
+
+    Individual boilers and furnaces are also considered within the CHP category. As these cannot generate electricity, \(\text{CHP}^\text{h2p}_c=0\), they have their electrical output disabled:
+    \(q^\text{CHP}_{c,t}=0\).
+
+    The CHP unit ability to deliver heat to the building is contingent upon the building being in heating mode, \(b^\text{heat}_t=1\):
+    \[
+    q^\text{CHP-BDG}_{c,l,t} \leq b^\text{heat}_t, \quad \forall c,\, \forall l \in (c,l), \forall t.
+    \]
+
+    \item \textbf{Thermal production:}
+    The available thermal output is constrained by the heat-to-power ratio of the CHP unit:
+    \[
+    \sum_{\substack{l=1 \\ l \in (c,l)}}^{2} q^\text{CHP-BDG}_{c,l,t} + \sum_{\substack{a=1 \\ a \in (c,a)}}^{\text{N}^\text{ABS}} q^\text{CHP-ABS}_{c,a,t} \leq \text{CHP}^\text{h2p}_c \cdot q^\text{CHP}_{c,t} \quad \forall c,t \text{ with } \text{CHP}^\text{h2p}_c > 0,
+    \]
+
+    where the index \(l\) distinguishes between the two types of thermal output: \(l=1\) represents hot air (used for space heating) and \(l=2\) represents hot water. The variable \(q^\text{CHP-BDG}_{c,l,t}\) denotes the amount of heat provided by CHP unit \(c\) at time \(t\) directly to the building for the respective application, as indicated by \((c,l\) In contrast, the term \(\sum_{a=1}^{\text{N}^\text{ABS}} q^\text{CHP-ABS}_{c,a,t}\) indicates the portion of heat production allocated to chiller operation, as denoted by \((c,a)\).
+    
+    For units operating as boilers, with \(\text{CHP}^\text{h2p}_c = 0\), the available heat is bounded by the unit's operational status:
+    \[
+    \sum_{l=1}^{2} q^\text{CHP-BDG}_{c,l,t} + \sum_{a=1}^{\text{N}^\text{ABS}} q^\text{CHP-ABS}_{c,a,t} \leq \text{CHP}^\text{mx}_c \cdot u^\text{CHP}_{c,t} \quad \forall c,t \text{ with } \text{CHP}^\text{h2p}_c = 0.
+    \]
+
+    \item \textbf{Fuel consumption:}
+    Fuel consumption for CHP units is calculated separately for gaseous, \(g^\text{CHP}_{t}\), and liquid, \(l^\text{CHP}_{t}\) fuels. For gaseous fuels, for example, the total fuel consumption at time \(t\) is given by
+    \[
+    g^\text{CHP}_{t} = \sum_{c \in G} \frac{q^\text{CHP}_{c,t}}{\text{CHP}^\text{hr}_c} \quad \forall t,
+    \]
+    with an analogous expression for liquid fuels:
+    \[
+    l^\text{CHP}_{t} = \sum_{c \in L} \frac{q^\text{CHP}_{c,t}}{\text{CHP}^\text{hr}_c} \quad \forall t,
+    \]
+    where \(\text{CHP}^\text{hr}_c\) is the thermal efficiency of CHP unit \(c\).
+    
+\end{enumerate}
+
+\subsubsection{HVAC Units}
+\label{sec:hvac}
+
+HVAC units are modeled to manage the building’s heating and cooling demands efficiently, consuming electricity. The model determines the optimal operation and investment in HVAC units by simultaneously optimizing their energy consumption for heating and cooling, while ensuring that capacity, investment, and mode‐selection constraints are respected.
+
+The primary objective of the HVAC module is to ensure that the building’s indoor thermal comfort is maintained at minimum operating cost. The model incorporates the following key constraints:
+
+\begin{enumerate}
+    \item \textbf{Investment limits:}  
+    Investment decisions for HVAC units are captured by the binary variable \(b^\text{HVAC}_{h,i}\), where \(i\) denotes the investment window. The availability of an HVAC unit at time \(t\) is determined by the cumulative investment up to the corresponding window. That is,
+    \[
+    u^\text{HVAC}_{h,t} \leq \sum_{i=1}^{i_1} b^\text{HVAC}_{h,i}, \quad \forall h\; i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\}.
+    \]
+    This formulation ensures that once an HVAC unit is installed, it remains operational in subsequent periods.
+
+    The total number of HVAC units installed is constrained by the available installation space \(\text{B}^\text{hvac}\):
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{h=1}^{\text{N}^\text{HVAC}} b^\text{HVAC}_{h,i} \leq \text{B}^\text{hvac}.
+    \]
+    Additionally, only one HVAC unit of a given type from the catalog is permitted across all investment windows:
+    \[
+    \sum_{i=1}^{\text{IT}} b^\text{HVAC}_{h,i} \leq 1, \quad \forall h.
+    \]
+    Investment decisions for new HVAC units must account for the currently installed units, \(\text{HVAC}^\text{0}\) (lower bound), and whether additional HVAC installations are allowed, determined by \(\text{HVAC}^\text{Y/N}\).
+    
+    \item \textbf{Capacity limits:}  
+    The electricity consumption for heating and cooling is limited by the available capacity and adjusting for efficiency. Specifically, the heating consumption (in kWh) is given by:
+    \[
+    q^\text{heat}_{h,t} \leq \frac{\text{TM}_t \cdot \text{HVAC}^\text{Hmx}_{h,t}}{\text{HVAC}^\text{Heff}_{h,t}} \cdot b^\text{heat}_{h,t},
+    \]
+    and similarly, the cooling consumption is expressed as:
+    \[
+    q^\text{cool}_{h,t} = \frac{\text{TM}_t \cdot \text{HVAC}^\text{Cmx}_{h,t}}{\text{HVAC}^\text{Ceff}_{h,t}}  \cdot b^\text{cool}_{h,t}.
+    \]
+    The effective capacity and efficiency of HVAC units are adjusted to account for deviations between the actual outdoor temperature and a prescribed design temperature. Specifically, the nominal heating capacity, \(\text{HVAC}^\text{Hmx}_h\), is corrected by applying a heating capacity loss coefficient, \(\text{HVAC}^\text{HmxL}_h\): \((1 - \text{HVAC}^\text{HmxL}_h \cdot (\text{HVAC}^\text{temp}_h - \text{T}^\text{out}_t)\)) where \(\text{HVAC}^\text{temp}_h\) is the design temperature for HVAC unit \(h\) and \(\text{T}^\text{out}_t\) is the outdoor temperature at time \(t\).
+    
+    Similarly, the nominal cooling capacity, \(\text{HVAC}^\text{Cmx}_h\), is adjusted using the cooling capacity loss coefficient, \(\text{HVAC}^\text{CmxL}_h\).
+    
+    The efficiency of the HVAC unit is likewise corrected. The heating efficiency, \(\text{HVAC}^\text{Heff}_h\), is adjusted using the heating efficiency loss coefficient, \(\text{HVAC}^\text{HeffL}_h\): \((1 - \text{HVAC}^\text{HeffL}_h \cdot max(\text{HVAC}^\text{T0}_h - \text{T}^\text{out}_t, 0)\). A lower bound of one is imposed on the corrected efficiency to ensure that it does not fall below a realistic threshold, under extreme outdoor temperatures. In practical terms, an efficiency value below one would imply that the HVAC system is performing worse than a passive electrical resistor.
+
+    The cooling efficiency is adjusted in a similar manner using the cooling efficiency loss coefficient, \(\text{HVAC}^\text{CeffL}_h\)
+    
+    \item \textbf{Mode selection:}  
+    The HVAC unit can operate in either heating or cooling mode (or be idle). This is modeled using the binary variables \(b^\text{heat}_{h,t}\) (heating mode) and \(b^\text{cool}_{h,t}\) (cooling mode):
+    \[
+    b^\text{heat}_{h,t} + b^\text{cool}_{h,t} \leq u^\text{HVAC}_{h,t}, \quad \forall h, t.
+    \]
+    This ensures that the HVAC unit only operates (in either mode) if it is installed and active at time \(t\). In addition, the heat pump cooling or heating mode is restricted by the building cooling or heating mode:
+    \[
+    b^\text{heat}_{h,t} \leq b^\text{heat}_{t}, \quad \forall h, t,
+    \]
+    \[
+    b^\text{cool}_{h,t} \leq b^\text{cool}_{t}, \quad \forall h, t.
+    \]
+    
+\end{enumerate}
+
+\subsubsection{Absorption Chillers}
+\label{sec:abc}
+
+Absorption chillers are modeled to optimize their role in providing cooling using thermal energy. These systems can utilize heat from CHP units or external fuel sources (gaseous or liquid), making them an integral part of the building's thermal management system. The model ensures optimal utilization of installed absorption chillers while adhering to operational constraints and available space.
+
+The primary objective of modeling absorption chillers is to determine their optimal configuration and operation, ensuring that cooling demand is met while minimizing energy consumption and fuel costs.
+
+The model includes the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Investment limits:}
+    The availability of an absorption chiller \(a\) at time \(t\) is constrained by the accumulated investments made up to the corresponding investment window \(i_1\):
+    \[
+    u^\text{ABS}_{a,t} \leq \sum_{i=1}^{i_1} b^\text{ABS}_{a,i}, \quad \forall a, \; i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\}.
+    \]
+    This constraint ensures that an absorption chiller can only be operational at time \(t\) if it has been installed in any of the past or current investment windows.
+    
+    The total number of installed absorption chillers cannot exceed the available installation space, while only one absorption chiller from the catalog is allowed across all investment windows:
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{a=1}^{\text{N}^\text{ABS}} b^\text{ABS}_{a,i} \leq \text{B}^\text{abs},
+    \]
+    \[
+    \sum_{i=1}^{\text{IT}} b^\text{ABS}_{a,i} \leq 1, \quad \forall a.
+    \]
+    The installation of new absorption chillers is subject to constraints based on the currently available units, \(\text{ABS}^\text{0}\), which serve as a lower bound, and whether new investments in absorption chillers are permitted, as defined by \(\text{ABS}^\text{Y/N}\).
+    
+    \item \textbf{Cooling generation limit:}
+    The cooling generation by an absorption chiller is constrained by its maximum capacity, and cooling is only allowed when the building is in cooling mode, \(b^\text{cool}_t=1\) :
+    \[
+    q^\text{ABS}_{a,t} \leq \text{ABS}^\text{mx}_a \cdot u^\text{ABS}_{a,t}, \quad \forall t, a.
+    \]
+    \[
+    q^\text{ABS}_{a,t} \leq \text{ABS}^\text{mx}_a \cdot b^\text{cool}_{t}, \quad \forall t, a.
+    \]
+
+    \item \textbf{Fuel consumption for absorption chillers:}
+    If the system includes absorption chillers using gaseous or liquid fuels, their total fuel consumption is computed as:
+    \[
+    g^\text{ABS}_{t} = \sum_{a \in G} \frac{q^\text{ABS}_{a,t}}{\text{ABS}^\text{hr}_a},
+    \]
+    \[
+    l^\text{ABS}_{t} = \sum_{a \in L} \frac{q^\text{ABS}_{a,t}}{\text{ABS}^\text{hr}_a},
+    \]
+    where \(G\) and \(L\) represent the sets of gas- and liquid-fueled absorption chillers, respectively.
+
+    \item \textbf{Heat Consumption for cooling:}
+    The cooling output of an absorption chiller at time \(t\), denoted \(q^\text{cool}_{a,t}\), is limited by the total heat input available. This input comprises three components:
+    \begin{enumerate}
+        \item The direct fuel consumption by the absorption chiller, \(q^\text{ABS}_{a,t}\).
+        \item The heat supplied from CHP units through dedicated thermal connections. This contribution is represented by \(q^\text{CHP-ABS}_{c,a,t}\)
+    \end{enumerate}
+    Thus, the constraint is formulated as:
+    \[
+    q^\text{cool}_{a,t} \leq \frac{q^\text{ABS}_{a,t}}{\text{ABS}^\text{eff}_w} +
+    \sum_{c=1}^{\text{N}^\text{CHP}} q^\text{CHP-ABS}_{c,a,t}.
+    \]
+    This equation ensures that the total cooling provided by an absorption chiller does not exceed the combined heat input available from its own fuel consumption, the excess heat from CHP units, and supplemental fuel firing.        
+\end{enumerate}
+
+\subsubsection{Water Heaters}
+\label{sec:wh}
+
+Water heaters are modeled to ensure optimal heating efficiency, fuel utilization, and storage capacity (when available) within equipment and space constraints. The model optimizes the selection and operation of water heaters while maintaining the energy balance and operational feasibility.
+
+The primary objective of modeling water heaters is to determine their optimal configuration and operation, ensuring that the required hot water demand is met while minimizing energy consumption and fuel costs.
+
+The model includes the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Investment limits:}
+    The existence of a water heater \(w\) at time \(t\) is constrained by the accumulated investments made up to the corresponding investment window \(i_1\):
+    \[
+    u^\text{WH}_{w,t} \leq \sum_{i=1}^{i_1} b^\text{WH}_{w,i}, \quad \forall w, \; i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\}.
+    \]
+    This constraint ensures that a water heater can only be operational at time \(t\) if it has been previously installed in any of the past or current investment windows.
+
+    The total number of installed water heaters, \(b^\text{WH}_{w,i}\), at each investment window \(i\) cannot exceed the available installation space \(\text{B}^\text{wh}\). Additionally, only one type of water heater from the catalog can be selected across all investment windows:
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{w=1}^{\text{N}^\text{WH}} b^\text{WH}_{w,i} \leq \text{B}^\text{wh},
+    \]
+    \[
+    \sum_{i=1}^{\text{IT}} b^\text{WH}_{w,i} \leq 1, \quad \forall w.
+    \]
+    Furthermore, investment decisions for new water heaters are constrained by their existing installations, denoted as \(\text{WH}^\text{0}\) (serving as a lower bound), and by whether new investments in water heaters are permitted, represented by \(\text{WH}^\text{Y/N}\).
+        
+    \item \textbf{Maximum heating supply:}
+    The heating energy supplied by a water heater cannot exceed its installed capacity:
+    \[
+    q^\text{WH}_{w,t} \leq \text{WH}^\text{mx}_w \cdot u^\text{WH}_{w,t}, \quad \forall w,t.
+    \]
+
+    For water heaters equipped with a storage tank (as opposed to tankless systems), the storage level is additionally constrained by the tank capacity:
+     
+    \[
+    q^\text{WHsoc}_{w,t} \leq u^\text{WH}_{w,t}, \quad \forall w,t.
+    \]
+
+    \item \textbf{Energy balance:}
+    The water heater's stored energy at each time step is given by:
+    \[
+    \text{WH}^\text{tank}_w \cdot \left( v^\text{WHsoc}_{t,w} - v^\text{WHsoc}_{t-1,w} \right)=
+    \text{WH}^\text{eff}_w \cdot q^\text{WH}_{w,t} - d^\text{WH}_{w,t}.
+    \]
+
+    The initial and final storage values of every water heater \(w\) are fixed: \(q^\text{WHsoc}_{w,t=1} = \text{WH}^\text{soc0}\) and \(q^\text{WHsoc}_{s,t=\mathcal{T}} = \text{WH}^\text{socf}\).
+
+    \item \textbf{Fuel consumption for water heating:}
+    If the system includes water heaters using gaseous or liquid fuels, the total fuel consumption is computed as:
+    \[
+    g^\text{WH}_{t} = \sum_{w \in G} \frac{q^\text{WH}_{w,t}}{\text{WH}^\text{hr}_w},
+    \]
+    \[
+    l^\text{WH}_{t} = \sum_{w \in L} \frac{q^\text{WH}_{w,t}}{\text{WH}^\text{hr}_w}.
+    \]
+    where \(G\) and \(L\) denote the sets of gas- and liquid-fueled water heaters, respectively, and \(\text{WH}^\text{hr}_w\) is the heat rate of water heater \(w\).
+\end{enumerate}
+
+\subsubsection{PV Panels}
+\label{sec:pv}
+
+PV panels are modeled to capture their role in generating renewable electricity, contributing to reducing the building's dependency on external energy sources and lowering carbon emissions. The model accounts for the physical installation constraints, the efficiency of PV panels, and their interaction with available solar irradiance.
+
+The primary objective of modeling PV panels is to determine the optimal number and configuration of PV systems that maximize electricity generation within the constraints of the available roof surface area. Additionally, the model ensures that electricity generation from PV panels is consistent with their technical specifications and environmental conditions.
+
+The model incorporates the following constraints:
+\begin{enumerate}
+    \item \textbf{Maximum available surface:}
+    The total area occupied by PV panels cannot exceed the available roof surface area, \(\text{B}^\text{pv}\):
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{p=1}^{\text{N}^\text{PV}} \text{PV}^\text{ar}_p \cdot z^\text{PV}_{p,i} \leq \text{B}^\text{pv},
+    \]
+    where \(\text{PV}^\text{ar}_p\) is the module area of each PV panel, \(\text{z}^\text{PV}_{p,i}\) is the variable number of installed PV panels at investment window \(i\) for panel \(p\), and \(\text{B}^\text{pv}\) is the available roof area.
+    
+    Furthermore, the investment decisions for new PV panels are constrained by their existing installation \(\text{PV}^\text{0}\) (lower bound), whether the PV panels are available for new investment \(\text{PV}^\text{Y/N}\), and the maximum potential number of PV panels in the roof (upper bound). This potential is calculated based on the ratio of the available PV roof surface area, \(\text{B}^\text{pv}\), to the module area of each PV panel, \(\text{PV}^\text{ar}_p\):
+    \[
+    \text{PV}^\text{zmx}_p = \left\lfloor \frac{\text{B}^\text{pv}}{\text{PV}^\text{ar}_p} \right\rfloor,
+    \]
+    where the floor function ensures the result is an integer, reflecting the discrete nature of panel installations.
+    
+    \item \textbf{Electricity generation limit:}
+    The electricity generated by PV panels is limited by the available solar potential , the total installed capacity, and the efficiency of the panels:
+    \[
+    q^\text{PV}_{p,t} \leq \text{TM}_t \cdot \text{PV}^\text{eff}_p \cdot \text{PV}^\text{mx}_p \cdot \text{PV}^\text{Smx}_{p,t} \cdot \left(\sum_{i=1}^{i_1} z^\text{PV}_{p,i}\right)
+    \quad
+    \forall i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\},
+    \]
+    where \(\text{PV}^\text{Smx}_{p,t}\) is the maximum solar potential at time \(t\), \(\text{PV}^\text{eff}_p\) is the efficiency, and \(\text{PV}^\text{mx}_p\) is the module power capacity of panel \(p\). This formulation ensures that investments in solar PV accumulate over successive investment windows, since \(i_1\) represents the investment window, and \(t\) spans all time periods from the start of the investment window to the end of the planning horizon.
+
+    The maximum solar potential for a PV panel, \(\text{PV}^\text{Smx}_{p,t}\), is estimated using the methodology described by Pfenninger \cite{pfenninger2016long}. This approach accounts for the tilt angle, azimuth angle, and tracking system type of the PV system, as well as the direct normal irradiance and diffuse horizontal irradiance for each time period \(t\). The total incident solar radiation is corrected to reflect the actual orientation and tilt of the PV panels. The efficiency of the PV panels is further adjusted using empirical relationships specific to the chosen PV technology, ensuring an accurate representation of the solar potential.
+    
+\end{enumerate}
+
+\subsubsection{Wind Turbines}
+\label{sec:wind}
+
+Wind turbines are modeled to capture their contribution to renewable energy generation by harnessing wind power. The model aims to optimize the number and operation of wind turbines within the physical and technical constraints of the system, thereby reducing the building's dependency on external energy sources and lowering carbon emissions.
+
+The primary objective of modeling wind turbines is to determine the optimal number and configuration of turbines that maximize electricity generation while adhering to constraints related to available space and technical performance.
+
+The model incorporates the following constraints:
+\begin{enumerate}
+    \item \textbf{Maximum available space:}
+    The total number of wind turbines installed cannot exceed the available installation space, \(\text{B}^\text{wind}\):
+    \[
+    \sum_{i=1}^{\text{IT}} \sum_{d=1}^{\text{N}^\text{WIND}} z^\text{WIND}_{d,i} \leq \text{B}^\text{wind},
+    \]
+    where \(z^\text{WIND}_{d,i}\) represents the number of wind turbines \(d\) installed during investment window \(i\). The investment decisions are also constrained by the current number of installed wind turbines \(\text{WIND}^{0}\) (lower bound), and  whether the wind turbines are available for new investment \(\text{WIND}^\text{Y/N}\).
+
+    \item \textbf{Electricity generation limit:}
+    The electricity generated by wind turbines is limited by their technical specifications and installed capacity:
+    \[
+    q^\text{WIND}_{d,t} \leq \text{TM}_t \cdot \text{WIND}^\text{Q}_{d,t} \cdot \sum_{i=1}^{i_1} z^\text{WIND}_{d,i},
+    \quad
+    \forall i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\},
+    \]
+    where \(q^\text{WIND}_{d,t}\) represents the electricity generation by turbine \(d\) at time \(t\). This constraint ensures that the power output of the turbines does not exceed their installed capacity. Simultaneously, this formulation ensures that investments in wind accumulate over successive investment windows, since \(i_1\) represents the investment window, and \(t\) spans all time periods from the start of the investment window to the end of the planning horizon.
+
+    The power output of wind turbines, \(\text{WIND}^\text{Q}_{t,d}\), is calculated based on the wind speed at time \(t\), denoted as \(W^\text{speed}_t\), and the turbine-specific parameters: minimum wind speed \(\text{WIND}^\text{vmn}_d\), cutoff wind speed \(\text{WIND}^\text{vmx}_d\), maximum output capacity \(\text{WIND}^\text{mx}_d\), and minimum output capacity \(\text{WIND}^\text{mn}_d\). The relationship is modeled as follows:
+    \[
+    \text{WIND}^\text{Q}_{t,d} =
+    \frac{\text{WIND}^\text{mx}_d - \text{WIND}^\text{mn}_d}{\text{WIND}^\text{vmx}_d - \text{WIND}^\text{vmn}_d} \cdot (\text{Wms}_t - \text{WIND}^\text{vmn}_d) + \text{WIND}^\text{mn}_d, \\
+    \]
+    \[
+    \text{if } \text{WIND}^\text{vmn}_d \leq \text{Wms}_t \leq \text{WIND}^\text{vmx}_d.
+    \]
+    
+    This formula linearly interpolates the output power between the minimum and maximum wind speeds, ensuring a smooth transition in the turbine's performance. When the wind speed is outside the operational range (below the minimum or above the cutoff), the turbine produces no power.
+    
+\end{enumerate}
+
+\subsubsection{Battery Energy Storage Systems}
+\label{sec:bess}
+
+BESS play a vital role in the energy system by enabling load balancing, energy arbitrage, and consumer flexibility. The model optimizes the charging, discharging, and storage behavior of BESS modules while respecting operational and technical constraints.
+
+The primary objective of modeling BESS modules is to determine their optimal configuration and operation, maximizing their utility within the constraints of space, charging/discharging rates, and energy balance.
+
+The model includes the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Space limitation:}
+    The total number of installed BESS modules cannot exceed the available installation space \(\text{B}^\text{bess}\):
+    \[
+    \sum_{s=1}^{\text{N}^\text{BESS}} z^\text{BESS}_{s,i} \leq \text{B}^\text{bess},
+    \quad
+    \forall i
+    \]
+    where \(z^\text{BESS}_{s,i}\) represents the number of existing (that is, installed) BESS \(s\) during the investment window \(i\). Investment in new battery storage systems (BESS) is also restricted by the existing installed capacity, \(\text{BESS}^\text{0}\) (lower bound), and the feasibility of new investments, as determined by \(\text{BESS}^\text{Y/N}\).
+    
+    \item \textbf{State-of-charge limit:}
+    The electricity stored \(q^\text{BESSsoc}_{s,t}\) is restricted by the installed capacity:
+    \[
+    q^\text{BESSsoc}_{s,t} \leq  \sum_{i=1}^{i_1}z^\text{BESS}_{s,i}
+    \quad
+    \forall i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\},
+    \]
+    where \(i_1\) represents the investment window and \(t\) spans all time periods from the start of the investment window to the end of the planning horizon. This formulation ensures that investments in BESS accumulate over successive investment windows.
+
+    \item \textbf{Charging and discharging limits:}
+    The electricity charged \(q^\text{BESSup}_{s,t}\) to and discharged \(q^\text{BESSdn}_{s,t}\) from BESS is constrained by their installed capacity and technical specifications:
+    \[
+    q^\text{BESSup}_{s,t} \leq  \text{TM}_t \cdot \text{BESS}^\text{up}_s \cdot \sum_{i=1}^{i_1}z^\text{BESS}_{s,i}
+    \quad
+    \forall i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\},
+    \]
+    \[
+    q^\text{BESSdn}_{s,t} \leq \text{TM}_t \cdot \text{BESS}^\text{dn}_s \cdot \sum_{i=1}^{i_1}z^\text{BESS}_{s,i_1}
+    \quad
+    \forall i_1 \in \{1, \dots, \text{IT}\}, \; t \in \{t_{i_1}, \dots, \mathcal{T}\},
+    \]
+
+    where \(\text{BESS}^\text{up}_s\) and \(\text{BESS}^\text{dn}_s\) are the maximum charging and discharging capacity, respectively. 
+
+    \item \textbf{State-of-charge balance:}
+    The state-of-charge is updated dynamically based on the charging, discharging, and efficiency losses:
+    \[
+    q^\text{BESSsoc}_{s,t} - q^\text{BESSsoc}_{s,t-1} = \text{BESS}^\text{effu}_s \cdot q^\text{BESSup}_{s,t} - \frac{q^\text{BESSdn}_{s,t}}{\text{BESS}^\text{effd}_s}
+    \quad
+    \forall s,t>1
+    \]
+    The initial and final state-of-charge values of every BESS \(s\) are fixed: \(q^\text{BESSsoc}_{s,t=1} = \text{BESS}^\text{soc0}\) and \(q^\text{BESSsoc}_{s,t=\mathcal{T}} = \text{BESS}^\text{socf}\).
+
+    \item \textbf{Charge/Discharge mode:}
+    A BESS module can either charge or discharge at any given time, as controlled by the binary variable \(b^\text{BESS}_{s,t}\):
+    \[
+    q^\text{BESSup}_{s,t} \leq \text{TM}_t \cdot \text{BESS}^\text{up}_s \cdot b^\text{BESS}_{s,t},
+    \]
+    \[
+    q^\text{BESSdn}_{s,t} \leq  \text{TM}_t \cdot \text{BESS}^\text{dn}_s \cdot (1 - b^\text{BESS}_{s,t}).
+    \]
+    
+\end{enumerate}
+
+\subsubsection{Electric Vehicles}
+\label{sec:ev}
+
+EVs are modeled to account for their dual role as mobile energy storage units and transportation devices. By integrating EVs into the building's energy management system, the model optimizes their charging and discharging behavior while respecting operational and technical constraints. This approach helps to reduce external electricity demand, increase flexibility, and enable vehicle-to-grid (V2G) applications where allowed.
+
+The primary objective of modeling EVs is to optimize their state-of-charge, charging, and discharging profiles while ensuring adherence to operational constraints such as the minimum state-of-charge and time-of-use behavior. In particular, charging (and V2G discharging) is only permitted when the vehicle is connected to the building. The plug‐in behavior is determined by two key inputs: 
+\begin{itemize}
+    \item \(\text{EV}^\text{dem}_t\) indicates the energy consumption due to driving at the departure time \(t\), and 
+    \item \(\text{EV}^\text{tm}_t\) specifies the plug‐in duration after arrival time \(t\), during which the vehicle is available for charging/discharging.
+\end{itemize}
+
+The model incorporates the following constraints:
+\begin{enumerate}
+    \item \textbf{Maximum charging:}
+    The charging rate of each EV \(e\) at time \(t\), \(q^\text{EVup}_{e,t}\), cannot exceed the maximum allowable rate, \(\text{EV}^\text{up}_e\):
+    \[
+    q^\text{EVup}_{e,t} \leq \text{TM}_t \cdot \text{EV}^\text{up}_e \cdot b^\text{EV}_{t,e}
+    \quad
+    \forall e,t,
+    \]
+    where \(b^\text{EV}_{t,e}\) is a binary variable that indicates if EV \(e\) is in charging mode at time \(t\).
+
+    \item \textbf{Maximum discharging:}
+    Similarly, the discharging rate of each EV \(e\) at time \(t\), \(q^\text{EVdn}_{e,t}\), is constrained by its maximum allowable rate, \(\text{EV}^\text{dn}_e\):
+    \[
+    q^\text{EVdn}_{e,t} \leq \text{TM}_t \cdot \text{EV}^\text{dn}_e \cdot (1 - b^\text{EV}_{t,e})
+    \quad
+    \forall e,t.
+    \]
+
+    \item \textbf{State-of-charge balance:}
+    The state-of-charge of each EV \(q^\text{EVsoc}_{e,t}\) is updated dynamically based on charging \(q^\text{EVup}_{e,t}\), discharging \(q^\text{EVdn}_{e,t}\), and driving energy consumption \(\text{EV}^\text{dem}_{e,t}\):
+    \[
+    q^\text{EVsoc}_{e,t} - q^\text{EVsoc}_{e,t-1} =  \text{EV}^\text{effu}_e \cdot q^\text{EVup}_{e,t} 
+    - \frac{q^\text{EVdn}_{e,t}}{\text{EV}^\text{effd}_e} - \text{EV}^\text{dem}_{e,t}
+    \quad
+    \forall e,t>1,
+    \]
+
+    with \(q^\text{EVsoc}_{e,t=1} = \text{EV}^\text{soc0}\). Here, the term \(\text{EV}^\text{dem}_{e,t}\) represents the energy consumption due to driving, which is indicated at the departure time.
+    
+    Charging and V2G discharging are only allowed when the EV is plugged into the building. The plug-in behavior of EVs is determined using the distance driven \(\text{EV}^\text{dem}_t\) (indicated at the departure time), the plug-in duration \(\text{EV}^\text{tm}_t\) (indicated at the arrival time), and the outdoor temperature effect as shown in \cite{yuksel2015temp}.
+    
+    \item \textbf{Minimum state-of-charge:}
+    The state-of-charge of each EV must always remain above the minimum allowable level EV\(^\text{mn-soc}\), accounting for occasional excursions \(q^\text{EVlo}_{e,t}\):
+    \[
+    v^\text{EVsoc}_{e,t} \geq \text{EV}^\text{mn-soc} - q^\text{EVlo}_{e,t}
+    \quad
+    \forall e,t>1.
+    \]
+\end{enumerate}
+
+\subsection{Balancing constraints}
+
+\subsubsection{Electric loads}
+\label{sec:eload}
+
+The electric load module plays a vital role by aggregating all electrical generation and load components, thereby characterizing the operational cost of the building’s electricity system. The model optimizes the generation, consumption, and flexibility of all electrical equipments while ensuring energy balance and respecting both operational and technical constraints. In essence, the primary objective of modeling electric loads is to determine the optimal operating points for all electrical components so that supply meets demand at minimal cost.
+
+The module incorporates the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Electricity demand:}
+    The total electricity demand, \(q^\text{dem}_t\), is computed by summing the non-controllable loads (lighting and equipment), the electrical consumption from HVAC systems, batteries, EVs, and electric water heaters. Mathematically, this is expressed as:
+    \[
+    q^\text{dem}_t = \text{TM}_t \cdot (\text{Q}^\text{light}_t + \text{Q}^\text{equip}_t) + \sum_{h=1}^{\text{N}^\text{HVAC}} (q^\text{heat}_{h,t} + q^\text{cool}_{h,t}) + \sum_{s=1}^{\text{N}^\text{BESS}} q^\text{BESSup}_{s,t} + \sum_{e=1}^{\text{N}^\text{EV}} q^\text{EVup}_{e,t} + \sum_{\substack{w=1 \\ w \in E}}^{\text{N}^\text{WH}} q^\text{WH}_{w,t} \quad \forall t.
+    \]
+
+    \item \textbf{Electricity generation:}
+    The total electricity generation, \(q^\text{gen}_t\), is calculated by aggregating the electricity produced by CHP units, PV panels, wind turbines, batteries (discharging), and EVs (discharging):
+    \[
+        q^\text{gen}_t = \sum_{c=1}^{\text{N}^\text{CHP}} q^\text{CHP}_{c,t} + \sum_{p=1}^{\text{N}^\text{PV}} q^\text{PV}_{p,t} + \sum_{d=1}^{\text{N}^\text{WIND}} q^\text{WIND}_{d,t} + \sum_{s=1}^{\text{N}^\text{BESS}} q^\text{BESSdn}_{s,t} + \sum_{e=1}^{\text{N}^\text{EV}} q^\text{EVdn}_{e,t} \quad \forall t.
+    \]
+
+    \item \textbf{Electricity purchase/sell mode:}
+    The binary variable \(b^\text{b-s}_t\) controls the mode of grid interaction. When in purchase mode, the electricity bought is limited by:
+    \[
+    q^\text{buy}_t \leq \text{Q}^\text{mxBuy}_t \cdot b^\text{b-s}_t \quad \forall t,
+    \]
+    and when in sell mode,
+    \[
+    q^\text{sell}_t \leq Q^\text{mxSell}_t \cdot (1-b^\text{b-s}_t) \quad \forall t.
+    \]
+
+    \item \textbf{Non-served electricity:}
+    Non-served electricity, \(q^\text{NSE}_t\), accounts for load shedding of the non-controllable loads (lighting and equipment) when supply is insufficient. It is computed as:
+    \[
+    q^\text{NSE}_t = \text{TM}_t \cdot (\text{Q}^\text{light}_t + \text{Q}^\text{equip}_t) \cdot u^\text{NSE}_t \quad \forall t.
+    \]
+    Note that this term excludes flexible loads---heating/cooling, hot water and EV charging.
+
+    \item \textbf{Electricity balance:}
+    The electricity balance between supply and demand is enforced by ensuring that, at every time period \(t\), the sum of on-site generation, purchased electricity, and non-served electricity equals the sum of demand and electricity sold to the grid:
+    \[
+    q^\text{gen}_t + q^\text{buy}_t + q^\text{NSE}_t = q^\text{dem}_t + q^\text{sell}_t \quad \forall t.
+    \]
+
+    \item \textbf{Peak power load:}
+    During designated peak periods (e.g., 6pm to 8pm), the model captures the maximum electricity purchased from the grid:
+    \[
+    q^\text{buy}_t \leq q^\text{mx}_n, \quad \forall n \in \{1, \dots, \text{Q}^\text{mx}\}, \;\ \forall t \in \text{T}^{mx}_t.
+    \]
+
+\end{enumerate}
+
+\subsubsection{Thermal loads}
+\label{sec:tload}
+
+The thermal loads module models the building’s thermal energy requirements by ensuring indoor temperature regulation and hot water supply, while allowing for operational flexibility. It optimizes the energy use of heating and cooling systems by integrating internal heat gains, outdoor weather conditions, and system constraints, thereby achieving efficient thermal management. The primary objective of this module is to determine the optimal operation of thermal units by maintaining indoor temperature set-points, accounting for the building's thermal mass properties, and meeting hot water demand. Moreover, the model accommodates flexibility in both temperature control and hot water service, which can be disabled during certain periods (e.g., to capture time off-home).
+
+The model incorporates the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Indoor temperature set-points:}  
+    When indoor temperature control is allowed, its initial bounds are derived from the input time series. These bounds ensure that the indoor temperature remains within the range defined by the temperature set-points, i.e., the lower and the upper limits. This constraint allow for discomfort excursions below and above the set-points:
+    \[
+    \text{T}_t^\text{mn} - vt^\text{lo}_t  \leq vt^\text{in}_t \leq \text{T}_t^\text{mx} + vt^\text{up}_t \quad \forall t \in \text{T}_t^\text{on} = 1.
+    \]
+    In cases where temperature discomfort flexibility is disabled, both the upper and lower discomfort deviations are set to zero:
+    \[
+    vt^\text{lo}_t = vt^\text{up}_t = 0 \quad \forall t \in \text{T}_t^\text{on} = 0.
+    \]
+
+    \item \textbf{Indoor temperature balance:}
+    The indoor temperature balance is modeled through a set of linear thermal equations. These equations incorporate:
+    \begin{itemize}
+        \item Thermal gains from active equipment (e.g., CHP units and absorption chillers),
+        \item Heat gains from occupancy, lighting, and electrical equipment as provided by the input time series,
+        \item Total radiation incident on the roof and external facades, also from input data, and
+        \item The building’s thermal response, which depends on the distribution of mass in floor slabs and walls.
+    \end{itemize}
+    The thermal balance accounts for heat conduction, ventilation losses, and thermal inertia. It is represented by an affine equation, whose coefficients are driven by a time-series regression that's performed on existing time-series data for individual housing profiles. In this balance, the internal temperature of each building is determined by the temperature difference between the indoor and outdoor temperature of the building, the solar radiation each building receives, and the internal heat gain through the HVAC system, occupancy, lighting and equipment loads.
+
+    \begin{align*}
+        \hat{T_{in, t}}^{j} &= T_{in, t-1}^{j} + \alpha^j (T_{out, t-1}^{j} - T_{in, t-1}^{j}) + \beta^j Q_{rad, t-1}^{j} + \gamma^j (Q_{heat, t-1}^{j} + Q_{IHG, t-1}^{j} - Q_{cool, t-1}^{j}) \label{eq:regression_baseline}
+    \end{align*}
+
+    The descriptions of each variable and coefficient are shown in Table \ref{tab:thermal_regression_vars} below.I
+    
+    \begin{table}[t!]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{| l | p{9.5cm} |}
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Prediction Variable}} \\
+        \hline
+        $\hat{T_{\mathrm{in},t}}$ & Calculated indoor temperature at time $t$ [$^\circ$C] \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Independent Variables}} \\
+        \hline
+        $T_{\mathrm{in},t}$ & Measured indoor temperature at time $t$ [$^\circ$C] \\
+        $T_{\mathrm{out},t}$ & Outdoor temperature at time $t$ [$^\circ$C] \\
+        $Q_{\mathrm{rad},t}$ & Solar radiation at time $t$ [kW] \\
+        $Q_{\mathrm{heat},t}$ & Heating power from HVAC systems at time $t$ [kW] \\
+        $Q_{\mathrm{cool},t}$ & Cooling power from HVAC systems at time $t$ [kW] \\
+        $Q_{\mathrm{IHG},t}$ & Heating power from internal elements at time $t$ [kW] \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Coefficients}} \\
+        \hline
+        $\alpha$ & Temperature gain coefficient between indoor and outdoor air [Unitless] \\
+        $\beta$ & Solar radiation gain coefficient [$^\circ$C/kW] \\
+        $\gamma$ & Net heat gain coefficient [$^\circ$C/kW] \\
+        \hline
+        \end{tabular}
+        \caption{Variables and coefficients for the DECARB data-driven thermal load balance model.}
+        \label{tab:thermal_regression_vars}
+    \end{table}
+
+    The internal heat gains ($Q_{\mathrm{IHG},t}$) are calculated per the following equation, by adding the electrical load used for lighting, $Q_{\text{L},t}$, the equipment load used for all appliances and equipments outside of lighting and HVAC, $Q_{\text{E},t}$, and the human heat dissipation that's assumed to be 100 W per occupant, $Q_{\text{H},t}$. 
+
+    \[
+    Q_{\text{IHG},t} = Q_{\text{L}, t} + Q_{\text{E},t} +Q_{\text{H},t}
+    \]
+
+    \item \textbf{Building heating/cooling mode:}
+    The building cannot be in both heating and cooling modes simultaneously. This is enforced by:
+    \[
+    b^\text{heat}_t + b^\text{cool}_t \leq 1, \quad \forall t.
+    \]
+
+    \item \textbf{Hot water balance:}
+    The total hot water demand at time \(t\), \(Q^\text{HW}_t\), may be met by either electric water heaters or CHP units configured for hot water production. This balance is represented as:
+    \[
+    (1 - u^\text{NSHW}_t) \cdot \text{Q}^\text{HW}_t = \sum_{w=1}^{\text{N}^\text{WH}} \text{WH}^\text{eff}_w \cdot q^\text{WH}_{w,t} + \sum_{c=1}^{\text{N}^\text{CHP}} q^\text{CHP}_{c,t} \quad \forall t.
+    \]
+\end{enumerate}
+
+\subsection{Carbon accounting}
+
+In addition to cost components directly related to energy operations and investments, the model also accounts for the carbon emissions. Two types of emissions are considered:
+\begin{itemize}
+    \item \textbf{Emissions from building operations.}  
+    \[
+    \text{CO2}^\text{B} = \sum_{t=1}^{\mathcal{T}} \left[ \text{G}^{\text{CO}_2} \cdot \left( g^\text{CHP}_t + g^\text{ABS}_t + g^\text{WH}_t \right) 
+    + \text{L}^{\text{CO}_2} \cdot \left( l^\text{CHP}_t + l^\text{ABS}_t + l^\text{WH}_t \right) \right],
+    \]
+    where \(\text{G}^{\text{CO}_2}\) and \(\text{L}^{\text{CO}_2}\) are the emission factors of the gaseous and liquid fuels, respectively.
+    \item \textbf{Emissions from grid purchases:}  
+    \[
+    \text{CO2}^\text{E} = \sum_{t=1}^{\mathcal{T}} Q^\text{co2}_t \cdot q^\text{buy}_t,
+    \]
+    which represents the CO\(_2\) emissions associated with electricity purchased from the grid.
+\end{itemize}
+Note that in DECARB.jl v1.0 carbon emission is evaluated for accounting purposes only, and has not been included in the objective function for optimizing operations and investments.
+
+\section{Case study and results}
+\label{sec:case}
+
+\section{Conclusions and future work}
+\label{sec:conclusion}
+
+\clearpage
+\appendix
+% \section{Building thermal characteristics}
+% \label{appendix_bdg}
+% The building’s thermal behavior is modeled using an 2RC-equivalent network, in which the thermal capacitance and resistances are computed based on the building’s physical properties.
+
+% The thermal capacitance, \(\text{B}^\text{C}\), represents the building’s ability to store heat and is calculated as:
+% \[
+% \text{B}^\text{C} = \text{B}^{\text{foot}} \cdot \text{B}^{\text{slab}} \cdot \text{B}^{\text{t-slab}} \cdot \text{B}^{\text{p-slab}} \cdot \text{B}^{\text{cp-slab}},
+% \]
+% where:
+% \begin{itemize}
+%     \item \(\text{B}^{\text{foot}}\) is the building footprint area \(\text{m}^2\),
+%     \item \(\text{B}^{\text{slab}}\) is the number of floor slabs \([0,z]\),
+%     \item \(\text{B}^{\text{t-slab}}\) is the thickness of each slab [m],
+%     \item \(\text{B}^{\text{p-slab}}\) is the density of the slab material [kg/m\(^3\)], and
+%     \item \(\text{B}^{\text{cp-slab}}\) is the specific heat capacity of the slab material [kW/kg\(\cdot\)°C].
+% \end{itemize}
+
+% The first thermal resistance, \(\text{B}^\text{R1}\), which models the conduction through the floor slabs, is given by:
+% \[
+% \text{B}^\text{R1} = \frac{1}{{\text{B}^\text{foot}} \cdot \text{B}^{\text{slab}} \cdot \text{B}^{\text{k-slab}}},
+% \]
+% with \(\text{B}^{\text{k-slab}}\) being the heat transfer coefficient of the floor slabs [kW/m\(^2\cdot\)°C].
+
+% The second thermal resistance, \(\text{B}^\text{R2}_t\), captures the heat loss through the external walls and the effect of ventilation. It is first computed as:
+% \[
+% \text{B}^\text{R2}_0 = \frac{1}{\sum_{j} \text{B}^{\text{wall}}_j \cdot \text{B}^{\text{k-wall}}_j},
+% \]
+% where \(\text{B}^{\text{wall}}\) is the wall surface in m\(^2\) and \(\text{B}^{\text{k-wall}}\) is the wall section U-value in kW/m\(^2\cdot\)°C. The summation is taken over all wall sections, including rooftop and glazing surfaces. This initial resistance is then corrected for the effect of ventilation by incorporating a ventilation conductivity per time period \(\text{AU}_t\):
+% \[
+% \text{B}^\text{R2}_t = \frac{1}{\frac{1}{\text{B}^\text{R2}_0} + \text{AU}_t}.
+% \]
+% Any resulting infinite values in \(\text{B}^\text{R2}_t\) are replaced by one to ensure numerical stability.
+
+% The ventilation conductivity quantifies the heat transfer due to forced ventilation and is computed as follows. First, a baseline air density is defined for a range of ambient temperatures \(\text{A}^\text{temp} = [-25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35]\) in °C with corresponding density values \(\rho^\text{temp} = [1.42,1.39,1.37,1.34,1.32,1.29,1.27,1.25,1.23,1.20,1.18,1.16,1.15]\) in kg/m\(^3\). These density values are then adjusted for altitude by multiplying by the exponential term \(e^{-\text{B}^\text{alt}/10400}\), which reflects the decrease in air density with increasing altitude.
+
+% Next, the volumetric heat capacity of air, AHC in kWh/m\(^3\cdot\)°C, is calculated as:
+% \[
+% \text{AHC}^\text{temp} = \rho^\text{temp} \times 0.0002793.
+% \]
+% This value is then multiplied by a ventilation parameter in m\(^3\)/h to obtain the per-person ventilation conductivity:
+% \[
+% \text{AU}^\text{temp} = \text{AHC}^\text{temp} \cdot \text{B}^\text{vent}.
+% \]
+% For each time period \(t\), the outdoor temperature \(\text{T}^\text{out}_t\) is used to interpolate between the predefined temperature intervals \(\text{AU}^\text{temp}\). If \(\text{T}^\text{out}_t\) falls within a specific interval, linear interpolation is applied to determine the effective conductivity \(\text{AU}_t\) at that time.
+
+% Finally, the overall ventilation conductivity is adjusted according to the occupancy. There exists two modes for forced ventilation: variation with level of occupancy, \(\text{B}^\text{ppl}_t\), and fixed at maximum occupancy, \(\max(\text{B}^\text{ppl}_t)\). This calculation yields the final ventilation conductivity (in kW/°C) used in the thermal balance model.
+
+% \shaohui{TODO: $Q_t^{IHG}$ in thermal model has not been added to val list and eqs here.}
+
+
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}

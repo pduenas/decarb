@@ -1,0 +1,83 @@
+"""
+solve_model!(path::AbstractString,model::Model,relax_int::Bool)
+
+Optimizes the model, checks feasibility, and writes an IIS report if infeasible. If the
+model is feasible, duals is true, and relax_int is false, integer/binary variables are fixed
+at their solution values and the model is re-solved relaxed to obtain dual information
+
+inputs:
+path            string path to working directory
+model           optimization model object
+relax_int       boolean flag to relax integrality constraints on integer variables
+
+"""
+
+function solve_model!(path::AbstractString,model::Model,relax_int::Bool;
+    duals::Bool=true, verbose::Bool=true)
+    progress_io = verbose ? stdout : devnull
+
+    # relax integrality {true,false}
+    if relax_int==true
+        relax_integrality(model)
+    end
+
+    optimize!(model)    # solve model
+    s = termination_status(model)
+
+    ok_status = s in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.TIME_LIMIT,
+        MOI.NODE_LIMIT, MOI.SOLUTION_LIMIT, MOI.INTERRUPTED)
+
+    if !(ok_status && primal_status(model) == MOI.FEASIBLE_POINT)
+        try
+            compute_conflict!(model)
+            if get_attribute(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+                println(progress_io, "\n❗ IIS detected — infeasible constraints:\n")
+                open(joinpath(path,"out","iis_constraints.txt"), "w") do io
+                    for (F, S) in list_of_constraint_types(model)
+                        F == VariableRef && continue
+                        for con in all_constraints(model, F, S)
+                            cs = get_attribute(con, MOI.ConstraintConflictStatus())
+                            if cs == MOI.IN_CONFLICT
+                                label = name(con) == "" ? string(con) : name(con)
+                                println(io, "[IN_CONFLICT] ", label)
+                                println(progress_io, "  ❌ ", label)
+                            end
+                        end
+                    end
+                end
+            end
+        catch e
+            @warn "Conflict computation unavailable" exception=e
+        end
+        error("❗  Model has no feasible solution. Check input data.\n(status = $(s))")
+    end
+
+    gap = try relative_gap(model) catch; NaN end
+    verbose && @info "termination = $(s), gap = $(round(gap*100, digits=1))%"
+
+    # relax integrality to get dual information
+    if duals && !relax_int
+        # save values of all variables
+        vALL = all_variables(model)
+        v_L = value.(vALL)
+        # locate and fix integer variables
+        vINT = is_integer.(vALL)
+        unset_integer.(vALL[vINT])
+        fix.(vALL[vINT],v_L[vINT]; force=true)
+        # locate and fix binary variables
+        vBIN = is_binary.(vALL)
+        unset_binary.(vALL[vBIN])
+        fix.(vALL[vBIN],v_L[vBIN]; force=true)
+        # solve relaxed model
+        optimize!(model)
+        if primal_status(model) != MOI.FEASIBLE_POINT
+            @warn "relaxed re-solve returned no solution; outputs unreliable" status=termination_status(model)
+        end
+    end
+
+    if duals
+        println(progress_io, has_duals(model) ? "   ℹ  Dual information available." :
+            "   ❗  Dual information unavailable.")
+    end
+
+end

@@ -1,0 +1,49 @@
+"""
+read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
+
+Reads time series outputs related to fuel consumptions and load them into dataframe
+
+inputs:
+model   optimization model object
+tm      dictionary with time series data
+n_chp   number of CHP types
+n_abp   number of absorption chiller types
+n_wh    number of water heater types
+
+returns dataframes of outputs
+"""
+
+function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
+
+    # outputs from CHP units
+    if n_chp > 0
+        CHP_G = round.(value.(model[:vCHP_G])./tm["TM"], digits=2)
+        CHP_L = round.(value.(model[:vCHP_L])./tm["TM"], digits=2)
+    else
+        CHP_G = zeros(Float64, tm["P"])
+        CHP_L = zeros(Float64, tm["P"])
+    end
+
+    # outputs from absorption chiller
+    if n_abp > 0
+        ABP_G = round.(value.(model[:vABP_G])./tm["TM"], digits=2)
+        ABP_L = round.(value.(model[:vABP_L])./tm["TM"], digits=2)
+    else
+        ABP_G = zeros(Float64, tm["P"])
+        ABP_L = zeros(Float64, tm["P"])
+    end
+
+    # outputs from water heaters
+    if n_wh > 0
+        WH_G = round.(value.(model[:vWH_G])./tm["TM"], digits=2)
+        WH_L = round.(value.(model[:vWH_L])./tm["TM"], digits=2)
+    else
+        WH_G = zeros(Float64, tm["P"])
+        WH_L = zeros(Float64, tm["P"])
+    end
+
+    df = DataFrame(Gchp=CHP_G,Gabp=ABP_G,Gwh=WH_G,Lchp=CHP_L,Labp=ABP_L,Lwh=WH_L)
+    
+    return df
+
+end

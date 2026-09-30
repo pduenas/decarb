@@ -1,0 +1,5 @@
+Eq,Inv,Qty,New,CAPEX,Date
+Electricity ASHP SEER 13 7.7 HSPF,14911.95474,1.0,0.0,0.0,01/01/2018 00:00
+Electric Standard,4000.0,1.0,0.0,0.0,01/01/2018 00:00
+Tesla_Cash,683.0,30.0,0.0,0.0,01/01/2018 00:00
+TeslaPowerwall_Cash,10500.0,1.0,0.0,0.0,01/01/2018 00:00
