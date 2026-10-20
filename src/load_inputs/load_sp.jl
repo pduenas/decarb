@@ -18,9 +18,9 @@ function load_sp(path::AbstractString,cfg::Dict)
     path2file = joinpath(path,"sp.csv")
 
     # load file into dataframe with predefined types
-    df_sp = CSV.File(path2file;delim=',',types=[String,UInt8,String,String,UInt8,String,
-                    String,UInt8,String,String,UInt8,String,String,UInt8,String,String,
-                    UInt8,String,String,UInt8,String,String,UInt8,String]) |> DataFrame
+    df_sp = CSV.File(path2file;delim=',',types=[String,Int,String,String,Int,String,
+                    String,Int,String,String,Int,String,String,Int,String,String,
+                    Int,String,String,Int,String,String,Int,String]) |> DataFrame
 
     sp["CHP0"] = collect(skipmissing(df_sp.pCHP0))      # CHP equipment
     sp["CHPz0"] = collect(skipmissing(df_sp.pCHPz0))    # CHP existing units [0,...,n]

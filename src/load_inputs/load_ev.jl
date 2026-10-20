@@ -98,7 +98,7 @@ end
 
 
 """
-ev_names(ty::Vector{String},z0::Vector{UInt8})
+ev_names(ty::Vector{String},z0::AbstractVector{<:Integer})
 """
 
 function ev_names(ty,z0)

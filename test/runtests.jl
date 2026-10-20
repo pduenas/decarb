@@ -118,7 +118,7 @@ function test_input_files()
                         (spec.kind != :float && variant in ("NaN", "Inf"))
                     @test length(result.logs) == Int(warning_expected)
                     @test all(log -> log.level == Test.Logging.Warn && log._module == CSV &&
-                        occursin(r"error parsing (Float64|Int8|UInt8)", string(log.message)), result.logs)
+                        occursin(r"error parsing (Float64|Int64|Int8|UInt8)", string(log.message)), result.logs)
                     accepted = variant == :valid || (variant == "0" && spec.zero) ||
                         (variant == "-1" && spec.negative)
                     if accepted
@@ -1189,6 +1189,17 @@ end
     expected_fom = (sum(inputs.hvac["fom"]) + sum(inputs.wh["fom"]) +
         4*only(inputs.pv["fom"]))*inputs.tm["H"]/8760
     @test only(e1.eq[e1.name .== "fixed_om_cost"]) ≈ expected_fom atol = 0.005
+end
+
+@testset "inputs :: counts above the 8-bit range load and validate" begin
+    p = stage(run=false, patches=Dict(
+        "bdg_i.csv" => ["pBbess,0" => "pBbess,500", "pBpv,20.0" => "pBpv,2000.0"],
+        "sp.csv"    => "PV-MONO,4,NO" => "PV-MONO,300,NO",
+    ))
+    inputs = load_fixture(joinpath(p, "in"))
+    @test inputs.sp["PVz0"] == [300]
+    @test inputs.bdg["Bbess"] == 500
+    @test DECARB.validate_inputs(values(inputs)...; io=devnull) === nothing
 end
 
 end # DECARB.jl

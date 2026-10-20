@@ -19,7 +19,7 @@ function wind_turbines!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wind:
     # investment in total # WIND turbines {0,z}
     @variable(model, 0 >= zWIND[i=1:cfg["IT"],d=1:wind["N"]] >= 0, Int)
 
-    wind["zmx0"] = zeros(Int16, wind["N"])      # maximum number of potential existing wind turbines
+    wind["zmx0"] = zeros(Int, wind["N"])      # maximum number of potential existing wind turbines
     for d in findall(sp["WIND0"].!="0")
         # fix already installed wind turbines
         if sp["WINDyn"][d] == "NO"
