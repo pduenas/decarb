@@ -19,8 +19,8 @@ function load_bdgi(path::AbstractString)
     # load file into dataframe with predefined types
     df_bdg = CSV.File(path2file;delim=',',types=[Float64,Float64,Float64,String,
                     Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Int8,Int8,Int8,Int8,
-                    Float64,Float64,Float64,Float64,Int8,Int8,Int8,Float64],
+                    Float64,Float64,Float64,Float64,Float64,Int,Int,Int,Int,
+                    Float64,Float64,Float64,Float64,Int,Int,Int,Float64],
                     transpose=true) |> DataFrame
 
     bdg["Balt"] = df_bdg.pBalt[1]       # altitude above sea level [m]

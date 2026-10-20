@@ -1,5 +1,5 @@
 """
-read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
+read_fuel(model::Model,tm::Dict,n_chp::Integer,n_abp::Integer,n_wh::Integer)
 
 Reads time series outputs related to fuel consumptions and load them into dataframe
 
@@ -13,7 +13,7 @@ n_wh    number of water heater types
 returns dataframes of outputs
 """
 
-function read_fuel(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_wh::Int64)
+function read_fuel(model::Model,tm::Dict,n_chp::Integer,n_abp::Integer,n_wh::Integer)
 
     # outputs from CHP units
     if n_chp > 0

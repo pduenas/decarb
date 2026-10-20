@@ -18,9 +18,9 @@ function load_cfg(path::AbstractString)
     
     # load file into dataframe with predefined types
     df_cfg = CSV.File(path2file;delim=',',types=[DateTime,Bool,Float64,Float64,Float64,
-                      Float64,Float64,Float64,Float64,Float64,Float64,UInt16,Float64,
-                      Float64,Float64,Float64,Float64,UInt8,Float64,Float64,Float64,
-                      Float64,Int8,Float64,Bool,UInt8,Float64],transpose=true) |> DataFrame
+                      Float64,Float64,Float64,Float64,Float64,Float64,Int,Float64,
+                      Float64,Float64,Float64,Float64,Int,Float64,Float64,Float64,
+                      Float64,Int,Float64,Bool,Int,Float64],transpose=true) |> DataFrame
 
     cfg["P0"] = df_cfg.pP0[1]               # UTC start
     cfg["Tmode"] = df_cfg.pTmode[1]         # temperature control mode {0,1}

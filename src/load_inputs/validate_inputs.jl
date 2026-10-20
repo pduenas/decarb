@@ -45,6 +45,15 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         end
     end
 
+    # ---- counts (read as Int, so negatives are rejected here) -------------
+    for k in ("Bchp","Bhvac","Babp","Bwh","Btck","Bwind","Bbess")
+        haskey(bdg,k) && bdg[k] < 0 && push!(err,"bdg_i.p$(k) must be non-negative")
+    end
+    for (k,v) in sp
+        endswith(k,"z0") && any(<(0), v) &&
+            push!(err,"sp.csv p$(k) must be non-negative")
+    end
+
     # ---- configuration -----------------------------------------------------
     for k in ("BESSsoc0","BESSsocf","EVsoc0","EVmnsoc","WHsto0","WHstof")
         0 <= cfg[k] <= 1 || push!(err,"cfg.$(k) = $(cfg[k]); expected a fraction in [0,1]")

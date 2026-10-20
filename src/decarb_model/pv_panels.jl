@@ -20,7 +20,7 @@ function pv_panels!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,pv::Dict)
     # investment in total # PV panels [0,z]
     @variable(model, 0 >= zPV[i=1:cfg["IT"],v=1:pv["N"]] >= 0, Int)
 
-    pv["zmx0"] = zeros(Int16, pv["N"])    # maximum number of potential existing PV panels
+    pv["zmx0"] = zeros(Int, pv["N"])    # maximum number of potential existing PV panels
     for v in findall(sp["PV0"].!="0")
         # fix already installed PV panels
         if sp["PVyn"][v] == "NO"

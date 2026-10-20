@@ -1,8 +1,9 @@
 """
-read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
-    n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    BESSzmx0::Vector{Int16},EVmx::Vector{Float64},WHfuel::Vector{String},
-    PVzmx0::Vector{Int16},WINDzmx0::Vector{Int16})
+read_electric(model::Model,tm::Dict,n_chp::Integer,n_hvac::Integer,n_wh::Integer,
+    n_pv::Integer,n_bess::Integer,n_ev::Integer,n_wind::Integer,BESSmx::AbstractVector{<:Real},
+    BESSzmx0::AbstractVector{<:Integer},PVzmx0::AbstractVector{<:Integer},
+    WINDzmx0::AbstractVector{<:Integer},EVmx::AbstractVector{<:Real},
+    WHfuel::AbstractVector{<:AbstractString})
 
 Reads time series outputs related to electric demands and generations and
     load them into dataframe
@@ -27,10 +28,11 @@ WHfuel      type of fuel in water heater
 returns dataframes of outputs
 """
 
-function read_electric(model::Model,tm::Dict,n_chp::Int64,n_hvac::Int64,n_wh::Int64,
-    n_pv::Int64,n_bess::Int64,n_ev::Int64,n_wind::Int64,BESSmx::Vector{Float64},
-    BESSzmx0::Vector{Int16},PVzmx0::Vector{Int16},WINDzmx0::Vector{Int16},
-    EVmx::Vector{Float64},WHfuel::AbstractVector{<:AbstractString})
+function read_electric(model::Model,tm::Dict,n_chp::Integer,n_hvac::Integer,n_wh::Integer,
+    n_pv::Integer,n_bess::Integer,n_ev::Integer,n_wind::Integer,BESSmx::AbstractVector{<:Real},
+    BESSzmx0::AbstractVector{<:Integer},PVzmx0::AbstractVector{<:Integer},
+    WINDzmx0::AbstractVector{<:Integer},EVmx::AbstractVector{<:Real},
+    WHfuel::AbstractVector{<:AbstractString})
 
     Qdem = tm["Qlight"] + tm["Qequip"]
     Qsell = round.(value.(model[:vQsell]), digits=2)

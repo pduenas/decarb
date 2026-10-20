@@ -1,6 +1,6 @@
 """
-read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
+read_indoor(model::Model,tm::Dict,n_chp::Integer,n_abp::Integer,n_hvac::Integer,n_wh::Integer,
+    WHtank::AbstractVector{<:Real},CHPbdg::Matrix{Float64})
 
 Reads time series outputs related to indoor demands for temperature and hot water and
     load them into dataframe
@@ -18,8 +18,8 @@ CHPbdg  CHP unit connected to building
 returns dataframes of outputs
 """
 
-function read_indoor(model::Model,tm::Dict,n_chp::Int64,n_abp::Int64,n_hvac::Int64,n_wh::Int64,
-    WHtank::Vector{Float64},CHPbdg::Matrix{Float64})
+function read_indoor(model::Model,tm::Dict,n_chp::Integer,n_abp::Integer,n_hvac::Integer,n_wh::Integer,
+    WHtank::AbstractVector{<:Real},CHPbdg::Matrix{Float64})
 
     # indoor temperature
     Tin = round.(value.(model[:vTin]), digits=2)

@@ -19,9 +19,9 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
     path2file = joinpath(path,"tm.csv")
 
     # load file into dataframe with predefined types
-    df_tm = CSV.File(path2file;delim=',',types=[DateTime,Float64,Float64,UInt8,Float64,
+    df_tm = CSV.File(path2file;delim=',',types=[DateTime,Float64,Float64,Int,Float64,
                     Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
-                    UInt8,Float64,Float64,Float64,Float64,Float64,Float64,UInt8,
+                    Int,Float64,Float64,Float64,Float64,Float64,Float64,Int,
                     Float64]) |> DataFrame
 
     # Every data row defines an interval, including rows with all-zero values.
