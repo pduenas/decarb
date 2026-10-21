@@ -14,7 +14,8 @@ model           optimization model object
 relax_int       boolean flag to relax integrality constraints on integer variables
 
 returns a named tuple with the MIP termination_status, primal_status, objective_value,
-objective_bound, relative_gap and solve_time (captured before the dual re-solve), and
+objective_bound, relative_gap and solve_time_s (captured before the dual re-solve),
+solver_name, solver_version, threads ("unset" if not set), and
 duals_available, which is false when duals were not requested or could not be obtained
 
 """
@@ -68,7 +69,14 @@ function solve_model!(path::AbstractString,model::Model,relax_int::Bool;
         objective_value = objective_value(model),
         objective_bound = try objective_bound(model) catch; NaN end,
         relative_gap = gap,
-        solve_time = try solve_time(model) catch; NaN end,
+        solve_time_s = try solve_time(model) catch; NaN end,
+        solver_name = try solver_name(model) catch; "unknown" end,
+        solver_version = try get_attribute(model, MOI.SolverVersion()) catch; "unknown" end,
+        threads = try
+            something(get_attribute(model, MOI.NumberOfThreads()), "unset")
+        catch
+            "unset"
+        end,
         duals_available = false)
 
     # fix integer variables at rounded values and re-solve the LP to get dual information

@@ -23,7 +23,8 @@ case/
 `-- out/
     |-- eq1.csv
     |-- eq2.csv
-    `-- ts.csv
+    |-- ts.csv
+    `-- solve_info.csv
 ```
 
 The current runner opens all 14 input files, even when a technology is not
@@ -458,6 +459,23 @@ are energy per period.
 
 Dual columns are zero when the selected solve does not provide dual values.
 Their sign follows the corresponding JuMP constraint convention.
+
+### `solve_info.csv`: solve summary
+
+This file has columns `name` and `value`. It records the run and the MIP solve:
+`decarb_version`, `git_commit` (`unknown` if `git` is unavailable),
+`julia_version`, `solver_name`, `solver_version`, `termination_status`,
+`primal_status`, `objective_value`, `objective_bound`, `relative_gap`,
+`solve_time_s` (captured before the dual re-solve), the requested `mip_gap`,
+`time_limit`, `relax_integrality` and `duals`, `duals_available`, `threads`
+(`unset` if not set) and `utc_timestamp`. The same data is returned as
+`solve_info` by `run_decarb!`. A
+`termination_status` of `TIME_LIMIT` means the reported solution is the best one
+found within `time_limit`, not necessarily within `mip_gap`.
+
+At the start of each run DECARB deletes the outputs of the previous run
+(`eq1.csv`, `eq2.csv`, `ts.csv`, `balance.csv`, `iis_constraints.txt`,
+`solve_info.csv`) from `out/`; other files there are left untouched.
 
 ### Conditional diagnostic outputs
 

@@ -475,7 +475,7 @@ end
         @test info.termination_status == MOI.OPTIMAL
         @test info.primal_status == MOI.FEASIBLE_POINT
         @test info.objective_value ≈ (relax ? 0.5 : 1.0)
-        @test isfinite(info.relative_gap) && info.solve_time >= 0
+        @test isfinite(info.relative_gap) && info.solve_time_s >= 0
     end
 
     # failed LP re-solve: restore the MIP, keep its solution, report no duals
@@ -784,12 +784,33 @@ end
 
 @testset "minimal :: runs and writes outputs" begin
     p = stage()
-    for f in ("eq1.csv", "eq2.csv", "ts.csv")
+    for f in ("eq1.csv", "eq2.csv", "ts.csv", "solve_info.csv")
         @test isfile(joinpath(p, "out", f))
+    end
+    si   = readout(p, "solve_info.csv")
+    info = Dict(zip(string.(si.name), string.(si.value)))
+    @test info["termination_status"] == "OPTIMAL"
+    @test info["primal_status"] == "FEASIBLE_POINT"
+    for k in ("decarb_version", "git_commit", "julia_version", "solver_name",
+              "solver_version", "objective_value", "solve_time_s", "mip_gap",
+              "time_limit", "relax_integrality", "duals", "threads", "utc_timestamp")
+        @test haskey(info, k)
     end
     # balance.csv is written ONLY when the electricity balance fails to close
     @test !isfile(joinpath(p, "out", "balance.csv"))
     @test !isfile(joinpath(p, "out", "iis_constraints.txt"))
+end
+
+@testset "minimal :: stale outputs removed, user files kept" begin
+    p = stage(run=false)
+    mkpath(joinpath(p, "out"))
+    write(joinpath(p, "out", "balance.csv"), "stale\n")
+    write(joinpath(p, "out", "notes.txt"), "keep\n")
+    ret = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false)
+    @test !isfile(joinpath(p, "out", "balance.csv"))
+    @test isfile(joinpath(p, "out", "notes.txt"))
+    @test ret.solve_info.termination_status == MOI.OPTIMAL
+    @test haskey(ret.solve_info, :git_commit)
 end
 
 @testset "minimal :: time series integrity" begin
