@@ -64,9 +64,9 @@ display only.
 | `pNSEcost` | $/kWh | Penalty for unserved electricity. A zero value prevents unserved electricity. |
 | `pNSTcost` | $/(deg C h) | Penalty for indoor-temperature deviation. A zero value prevents comfort-bound violations when comfort is active. |
 | `pNSHWcost` | $/kWh | Penalty for unserved hot water. A zero value prevents unserved hot water. |
-| `pNSEVcost` | $ per unit SOC | Penalty for EV state-of-charge shortfall. |
+| `pNSEVcost` | $ per unit SOC per hour | Penalty for EV state-of-charge shortfall. |
 | `pEVdriver` | `-1`, `0`, or `1` | Driver preference: range-anxious, indifferent, or battery-conscious, respectively. |
-| `pEVpen` | $ per unit SOC | Weight applied to the driver-preference term. |
+| `pEVpen` | $ per unit SOC per hour | Weight applied to the driver-preference term. |
 | `pEVv2g` | boolean | Allows EV discharge to the building/grid when true. |
 | `pIT` | integer | Number of investment windows. `0` disables investment and creates one internal window for existing assets. |
 | `pIR` | fraction/year | Annual interest rate used to annualize capital costs; must be between 0 and 1. |

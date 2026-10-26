@@ -29,7 +29,7 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, vNSHWcost[t=1:tm["P"]], cfg["NSHWcost"]*tm["HWdem"][t]*model[:vNShw][t])
     # cost of leaving EV charge below required level [$]
     @expression(model, vNSEVcost[t=1:tm["P"]],
-        cfg["NSEVcost"]*sum(model[:vEVlo][t,e] for e=1:ev["N"]))
+        cfg["NSEVcost"]*sum(model[:vEVlo][t,e] for e=1:ev["N"])*tm["TM"][t])
     # cost of purchasing electricity [$]
     @expression(model, vQcost[t=1:tm["P"]], tm["TM"][t]*tm["QcostBuy"][t]*model[:vQbuy][t])
     # income from selling electricity [$]
@@ -41,7 +41,8 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
 
     # penalties for driver type: range anxious (-1), indifferent (0), battery concious (1)
     @expression(model, vEVpen,
-        sum(cfg["EVdriver"]*cfg["EVpen"]*model[:vEVsoc][t,e] for t=1:tm["P"],e=1:ev["N"] if ev["mx_eff"][e] > 0))
+        sum(cfg["EVdriver"]*cfg["EVpen"]*model[:vEVsoc][t,e]*tm["TM"][t]
+            for t=1:tm["P"],e=1:ev["N"] if ev["mx_eff"][e] > 0))
 
     # cost of peak capacity subscription [$]
     @expression(model, vQmxCost, sum(tm["QmxCostN"][n]*model[:vQmx][n] for n=1:cfg["QmxTM"]))
