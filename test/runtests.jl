@@ -205,11 +205,16 @@ end
 struct RecordingOptimizer <: MOI.AbstractOptimizer
     name::String
     attributes::Dict{MOI.AbstractOptimizerAttribute,Any}
+    supported_attributes::Set{MOI.AbstractOptimizerAttribute}
 end
-RecordingOptimizer(name) = RecordingOptimizer(name, Dict{MOI.AbstractOptimizerAttribute,Any}())
+RecordingOptimizer(name; supported_attributes=[
+    MOI.RelativeGapTolerance(), MOI.TimeLimitSec()]) =
+        RecordingOptimizer(name, Dict{MOI.AbstractOptimizerAttribute,Any}(),
+            Set{MOI.AbstractOptimizerAttribute}(supported_attributes))
 MOI.is_empty(::RecordingOptimizer) = true
 MOI.get(opt::RecordingOptimizer, ::MOI.SolverName) = opt.name
-MOI.supports(::RecordingOptimizer, ::MOI.AbstractOptimizerAttribute) = true
+MOI.supports(opt::RecordingOptimizer, attr::MOI.AbstractOptimizerAttribute) =
+    attr in opt.supported_attributes
 MOI.set(opt::RecordingOptimizer, attr::MOI.AbstractOptimizerAttribute, value) =
     (opt.attributes[attr] = value)
 MOI.get(opt::RecordingOptimizer, attr::MOI.AbstractOptimizerAttribute) = opt.attributes[attr]
@@ -412,12 +417,16 @@ end
 end
 
 @testset "solver API :: generic MOI defaults and Gurobi tuning" begin
-    generic = RecordingOptimizer("Industrial MIP")
-    DECARB.configure_solver!(direct_model(generic), 1//1000, 60)
+    generic = RecordingOptimizer("Industrial MIP";
+        supported_attributes=[MOI.RelativeGapTolerance()])
+    @test_logs (:warn, r"MOI.TimeLimitSec") begin
+        DECARB.configure_solver!(direct_model(generic), 1//1000, 60)
+        DECARB.configure_solver!(direct_model(generic), 1//1000, 60)
+    end
     @test generic.attributes == Dict(
         MOI.RelativeGapTolerance() => 0.001,
-        MOI.TimeLimitSec() => 60.0,
     )
+    @test !haskey(generic.attributes, MOI.TimeLimitSec())
 
     gurobi = RecordingOptimizer("Gurobi Optimizer")
     DECARB.configure_solver!(direct_model(gurobi), 0.002, 90)
@@ -472,8 +481,6 @@ end
     for (relax, duals, expected_solves) in ((false,false,1), (false,true,2),
                                           (true,false,1), (true,true,1))
         model = Model(HiGHS.Optimizer)
-        # Keep the thread count consistent with the process-wide HiGHS scheduler
-        # initialized by the preceding case runs.
         DECARB.configure_solver!(model, 1e-4, 30.0)
         set_silent(model)
         @variable(model, x, Bin)
