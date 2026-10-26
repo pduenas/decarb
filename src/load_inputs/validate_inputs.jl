@@ -42,10 +42,10 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         for selected in sp["$(prefix)0"]
             selected == "0" && continue
             any(n -> n == selected || startswith(n, selected * "-"), names) && continue
-            error("❗  equipment \"$selected\" is selected in sp.csv but absent from the " *
+            push!(err,"equipment \"$selected\" is selected in sp.csv but absent from the " *
                   "catalog. Check the spelling, and that its capacity is non-zero " *
-                  "(zero-capacity rows are discarded on load).\n" *
-                  "    available: $(join(unique(names), ", "))")
+                  "(zero-capacity rows are discarded on load). " *
+                  "Available: $(join(unique(names), ", "))")
         end
     end
 
@@ -189,6 +189,8 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
                   "the link will be ignored")
     end
 
+    validate_extended_inputs!(err, wrn, cfg, sp, bdg, tm, chp, pv, wind, topo)
+
     # ---- reserved inputs, accepted but inactive in v1.0 -------------------
     reserved = String[]
     cfg["ST"]      != 0 && push!(reserved,"cfg.ST")
@@ -241,11 +243,102 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         println(io, "   \u26A0  ", w)
     end
     if !isempty(err)
-        error("❗  input validation failed:\n" *
-              join(["    • " * e for e in err], "\n") * "\n")
+        throw(ArgumentError("❗  input validation failed:\n" *
+              join(["    • " * e for e in err], "\n") * "\n"))
     end
     println(io, "   \u2139  inputs validated (", length(wrn), " warning(s))")
 
+    return nothing
+end
+
+# Strip a trailing "-<number>" instance suffix added by extend_catalog.
+catalog_base_name(name::AbstractString) =
+    (m = match(r"^(.*)-\d+$", name); m === nothing ? String(name) : String(m.captures[1]))
+
+function validate_extended_inputs!(err, wrn, cfg, sp, bdg, tm, chp, pv, wind, topo)
+    # ---- time series ------------------------------------------------------
+    nQ = cfg["QmxTM"]
+    all(q -> 0 <= q <= nQ, tm["Qmx"]) ||
+        push!(err,"tm.csv pQmx values must lie in 0:pQmxTM (pQmxTM = $(nQ))")
+    for n in 1:nQ
+        costs = unique(tm["QmxCost"][tm["Qmx"] .== n])
+        length(costs) > 1 &&
+            push!(wrn,"tm.csv pQmxCost is inconsistent within peak group $(n): " *
+                      "$(join(costs, ", ")); only the last value is used")
+    end
+    nEV = sum(max.(sp["EVz0"], 0); init=0)
+    evtype = tm["EVtype"]
+    any(>(nEV), evtype) &&
+        push!(err,"tm.csv pEVtype contains values above the number of selected EV " *
+                  "instances ($(nEV))")
+    for k in 1:nEV
+        isodd(count(==(k), evtype)) &&
+            push!(err,"tm.csv pEVtype has an odd number of events for EV $(k) " *
+                      "(departure without arrival)")
+    end
+    all(t -> t in (0,1), tm["Ton"]) || push!(err,"tm.csv pTon must be 0 or 1")
+    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi")
+        all(>=(0), tm[key]) || push!(err,"tm.csv p$(key) must be non-negative")
+    end
+
+    # ---- existing DER stock vs. available space ---------------------------
+    area = 0.0
+    for (name,n) in zip(sp["PV0"], sp["PVz0"])
+        i = findfirst(==(name), pv["ty"])
+        i === nothing || (area += n*pv["ar"][i])
+    end
+    area > bdg["Bpv"] &&
+        push!(err,"sp.csv existing PV stock needs $(area) m2 but bdg_i.csv pBpv " *
+                  "allows only $(bdg["Bpv"])")
+    sum(sp["BESSz0"]; init=0) > bdg["Bbess"] &&
+        push!(err,"sp.csv declares $(sum(sp["BESSz0"])) existing BESS modules but " *
+                  "bdg_i.csv pBbess allows only $(bdg["Bbess"])")
+    sum(sp["WINDz0"]; init=0) > bdg["Bwind"] &&
+        push!(err,"sp.csv declares $(sum(sp["WINDz0"])) existing wind turbines but " *
+                  "bdg_i.csv pBwind allows only $(bdg["Bwind"])")
+
+    # ---- duplicate equipment names ----------------------------------------
+    for prefix in ("CHP","ABP","HVAC","WH","PV","WIND","BESS","EV")
+        names = filter(!=("0"), sp["$(prefix)0"])
+        dups = unique(filter(n -> count(==(n), names) > 1, names))
+        isempty(dups) ||
+            push!(err,"sp.csv $(prefix) lists duplicate equipment: $(join(dups, ", "))")
+    end
+
+    # ---- topology names ---------------------------------------------------
+    selected = Set{String}()
+    for prefix in ("CHP","ABP","HVAC","WH")
+        union!(selected, catalog_base_name.(filter(!=("0"), sp["$(prefix)0"])))
+    end
+    for i in 1:topo["N"], (col,name) in (("up",topo["up"][i]), ("lo",topo["lo"][i]))
+        (col == "lo" && name == "Building") && continue
+        catalog_base_name(name) in selected && continue
+        push!(wrn,"topo.csv row $(i): $(col) \"$(name)\" matches no selected " *
+                  "catalog equipment; the link will be ignored")
+    end
+
+    # ---- catalog parameter ranges -----------------------------------------
+    for i in 1:wind["N"]
+        wind["mn"][i] > wind["mx"][i] &&
+            push!(err,"wind.csv row $(i) ($(wind["ty"][i])): mn must not exceed mx")
+    end
+    for i in 1:chp["N"]
+        0 <= chp["mn"][i] <= 1 ||
+            push!(err,"chp.csv row $(i) ($(chp["ty"][i])): mn must be in [0,1]")
+        chp["h2p"][i] >= 0 ||
+            push!(err,"chp.csv row $(i) ($(chp["ty"][i])): h2p must be non-negative")
+    end
+    for i in 1:pv["N"]
+        0 < pv["eff"][i] <= 1 ||
+            push!(err,"pv.csv row $(i) ($(pv["ty"][i])): eff must be in (0,1]")
+    end
+
+    # ---- investment windows -----------------------------------------------
+    cfg["IT"] > tm["P"] &&
+        push!(err,"cfg.pIT = $(cfg["IT"]) exceeds the number of periods ($(tm["P"]))")
+    length(unique(tm["IW"])) == length(tm["IW"]) ||
+        push!(err,"investment windows have duplicate start periods; reduce cfg.pIT " *
+                  "or lengthen the horizon")
     return nothing
 end
 

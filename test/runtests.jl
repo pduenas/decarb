@@ -1061,6 +1061,59 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 # Input validation: a name in sp.csv with no surviving catalogue row must
 # produce a readable message, not DimensionMismatch (§B5 root cause).
+@testset "validation :: extended input rules" begin
+    base = load_fixture(joinpath(stage(run=false), "in"))
+    function validate_with(mutate)
+        inputs = deepcopy(base)
+        mutate(inputs)
+        io = IOBuffer()
+        err = try
+            DECARB.validate_inputs(values(inputs)...; io)
+            nothing
+        catch e
+            e
+        end
+        return err, String(take!(io))
+    end
+    function rejects(mutate, msg)
+        err, _ = validate_with(mutate)
+        @test err isa ArgumentError
+        @test err isa ArgumentError && occursin(msg, err.msg)
+    end
+    function warns(mutate, msg)
+        err, out = validate_with(mutate)
+        @test err === nothing
+        @test occursin(msg, out)
+    end
+    @test validate_with(identity)[1] === nothing
+
+    rejects(i -> i.tm["Qmx"][1] = 1, "pQmx values must lie in 0:pQmxTM")
+    warns(i -> (i.cfg["QmxTM"] = 1; i.tm["Qmx"][1:2] .= 1; i.tm["QmxCost"][1:2] = [1.0, 2.0]),
+        "pQmxCost is inconsistent within peak group 1")
+    rejects(i -> i.tm["EVtype"][1] = 1, "pEVtype contains values above")
+    rejects(i -> (i.sp["EVz0"] = [1]; i.tm["EVtype"][1] = 1), "odd number of events for EV 1")
+    rejects(i -> i.tm["Ton"][1] = 2, "pTon must be 0 or 1")
+    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi")
+        rejects(i -> i.tm[key][1] = -1, "p$(key) must be non-negative")
+    end
+    rejects(i -> i.sp["PVz0"][1] = 10^6, "existing PV stock")
+    rejects(i -> i.sp["BESSz0"] = [1], "existing BESS modules")
+    rejects(i -> i.sp["WINDz0"] = [1], "existing wind turbines")
+    rejects(i -> (push!(i.sp["PV0"], "PV-MONO"); push!(i.sp["PVz0"], 0)),
+        "duplicate equipment: PV-MONO")
+    warns(i -> i.topo["up"][1] = "UNKNOWN", "matches no selected catalog equipment")
+    rejects(i -> (i.wind["N"] = 1; i.wind["ty"] = ["W"]; i.wind["mn"] = [2.0];
+                  i.wind["mx"] = [1.0]; i.wind["vmn"] = [1.0]; i.wind["vmx"] = [2.0];
+                  i.wind["life"] = [1.0]; i.wind["inv"] = [0.0]; i.wind["fom"] = [0.0];
+                  i.wind["fail"] = [0.0]; i.wind["lc"] = [0.0]),
+        "mn must not exceed mx")
+    rejects(i -> i.chp["mn"][1] = 1.5, "mn must be in [0,1]")
+    rejects(i -> i.chp["h2p"][1] = -1.0, "h2p must be non-negative")
+    rejects(i -> i.pv["eff"][1] = 1.5, "eff must be in (0,1]")
+    rejects(i -> i.cfg["IT"] = i.tm["P"] + 1, "exceeds the number of periods")
+    rejects(i -> i.tm["IW"] = Int32[1, 1], "duplicate start periods")
+end
+
 @testset "validation :: unknown equipment name" begin
     err = try
         stage(patches = Dict("sp.csv" => "HP-MINISPLIT,1,NO" => "NO-SUCH-UNIT,1,NO"))
@@ -1068,7 +1121,7 @@ end
     catch e
         e
     end
-    @test err isa ErrorException
+    @test err isa ArgumentError
     @test occursin("NO-SUCH-UNIT", sprint(showerror, err))
 end
 
@@ -1103,7 +1156,7 @@ end
     catch e
         e
     end
-    @test err isa ErrorException
+    @test err isa ArgumentError
     @test occursin("fcf must be in (0,1]", sprint(showerror, err))
 end
 
