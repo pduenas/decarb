@@ -362,6 +362,11 @@ result = DECARB.run_decarb!(case_path;
 | `verbose` | Defaults to true. If false, suppresses progress and requests a silent solver; warnings may still be logged. |
 | `relax_integrality` | If true, solves the continuous relaxation; no additional solve is needed to obtain duals. |
 
+DECARB applies its solver defaults after creating the optimizer. As a result,
+DECARB defaults override values supplied through `optimizer_with_attributes`.
+Use the `attributes` keyword to override DECARB defaults; these attributes are
+applied last.
+
 DECARB can be configured for any compatible JuMP MIP solver, with minor
 solver-specific configuration changes where needed. Extensions for additional
 solvers will be included in future releases. Specific solvers must be installed
