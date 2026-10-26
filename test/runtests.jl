@@ -399,6 +399,38 @@ end
     test_input_files()
 end
 
+@testset "input files :: column and row order independence" begin
+    src = joinpath(@__DIR__,"..","examples","minimal","in")
+    mktempdir() do tmp
+        cp(src,joinpath(tmp,"orig"))
+        cp(src,joinpath(tmp,"shuf"))
+        orig = joinpath(tmp,"orig")
+        shuf = joinpath(tmp,"shuf")
+
+        # shuffle hvac.csv columns (reversed order)
+        df = CSV.read(joinpath(orig,"hvac.csv"),DataFrame)
+        CSV.write(joinpath(shuf,"hvac.csv"),df[:,reverse(names(df))])
+        # shuffle cfg.csv rows (reversed order)
+        lines = readlines(joinpath(orig,"cfg.csv"))
+        write(joinpath(shuf,"cfg.csv"),join(reverse(lines),"\n")*"\n")
+
+        function load_all(p)
+            cfg = DECARB.load_cfg(p)
+            sp = DECARB.load_sp(p,cfg)
+            bdg = DECARB.load_bdgi(p)
+            bdg = DECARB.load_bdgii(p,bdg)
+            tm = DECARB.load_tm(p,cfg,bdg)
+            hvac = DECARB.load_hvac(p,tm,sp,bdg)
+            return cfg,hvac
+        end
+
+        cfg0,hvac0 = load_all(orig)
+        cfg1,hvac1 = load_all(shuf)
+        @test cfg1 == cfg0
+        @test hvac1 == hvac0
+    end
+end
+
 @testset "validation :: missing numeric input values" begin
     for (file, patch, expected) in (
         ("tm.csv", "0.18,0.05,0,0.0" => ",0.05,0,0.0",
@@ -725,8 +757,7 @@ end
                 end
             end
             # Native CSV/indexing errors are allowed; the loader is unchanged.
-            for contents in (header, "",
-                "note,pBk2,pBtime,pBk1,pBk3\ncalibrated,0.05,1,0.03,0.15\n")
+            for contents in (header, "")
                 write(input, contents)
                 try
                     @test_throws Exception DECARB.load_bdgii(path, Dict())
@@ -735,6 +766,10 @@ end
                     GC.gc()
                 end
             end
+            # Types are keyed by column name, so extra columns are ignored.
+            write(input, "note,pBk2,pBtime,pBk1,pBk3\ncalibrated,0.05,1,0.03,0.15\n")
+            @test DECARB.load_bdgii(path, Dict())["Bk1"] == 0.03
+            GC.gc()
         end
 
         @testset "calibration interval" begin

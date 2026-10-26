@@ -19,7 +19,8 @@ function load_topo(path::AbstractString,chp::Dict,abp::Dict)
     path2file = joinpath(path,"topo.csv")
 
     # load file into dataframe with predefined types
-    df_topo = CSV.File(path2file;delim=',',types=[String,String,String,Float64]) |> DataFrame
+    df_topo = CSV.File(path2file;delim=',',types=Dict{String,Type}("up"=>String,
+                    "lo"=>String,"in"=>String,"eff"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.up), df_topo)
