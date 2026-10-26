@@ -17,8 +17,10 @@ function load_bess(path::AbstractString)
     path2file = joinpath(path,"bess.csv")
 
     # load file into dataframe with predefined types
-    df_bess = CSV.File(path2file;delim=',',types=[String,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
+    df_bess = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,
+                    "mx"=>Float64,"up"=>Float64,"dn"=>Float64,"effu"=>Float64,
+                    "effd"=>Float64,"inv"=>Float64,"lc"=>Float64,"fom"=>Float64,
+                    "life"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_bess)

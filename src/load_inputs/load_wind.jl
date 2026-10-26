@@ -18,8 +18,10 @@ function load_wind(path::AbstractString,tm::Dict)
     path2file = joinpath(path,"wind.csv")
 
     # load file into dataframe with predefined types
-    df_wind = CSV.File(path2file;delim=',',types=[String,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
+    df_wind = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,
+                    "mx"=>Float64,"mn"=>Float64,"vmn"=>Float64,"vmx"=>Float64,
+                    "fail"=>Float64,"inv"=>Float64,"lc"=>Float64,"fom"=>Float64,
+                    "life"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_wind)

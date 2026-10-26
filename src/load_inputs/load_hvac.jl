@@ -20,9 +20,11 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
     path2file = joinpath(path,"hvac.csv")
     
     # load file into dataframe with predefined types
-    df_hvac = CSV.File(path2file;delim=',',types=[String,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
-                    Float64,Float64]) |> DataFrame
+    df_hvac = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,"pHVmx"=>Float64,
+                    "pACmx"=>Float64,"pHVeff"=>Float64,"pACeff"=>Float64,"temp"=>Float64,
+                    "pHVmx_"=>Float64,"pACmx_"=>Float64,"pHVeff_"=>Float64,
+                    "pACeff_"=>Float64,"inv"=>Float64,"fom"=>Float64,"vom"=>Float64,
+                    "life"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_hvac)

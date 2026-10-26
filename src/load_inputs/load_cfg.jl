@@ -17,10 +17,15 @@ function load_cfg(path::AbstractString)
     path2file = joinpath(path,"cfg.csv")
     
     # load file into dataframe with predefined types
-    df_cfg = CSV.File(path2file;delim=',',types=[DateTime,Bool,Float64,Float64,Float64,
-                      Float64,Float64,Float64,Float64,Float64,Float64,Int,Float64,
-                      Float64,Float64,Float64,Float64,Int,Float64,Float64,Float64,
-                      Float64,Int,Float64,Bool,Int,Float64],transpose=true) |> DataFrame
+    df_cfg = CSV.File(path2file;delim=',',types=Dict{String,Type}("pP0"=>DateTime,"pTmode"=>Bool,
+                      "pBESSsoc0"=>Float64,"pBESSsocf"=>Float64,"pEVsoc0"=>Float64,
+                      "pEVmnsoc"=>Float64,"pWHsto0"=>Float64,"pWHstof"=>Float64,
+                      "pTin0"=>Float64,"pQmxBuy"=>Float64,"pQmxSell"=>Float64,
+                      "pST"=>Int,"pGco2"=>Float64,"pLco2"=>Float64,"pCO2mx"=>Float64,
+                      "pCO2cost"=>Float64,"pCO2ton"=>Float64,"pQmxTM"=>Int,
+                      "pNSEcost"=>Float64,"pNSTcost"=>Float64,"pNSHWcost"=>Float64,
+                      "pNSEVcost"=>Float64,"pEVdriver"=>Int,"pEVpen"=>Float64,
+                      "pEVv2g"=>Bool,"pIT"=>Int,"pIR"=>Float64),transpose=true) |> DataFrame
 
     cfg["P0"] = df_cfg.pP0[1]               # UTC start
     cfg["Tmode"] = df_cfg.pTmode[1]         # temperature control mode {0,1}

@@ -19,8 +19,10 @@ function load_wh(path::AbstractString,sp::Dict,bdg::Dict)
     path2file = joinpath(path,"wh.csv")
 
     # load file into dataframe with predefined types
-    df_wh = CSV.File(path2file;delim=',',types=[String,Float64,Float64,String,Float64,
-                    Float64,Float64,Float64,Float64,Float64]) |> DataFrame
+    df_wh = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,
+                    "mx"=>Float64,"fcf"=>Float64,"fuel"=>String,"eff"=>Float64,
+                    "tank"=>Float64,"inv"=>Float64,"fom"=>Float64,"vom"=>Float64,
+                    "life"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_wh)

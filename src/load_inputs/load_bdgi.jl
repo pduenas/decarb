@@ -17,11 +17,15 @@ function load_bdgi(path::AbstractString)
     path2file = joinpath(path,"bdg_i.csv")
 
     # load file into dataframe with predefined types
-    df_bdg = CSV.File(path2file;delim=',',types=[Float64,Float64,Float64,String,
-                    Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Int,Int,Int,Int,
-                    Float64,Float64,Float64,Float64,Int,Int,Int,Float64],
-                    transpose=true) |> DataFrame
+    df_bdg = CSV.File(path2file;delim=',',types=Dict{String,Type}("pBalt"=>Float64,
+                    "pBlon"=>Float64,"pBlat"=>Float64,"pBtz"=>String,"pBihgp"=>Float64,
+                    "pBihgl"=>Float64,"pBihge"=>Float64,"pBfoot"=>Float64,
+                    "pBkroof"=>Float64,"pBwest"=>Float64,"pBkwest"=>Float64,
+                    "pBeast"=>Float64,"pBkeast"=>Float64,"pBnorth"=>Float64,
+                    "pBknorth"=>Float64,"pBsouth"=>Float64,"pBksouth"=>Float64,
+                    "pBchp"=>Int,"pBhvac"=>Int,"pBabp"=>Int,"pBwh"=>Int,"pBpv"=>Float64,
+                    "pBtilt"=>Float64,"pBazi"=>Float64,"pBalb"=>Float64,"pBtck"=>Int,
+                    "pBwind"=>Int,"pBbess"=>Int,"pBevmx"=>Float64),transpose=true) |> DataFrame
 
     bdg["Balt"] = df_bdg.pBalt[1]       # altitude above sea level [m]
     bdg["Blon"] = df_bdg.pBlon[1]		# longitude [°]

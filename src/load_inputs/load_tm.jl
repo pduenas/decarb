@@ -19,10 +19,14 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
     path2file = joinpath(path,"tm.csv")
 
     # load file into dataframe with predefined types
-    df_tm = CSV.File(path2file;delim=',',types=[DateTime,Float64,Float64,Int,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64,Float64,Float64,
-                    Int,Float64,Float64,Float64,Float64,Float64,Float64,Int,
-                    Float64]) |> DataFrame
+    df_tm = CSV.File(path2file;delim=',',types=Dict{String,Type}("pP"=>DateTime,
+                    "pQcostBuy"=>Float64,"pQcostSell"=>Float64,"pQmx"=>Int,
+                    "pQmxCost"=>Float64,"pQco2"=>Float64,"pGcost"=>Float64,
+                    "pLcost"=>Float64,"pQlight"=>Float64,"pQequip"=>Float64,
+                    "pTout"=>Float64,"pTmx"=>Float64,"pTmn"=>Float64,"pTon"=>Int,
+                    "pHWdem"=>Float64,"pSdni"=>Float64,"pSdhi"=>Float64,
+                    "pWms"=>Float64,"pEVdem"=>Float64,"pEVtm"=>Float64,
+                    "pEVtype"=>Int,"pBppl"=>Float64)) |> DataFrame
 
     # Every data row defines an interval, including rows with all-zero values.
     validate_tm_timestamps(cfg["P0"], df_tm.pP)

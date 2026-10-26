@@ -19,8 +19,10 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
     path2file = joinpath(path,"pv.csv")
 
     # load file into dataframe with predefined types
-    df_pv = CSV.File(path2file;delim=',',types=[String,Int8,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64,Float64,Float64]) |> DataFrame
+    df_pv = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,
+                    "tech"=>Int8,"mx"=>Float64,"ar"=>Float64,"eff"=>Float64,
+                    "loss"=>Float64,"fail"=>Float64,"inv"=>Float64,"lc"=>Float64,
+                    "fom"=>Float64,"life"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_pv)

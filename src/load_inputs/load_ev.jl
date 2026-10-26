@@ -19,8 +19,9 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
     path2file = joinpath(path,"ev.csv")
 
     # load file into dataframe with predefined types
-    df_ev = CSV.File(path2file;delim=',',types=[String,Float64,Float64,Float64,
-                    Float64,Float64,Float64,Float64]) |> DataFrame
+    df_ev = CSV.File(path2file;delim=',',types=Dict{String,Type}("ty"=>String,
+                    "mx"=>Float64,"drv"=>Float64,"cold"=>Float64,"up"=>Float64,
+                    "dn"=>Float64,"effu"=>Float64,"effd"=>Float64)) |> DataFrame
 
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_ev)
