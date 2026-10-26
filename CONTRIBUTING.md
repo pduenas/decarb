@@ -124,6 +124,26 @@ Run the project test suite:
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
+The suite includes regression tests that run `examples/minimal` and compare
+`total_cost`, `energy_bill` and emissions (direct + indirect) in `eq1.csv` with the
+committed `examples/minimal/out/eq1.csv` (relative tolerance `max(1e-3, 2*MIP_GAP)`).
+
+### Regenerating regression fixtures
+
+Only regenerate fixtures when a change intentionally alters results, and explain the
+change in the pull request. From the repository root, run each case with the settings
+used by `run.jl` (HiGHS, `mip_gap = 1e-4`):
+
+```bash
+julia --project=. run.jl examples/minimal
+julia --project=. run.jl examples/annual
+julia --project=. run.jl examples/investment
+```
+
+This overwrites `examples/<case>/out/`. Review the diff of `eq1.csv` (and the other
+outputs), then commit the updated files. Do not commit `balance.csv` or other
+stray files from failed runs.
+
 For changes affecting model execution, run a representative case:
 
 ```julia

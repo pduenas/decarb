@@ -1223,4 +1223,37 @@ end
     @test DECARB.validate_inputs(values(inputs)...; io=devnull) === nothing
 end
 
+# Regression against committed examples/<case>/out/eq1.csv. Cases run in a temp
+# copy so the fixtures are never overwritten. Fixtures are rounded in the CSV
+# (0.01 for costs, 0.001 for emissions), hence the small absolute floors.
+REGRESSION_GAP = 1e-4
+REGRESSION_KEYS = (
+    "total_cost"  => 0.01,
+    "energy_bill" => 0.01,
+    "emissions"   => 0.002,   # direct_emissions + indirect_emissions
+)
+
+function eq1_metrics(path)
+    df = CSV.read(joinpath(path, "out", "eq1.csv"), DataFrame)
+    d  = Dict(string(n) => Float64(v) for (n, v) in zip(df.name, df.eq))
+    d["emissions"] = d["direct_emissions"] + d["indirect_emissions"]
+    return d
+end
+
+function regression_case(name; mip_gap = REGRESSION_GAP, time_limit = 600.0)
+    src = joinpath(@__DIR__, "..", "examples", name)
+    dst = mktempdir()
+    cp(src, dst; force = true)
+    DECARB.run_decarb!(dst; mip_gap, time_limit, verbose = false)
+    got, ref = eq1_metrics(dst), eq1_metrics(src)
+    rtol = max(1e-3, 2 * mip_gap)   # never tighter than the solver gap allows
+    for (key, atol) in REGRESSION_KEYS
+        @test isapprox(got[key], ref[key]; rtol, atol)
+    end
+end
+
+@testset "regression :: minimal eq1.csv matches committed fixture" begin
+    regression_case("minimal")
+end
+
 end # DECARB.jl
