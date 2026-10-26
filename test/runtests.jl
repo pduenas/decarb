@@ -179,9 +179,14 @@ function test_input_bounds()
                                 if accepted
                                     @test DECARB.validate_inputs(values(inputs)...; io=devnull) === nothing
                                 else
-                                    row = spec.catalog == :topo ? "topo.csv row 1" :
-                                        "$(spec.catalog).csv row 1 ($(catalog["ty"][1]))"
-                                    @test_throws "$row: $(spec.rule)" DECARB.validate_inputs(values(inputs)...; io=devnull)
+                                    expected = if ismissing(value)
+                                        "$(spec.catalog).csv column $(spec.field) has a missing value at row 1"
+                                    else
+                                        row = spec.catalog == :topo ? "topo.csv row 1" :
+                                            "$(spec.catalog).csv row 1 ($(catalog["ty"][1]))"
+                                        "$row: $(spec.rule)"
+                                    end
+                                    @test_throws expected DECARB.validate_inputs(values(inputs)...; io=devnull)
                                 end
                                 @test isequal(inputs, original)
                             end
@@ -387,6 +392,19 @@ end
 
 @testset "input files :: common loading and validation" begin
     test_input_files()
+end
+
+@testset "validation :: missing numeric input values" begin
+    for (file, patch, expected) in (
+        ("tm.csv", "0.18,0.05,0,0.0" => ",0.05,0,0.0",
+            "tm.csv column pQcostBuy has a missing value at row 1"),
+        ("hvac.csv", ",15.0" => ",",
+            "hvac.csv column life has a missing value at row 1"),
+    )
+        path = stage(run=false, patches=Dict(file => patch))
+        inputs = load_fixture(joinpath(path, "in"))
+        @test_throws expected DECARB.validate_inputs(values(inputs)...; io=devnull)
+    end
 end
 
 @testset "validation :: finite values and numeric bounds" begin
@@ -603,10 +621,13 @@ end
     @test_throws "pBk1 must be in [0,1]" DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
     for hours in ("", "0", "-1", "NaN", "Inf", "invalid")
         write(input, header * "0.1,0.05,0.15,$hours\n")
+        expected = isempty(hours) || hours == "invalid" ?
+            "bdg_ii.csv column pBtime has a missing value at row 1" :
+            "pBtime must be a positive, finite number"
         if hours == "invalid"
-            @test_logs (:warn, r"error parsing Float64") @test_throws "pBtime must be a positive, finite number" DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
+            @test_logs (:warn, r"error parsing Float64") @test_throws expected DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
         else
-            @test_throws "pBtime must be a positive, finite number" DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
+            @test_throws expected DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
         end
     end
     write(input, "pBk1,pBk2,pBk3\n0.1,0.05,0.15\n")
@@ -711,8 +732,11 @@ end
 
         @testset "calibration interval" begin
             for hours in ("", "0", "-1", "NaN", "Inf", "-Inf", "invalid")
+                message = isempty(hours) || hours == "invalid" ?
+                    "bdg_ii.csv column pBtime has a missing value at row 1" :
+                    "bdg_ii.pBtime must be a positive, finite number"
                 check_error(header * "0.03,0.05,0.15,$hours\n",
-                    "bdg_ii.pBtime must be a positive, finite number")
+                    message)
             end
             write(input, header * "0.03,0.05,0.15,0.25\n")
             @test DECARB.validate_inputs(values(load_fixture(path))...; io=devnull) === nothing
@@ -721,18 +745,24 @@ end
 
         @testset "coefficients" begin
             for value in ("", "-0.1", "1.1", "NaN", "Inf", "-Inf", "invalid")
+                message = isempty(value) || value == "invalid" ?
+                    "bdg_ii.csv column pBk1 has a missing value at row 1" :
+                    "bdg_ii.pBk1 must be in [0,1] for timestep resampling"
                 check_error(header * "$value,0.05,0.15,1\n",
-                    "bdg_ii.pBk1 must be in [0,1] for timestep resampling")
+                    message)
             end
             for (column, row) in (("pBk2", v -> "0.03,$v,0.15,1\n"),
                                   ("pBk3", v -> "0.03,0.05,$v,1\n"))
                 for value in ("", "NaN", "Inf", "-Inf", "invalid")
-                    check_error(header * row(value), "bdg_ii.$column must be finite")
+                    message = isempty(value) || value == "invalid" ?
+                        "bdg_ii.csv column $column has a missing value at row 1" :
+                        "bdg_ii.$column must be finite"
+                    check_error(header * row(value), message)
                 end
             end
             # A malformed first row must not be silently discarded.
             check_error(header * ",0.05,0.15,1\n0.03,0.05,0.15,1\n",
-                "bdg_ii.pBk1 must be in [0,1] for timestep resampling")
+                "bdg_ii.csv column pBk1 has a missing value at row 1")
             for k1 in (0.0, 1.0)
                 write(input, header * "$k1,0,-0.15,1\n")
                 @test DECARB.validate_inputs(values(load_fixture(path))...; io=devnull) === nothing
@@ -766,7 +796,9 @@ end
     header = "pBk1,pBk2,pBk3,pBtime\n"
     for (contents, message) in (
         ((header * "0.03,0.05,0.15,$hours\n",
-          "bdg_ii.pBtime must be a positive, finite number")
+          (isempty(hours) ?
+           "bdg_ii.csv column pBtime has a missing value at row 1" :
+           "bdg_ii.pBtime must be a positive, finite number"))
          for hours in ("", "0", "-1", "NaN", "Inf"))...,
     )
         write(input, contents)

@@ -11,6 +11,10 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     err = String[]       # fatal
     wrn = String[]       # accepted but suspect
 
+    validate_numeric_missing!(err, cfg, bdg, tm, chp, abp, hvac, wh, pv, wind,
+        bess, ev, topo)
+    isempty(err) || throw(ArgumentError(join(err, "\n")))
+
     # ---- loaded thermal values -------------------------------------------
     for key in ("Bk1", "Bk2", "Bk3", "Btime")
         if !haskey(bdg, key)
@@ -242,6 +246,89 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     end
     println(io, "   \u2139  inputs validated (", length(wrn), " warning(s))")
 
+    return nothing
+end
+
+function validate_numeric_missing!(err, cfg, bdg, tm, chp, abp, hvac, wh, pv,
+    wind, bess, ev, topo)
+    sources = (
+        ("cfg.csv", cfg, (
+            "BESSsoc0" => "pBESSsoc0", "BESSsocf" => "pBESSsocf",
+            "EVsoc0" => "pEVsoc0", "EVmnsoc" => "pEVmnsoc",
+            "WHsto0" => "pWHsto0", "WHstof" => "pWHstof",
+            "Tin0" => "pTin0", "QmxBuy" => "pQmxBuy", "QmxSell" => "pQmxSell",
+            "ST" => "pST", "Gco2" => "pGco2", "Lco2" => "pLco2",
+            "CO2mx" => "pCO2mx", "CO2cost" => "pCO2cost", "CO2ton" => "pCO2ton",
+            "QmxTM" => "pQmxTM", "NSEcost" => "pNSEcost",
+            "NSTcost" => "pNSTcost", "NSHWcost" => "pNSHWcost",
+            "NSEVcost" => "pNSEVcost", "EVdriver" => "pEVdriver",
+            "EVpen" => "pEVpen", "IT" => "pIT", "IR" => "pIR")),
+        ("bdg_i.csv", bdg, (
+            "Balt" => "pBalt", "Blon" => "pBlon", "Blat" => "pBlat",
+            "Bihgp" => "pBihgp", "Bihgl" => "pBihgl", "Bihge" => "pBihge",
+            "Bfoot" => "pBfoot", "Bkroof" => "pBkroof", "Bwest" => "pBwest",
+            "Bkwest" => "pBkwest", "Beast" => "pBeast", "Bkeast" => "pBkeast",
+            "Bnorth" => "pBnorth", "Bknorth" => "pBknorth", "Bsouth" => "pBsouth",
+            "Bksouth" => "pBksouth", "Bchp" => "pBchp", "Bhvac" => "pBhvac",
+            "Babp" => "pBabp", "Bwh" => "pBwh", "Bpv" => "pBpv",
+            "Btilt" => "pBtilt", "Bazi" => "pBazi", "Balb" => "pBalb",
+            "Btck" => "pBtck", "Bwind" => "pBwind", "Bbess" => "pBbess",
+            "Bevmx" => "pBevmx")),
+        ("bdg_ii.csv", bdg, (
+            "Bk1" => "pBk1", "Bk2" => "pBk2", "Bk3" => "pBk3",
+            "Btime" => "pBtime")),
+        ("tm.csv", tm, (
+            "QcostBuy" => "pQcostBuy", "QcostSell" => "pQcostSell",
+            "Qmx" => "pQmx", "QmxCost" => "pQmxCost", "Qco2" => "pQco2",
+            "Gcost" => "pGcost", "Lcost" => "pLcost", "Qlight" => "pQlight",
+            "Qequip" => "pQequip", "Tout" => "pTout", "Tmx" => "pTmx",
+            "Tmn" => "pTmn", "Ton" => "pTon", "HWdem" => "pHWdem",
+            "Sdni" => "pSdni", "Sdhi" => "pSdhi", "Wms" => "pWms",
+            "EVdem" => "pEVdem", "EVtm" => "pEVtm", "EVtype" => "pEVtype",
+            "Bppl" => "pBppl")),
+        ("chp.csv", chp, (
+            "mx" => "mx", "mn" => "mn", "fcf" => "fcf", "tank" => "tank",
+            "h2p" => "h2p", "sup" => "sup", "inv" => "inv", "fom" => "fom",
+            "vom" => "vom", "life" => "life")),
+        ("abp.csv", abp, (
+            "mx" => "mx", "fcf" => "fcf", "ac" => "ac", "inv" => "inv",
+            "fom" => "fom", "vom" => "vom", "life" => "life")),
+        ("hvac.csv", hvac, (
+            "HVmx" => "pHVmx", "ACmx" => "pACmx", "HVeff" => "pHVeff",
+            "ACeff" => "pACeff", "temp" => "temp", "HVmx_" => "pHVmx_",
+            "ACmx_" => "pACmx_", "HVeff_" => "pHVeff_", "ACeff_" => "pACeff_",
+            "inv" => "inv", "fom" => "fom", "vom" => "vom", "life" => "life")),
+        ("wh.csv", wh, (
+            "mx" => "mx", "fcf" => "fcf", "eff" => "eff", "tank" => "tank",
+            "inv" => "inv", "fom" => "fom", "vom" => "vom", "life" => "life")),
+        ("pv.csv", pv, (
+            "tech" => "tech", "mx" => "mx", "ar" => "ar", "eff" => "eff",
+            "loss" => "loss", "fail" => "fail", "inv" => "inv", "lc" => "lc",
+            "fom" => "fom", "life" => "life")),
+        ("wind.csv", wind, (
+            "mx" => "mx", "mn" => "mn", "vmn" => "vmn", "vmx" => "vmx",
+            "fail" => "fail", "inv" => "inv", "lc" => "lc", "fom" => "fom",
+            "life" => "life")),
+        ("bess.csv", bess, (
+            "mx" => "mx", "up" => "up", "dn" => "dn", "effu" => "effu",
+            "effd" => "effd", "inv" => "inv", "lc" => "lc", "fom" => "fom",
+            "life" => "life")),
+        ("ev.csv", ev, (
+            "mx" => "mx", "drv" => "drv", "cold" => "cold", "up" => "up",
+            "dn" => "dn", "effu" => "effu", "effd" => "effd")),
+        ("topo.csv", topo, ("eff" => "eff",)),
+    )
+
+    for (filename, input_values, fields) in sources
+        for field in fields
+            key, column = field.first, field.second
+            value = input_values[key]
+            row = value isa AbstractArray ? findfirst(ismissing, value) :
+                (ismissing(value) ? 1 : nothing)
+            isnothing(row) || push!(err,
+                "$filename column $column has a missing value at row $row")
+        end
+    end
     return nothing
 end
 
