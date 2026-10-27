@@ -20,7 +20,9 @@ function wind_turbines!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wind:
     @variable(model, 0 >= zWIND[i=1:cfg["IT"],d=1:wind["N"]] >= 0, Int)
 
     wind["zmx0"] = zeros(Int, wind["N"])      # maximum number of potential existing wind turbines
+    wind["z0"] = zeros(cfg["IT"],wind["N"])   # existing stock (sunk capital)
     for d in findall(sp["WIND0"].!="0")
+        wind["z0"][1,wind["ty"].==sp["WIND0"][d]] .= sp["WINDz0"][d]
         # fix already installed wind turbines
         if sp["WINDyn"][d] == "NO"
             set_upper_bound.(zWIND[1,wind["ty"].==sp["WIND0"][d]],sp["WINDz0"][d])

@@ -28,7 +28,9 @@ function bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::
     @variable(model, 0 >= zBESS[i=1:cfg["IT"],s=1:bess["N"]] >= 0, Int)
 
     bess["zmx0"] = zeros(Int, bess["N"])      # maximum number of potential existing BESS modules
+    bess["z0"] = zeros(cfg["IT"],bess["N"])   # existing stock (sunk capital)
     for s in findall(sp["BESSyn"].!="0")
+        bess["z0"][1,bess["ty"].==sp["BESS0"][s]] .= sp["BESSz0"][s]
         # fix already installed BESS modules
         if sp["BESSyn"][s] == "NO"
             set_upper_bound.(zBESS[1,bess["ty"].==sp["BESS0"][s]],sp["BESSz0"][s])

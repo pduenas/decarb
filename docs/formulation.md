@@ -45,7 +45,8 @@ total cost = operating cost
 
 Operating cost includes grid purchases, less grid-sale revenue, fuel,
 capacity charges, variable O&M, and fixed O&M. Investment costs use the input
-interest rate and asset lifetime to form an annuity, prorated to the modeled
+interest rate and asset lifetime to form an annuity (`IR/(1-(1+IR)^-life)`, or
+`1/life` when the rate is zero), prorated to the modeled
 time horizon. Penalties can be applied to unserved electricity, indoor
 temperature deviations, unserved hot water, and EV state-of-charge shortfalls.
 

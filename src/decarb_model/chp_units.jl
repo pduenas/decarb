@@ -29,11 +29,13 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
 
     # define bounds of binary investment variable
     set_upper_bound.(bCHPty,0)
+    chp["z0"] = zeros(cfg["IT"],chp["N"])   # existing stock (sunk capital)
     for c in findall(sp["CHP0"].!="0")
         # fix already installed CHP units
         for u=1:sp["CHPz0"][c]
             set_upper_bound.(bCHPty[1,chp["ty"].==string(sp["CHP0"][c],'-',u)],1)
             set_lower_bound.(bCHPty[1,chp["ty"].==string(sp["CHP0"][c],'-',u)],1)
+            chp["z0"][1,chp["ty"].==string(sp["CHP0"][c],'-',u)] .= 1
         end
         # release potential installed CHP units
         if sp["CHPyn"][c] == "YES"

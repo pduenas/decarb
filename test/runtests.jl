@@ -50,7 +50,7 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 # Representative required numeric fields: common cases, field-specific rules.
 const INPUT_FILE_CASES = [
-    (file="cfg.csv",    field="pIR",      vertical=true,  kind=:float, zero=false, negative=false),
+    (file="cfg.csv",    field="pIR",      vertical=true,  kind=:float, zero=true,  negative=false),
     (file="bdg_i.csv",  field="pBtck",    vertical=true,  kind=:int,   zero=true,  negative=false),
     (file="bdg_ii.csv", field="pBtime",   vertical=false, kind=:float, zero=false, negative=false),
     (file="sp.csv",     field="pHVACz0",  vertical=false, kind=:uint,  zero=true,  negative=false),
@@ -1266,6 +1266,7 @@ end
         catalogs = [Dict("N"=>1, "fom"=>[100.0*k], "inv"=>[0.0],
             "life"=>[20.0], "vom"=>[0.0]) for k in eachindex(keys)]
         for (k, key) in enumerate(keys)
+            catalogs[k]["z0"] = zeros(2, 1)
             if k <= 4
                 model[key] = @variable(model, [1:2, 1:1], Bin)
                 set_upper_bound.(model[key], 1)
@@ -1350,6 +1351,44 @@ end
     expected_fom = (sum(inputs.hvac["fom"]) + sum(inputs.wh["fom"]) +
         4*only(inputs.pv["fom"]))*inputs.tm["H"]/8760
     @test only(e1.eq[e1.name .== "fixed_om_cost"]) ≈ expected_fom atol = 0.005
+end
+
+@testset "existing stock :: explicit z0 arrays on minimal" begin
+    p = stage(run=false)
+    r = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,
+        return_result=true)
+    for (d, name) in ((r.chp,"chp"), (r.hvac,"hvac"), (r.abp,"abp"), (r.wh,"wh"),
+                      (r.pv,"pv"), (r.wind,"wind"), (r.bess,"bess"))
+        @test size(d["z0"]) == (r.cfg["IT"], d["N"])
+    end
+    @test all(iszero, r.chp["z0"]) && all(iszero, r.abp["z0"])
+    @test all(iszero, r.wind["z0"]) && all(iszero, r.bess["z0"])
+    @test r.hvac["z0"][1, r.hvac["ty"] .== "HP-MINISPLIT-1"] == [1.0]
+    @test sum(r.hvac["z0"]) == 1
+    @test r.wh["z0"][1, :] == Float64.(startswith.(r.wh["ty"], "WH-TANKLESS-GAS"))
+    @test r.pv["z0"][1, r.pv["ty"] .== "PV-MONO"] == [4.0]
+end
+
+@testset "interest rate :: zero rate uses 1/life annuity" begin
+    p = stage(run=false, patches=Dict(
+        "cfg.csv" => ["pIR,0.06" => "pIR,0.0", "pIT,0" => "pIT,1",
+                      "pNSTcost,1.0" => "pNSTcost,1000.0"],
+        "sp.csv" => "HP-MINISPLIT,1,NO" => "HP-MINISPLIT,0,YES"))
+    DECARB.validate_inputs(values(load_fixture(joinpath(p, "in")))...; io=devnull)
+    r = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,
+        return_result=true)
+    h = findfirst(==("HP-MINISPLIT-1"), r.hvac["ty"])
+    @test r.cfg["IR"] == 0
+    @test value(r.model[:vHVACinv]) ≈
+        r.hvac["inv"][h] / r.hvac["life"][h] * value(r.model[:bHVACty][1,h]) *
+        sum(r.tm["TM"]) / 8760
+    @test value(r.model[:vHVACinv]) > 0
+
+    inputs = load_fixture(joinpath(p, "in"))
+    inputs.cfg["IR"] = -0.01
+    @test_throws "[0,1)" DECARB.validate_inputs(values(inputs)...; io=devnull)
+    inputs.cfg["IR"] = 1.0
+    @test_throws "[0,1)" DECARB.validate_inputs(values(inputs)...; io=devnull)
 end
 
 @testset "inputs :: counts above the 8-bit range load and validate" begin

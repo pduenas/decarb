@@ -29,11 +29,13 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
 
     # define bounds of binary investment variable
     set_upper_bound.(bABPty,0)
+    abp["z0"] = zeros(cfg["IT"],abp["N"])   # existing stock (sunk capital)
     for a in findall(sp["ABP0"].!="0")
         # fix already installed absorption chillers
         for u=1:sp["ABPz0"][a]
             set_upper_bound.(bABPty[1,abp["ty"].==string(sp["ABP0"][a],'-',u)],1)
             set_lower_bound.(bABPty[1,abp["ty"].==string(sp["ABP0"][a],'-',u)],1)
+            abp["z0"][1,abp["ty"].==string(sp["ABP0"][a],'-',u)] .= 1
         end
         # release potential installed absorption chillers
         if sp["ABPyn"][a] == "YES"

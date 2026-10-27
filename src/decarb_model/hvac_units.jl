@@ -25,11 +25,13 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
 
     # define bounds of binary investment variable
     set_upper_bound.(bHVACty,0)
+    hvac["z0"] = zeros(cfg["IT"],hvac["N"]) # existing stock (sunk capital)
     for h in findall(sp["HVAC0"].!="0")
         # fix already installed HVAC units
         for u=1:sp["HVACz0"][h]
             set_upper_bound.(bHVACty[1,hvac["ty"].==string(sp["HVAC0"][h],'-',u)],1)
             set_lower_bound.(bHVACty[1,hvac["ty"].==string(sp["HVAC0"][h],'-',u)],1)
+            hvac["z0"][1,hvac["ty"].==string(sp["HVAC0"][h],'-',u)] .= 1
         end
         # release potential installed HVAC units
         if sp["HVACyn"][h] == "YES"

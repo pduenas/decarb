@@ -62,7 +62,7 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     for k in ("BESSsoc0","BESSsocf","EVsoc0","EVmnsoc","WHsto0","WHstof")
         0 <= cfg[k] <= 1 || push!(err,"cfg.$(k) = $(cfg[k]); expected a fraction in [0,1]")
     end
-    0 < cfg["IR"] < 1 || push!(err,"cfg.IR = $(cfg["IR"]); expected an annual rate in (0,1)")
+    0 <= cfg["IR"] < 1 || push!(err,"cfg.IR = $(cfg["IR"]); expected an annual rate in [0,1)")
     cfg["QmxBuy"]  > 0 || push!(err,"cfg.QmxBuy must be positive")
     cfg["QmxSell"] >= 0 || push!(err,"cfg.QmxSell must be non-negative")
     cfg["EVdriver"] in (-1,0,1) ||

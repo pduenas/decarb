@@ -21,7 +21,9 @@ function pv_panels!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,pv::Dict)
     @variable(model, 0 >= zPV[i=1:cfg["IT"],v=1:pv["N"]] >= 0, Int)
 
     pv["zmx0"] = zeros(Int, pv["N"])    # maximum number of potential existing PV panels
+    pv["z0"] = zeros(cfg["IT"],pv["N"]) # existing stock (sunk capital)
     for v in findall(sp["PV0"].!="0")
+        pv["z0"][1,pv["ty"].==sp["PV0"][v]] .= sp["PVz0"][v]
         # fix already installed PV panels
         if sp["PVyn"][v] == "NO"
             set_upper_bound.(zPV[1,pv["ty"].==sp["PV0"][v]],sp["PVz0"][v])
