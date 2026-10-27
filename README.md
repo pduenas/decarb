@@ -47,13 +47,16 @@ result = DECARB.run_decarb!("examples/minimal";
     mip_gap=1e-4,
     time_limit=300.0,
     duals=true,
-    verbose=true,
+    return_result=true,
     relax_integrality=false,
 )
 ```
 
-The returned named tuple contains the solved JuMP model and the loaded input
-dictionaries. The case results are written to its `out/` directory.
+Progress output is enabled by default; pass `verbose=false` to suppress it. The
+function returns `nothing` by default, so a call entered directly at the Julia
+prompt does not display a final result. Pass `return_result=true` to receive the
+named tuple containing the solved JuMP model and loaded input dictionaries. The
+case results are written to its `out/` directory.
 
 ### Other solvers
 
@@ -134,6 +137,8 @@ julia --project=. run_decarb.jl --solver gurobi path/to/cases.txt
 ```
 
 Omit `--solver` to use the default HiGHS solver.
+
+Relative case paths are resolved from the directory containing the case-list file. The runner continues after a case fails and prints a summary table when all cases have been attempted. When invoked as a script, it exits with a nonzero status if any case failed. `run_batch()` returns `true` if one or more cases failed and `false` otherwise.
 
 For another JuMP-compatible solver, install and load it in the active Julia environment, then run the batch from Julia:
 

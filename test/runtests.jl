@@ -480,7 +480,8 @@ end
             @test_logs DECARB.run_decarb!(p; optimizer=factory,
                 attributes=Dict{Any,Any}("mip_rel_gap"=>0.002,
                     MOI.TimeLimitSec()=>90.0),
-                mip_gap=0.1, time_limit=120, duals=false, verbose=false)
+                mip_gap=0.1, time_limit=120, duals=false, verbose=false,
+                return_result=true)
         end
         seekstart(io)
         @test isempty(read(io, String))
@@ -499,7 +500,7 @@ end
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, "presolve"=>"off")
     result = DECARB.run_decarb!(p; optimizer,
         attributes=Dict("presolve"=>"on"),
-        relax_integrality=true, verbose=false)
+        relax_integrality=true, verbose=false, return_result=true)
     @test get_attribute(result.model, "presolve") == "on"
     @test get_attribute(result.model, "mip_rel_gap") == 1e-4
     @test !any(v -> is_binary(v) || is_integer(v), all_variables(result.model))
@@ -857,7 +858,16 @@ end
 end
 
 @testset "minimal :: runs and writes outputs" begin
-    p = stage()
+    p = stage(run=false)
+    output = mktemp() do _, io
+        result = redirect_stdout(io) do
+            DECARB.run_decarb!(p)
+        end
+        seekstart(io)
+        (result, read(io, String))
+    end
+    @test output[1] === nothing
+    @test occursin("loading inputs", output[2])
     for f in ("eq1.csv", "eq2.csv", "ts.csv")
         @test isfile(joinpath(p, "out", f))
     end
@@ -993,7 +1003,8 @@ end
 
 @testset "minimal :: deselected BESS and wind types are fixed to zero" begin
     p = stage(run = false)
-    r = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false)
+    r = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,
+        return_result=true)
     m = r.model
 
     @test all(iszero, r.bess["zmx0"]) && all(iszero, r.wind["zmx0"])
@@ -1092,7 +1103,8 @@ end
     rows.pP = string.(
         collect(DateTime(2019,11,3,5):Hour(1):DateTime(2019,11,4,4)))
     CSV.write(file, rows)
-    result = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false)
+    result = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,
+        return_result=true)
     ts = readout(p, "ts.csv")
     @test all(==(1.0), result.tm["TM"])
     @test result.tm["H"] == 24.0
