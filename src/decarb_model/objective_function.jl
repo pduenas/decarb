@@ -47,58 +47,50 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     # cost of peak capacity subscription [$]
     @expression(model, vQmxCost, sum(tm["QmxCostN"][n]*model[:vQmx][n] for n=1:cfg["QmxTM"]))
 
-    # Existing equipment is encoded as an explicit lower bound on the first
-    # investment variable. Binary variables without such a bound are new.
-    sunk_stock(vars) = map(v -> has_lower_bound(v) ? lower_bound(v) : 0.0, vars)
+    # annuity factor of capital cost; a zero interest rate spreads it evenly over the lifetime
+    annuity(life) = iszero(cfg["IR"]) ? 1/life : cfg["IR"]/(1-(1+cfg["IR"])^(-life))
 
     # annualized cost of CHP during time scope [$]
     b = upper_bound.(model[:bCHPty]) .> 0   # for potential investments
-    z0 = sunk_stock(model[:bCHPty])         # existing stock (sunk capital)
+    z0 = chp["z0"]
     @expression(model, vCHPinv,
-        sum(b[i,c]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*chp["inv"][c]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-chp["life"][c]))*(model[:bCHPty][i,c]-z0[i,c])
+        sum(b[i,c]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*chp["inv"][c]*annuity(chp["life"][c])*(model[:bCHPty][i,c]-z0[i,c])
         for i=1:cfg["IT"],c=1:chp["N"]))
     # annualized cost of HVAC during time scope [$]
     b = upper_bound.(model[:bHVACty]) .> 0  # for potential investments
-    z0 = sunk_stock(model[:bHVACty])        # existing stock (sunk capital)
+    z0 = hvac["z0"]
     @expression(model, vHVACinv,
-        sum(b[i,h]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*hvac["inv"][h]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-hvac["life"][h]))*(model[:bHVACty][i,h]-z0[i,h])
+        sum(b[i,h]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*hvac["inv"][h]*annuity(hvac["life"][h])*(model[:bHVACty][i,h]-z0[i,h])
         for i=1:cfg["IT"],h=1:hvac["N"]))
     # annualized cost of absorption chiller during time scope [$]
     b = upper_bound.(model[:bABPty]) .> 0   # for potential investments
-    z0 = sunk_stock(model[:bABPty])         # existing stock (sunk capital)
+    z0 = abp["z0"]
     @expression(model, vABPinv,
-        sum(b[i,a]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*abp["inv"][a]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-abp["life"][a]))*(model[:bABPty][i,a]-z0[i,a])
+        sum(b[i,a]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*abp["inv"][a]*annuity(abp["life"][a])*(model[:bABPty][i,a]-z0[i,a])
         for i=1:cfg["IT"],a=1:abp["N"]))
     # annualized cost of water heater during time scope [$]
     b = upper_bound.(model[:bWHty]) .> 0    # for potential investments
-    z0 = sunk_stock(model[:bWHty])          # existing stock (sunk capital)
+    z0 = wh["z0"]
     @expression(model, vWHinv,
-        sum(b[i,w]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*wh["inv"][w]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-wh["life"][w]))*(model[:bWHty][i,w]-z0[i,w])
+        sum(b[i,w]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*wh["inv"][w]*annuity(wh["life"][w])*(model[:bWHty][i,w]-z0[i,w])
         for i=1:cfg["IT"],w=1:wh["N"]))
     # annualized cost of PV during time scope [$]
     b = upper_bound.(model[:zPV]) .> 0      # for potential investments
-    z0 = sunk_stock(model[:zPV])            # existing stock (sunk capital)
+    z0 = pv["z0"]
     @expression(model, vPVinv,
-        sum(b[i,v]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*pv["inv"][v]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-pv["life"][v]))*(model[:zPV][i,v]-z0[i,v])
+        sum(b[i,v]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*pv["inv"][v]*annuity(pv["life"][v])*(model[:zPV][i,v]-z0[i,v])
         for i=1:cfg["IT"],v=1:pv["N"]))
     # annualized cost of wind turbine during time scope [$]
     b = upper_bound.(model[:zWIND]) .> 0   # for potential investments
-    z0 = sunk_stock(model[:zWIND])         # existing stock (sunk capital)
+    z0 = wind["z0"]
     @expression(model, vWINDinv,
-        sum(b[i,d]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*wind["inv"][d]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-wind["life"][d]))*(model[:zWIND][i,d]-z0[i,d])
+        sum(b[i,d]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*wind["inv"][d]*annuity(wind["life"][d])*(model[:zWIND][i,d]-z0[i,d])
         for i=1:cfg["IT"],d=1:wind["N"]))
     # annualized cost of electricity storage during time scope [$]
     b = upper_bound.(model[:zBESS]) .> 0   # for potential investments
-    z0 = sunk_stock(model[:zBESS])         # existing stock (sunk capital)
+    z0 = bess["z0"]
     @expression(model, vBESSinv,
-        sum(b[i,s]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*bess["inv"][s]*cfg["IR"]/
-        (1-(1+cfg["IR"])^(-bess["life"][s]))*(model[:zBESS][i,s]-z0[i,s])
+        sum(b[i,s]*sum(tm["TM"][tm["IW"][i]:tm["P"]])/8760*bess["inv"][s]*annuity(bess["life"][s])*(model[:zBESS][i,s]-z0[i,s])
         for i=1:cfg["IT"],s=1:bess["N"]))
 
     # Installed equipment remains active through the final modeled period.

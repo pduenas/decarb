@@ -27,11 +27,13 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
 
     # define bounds of binary investment variable
     set_upper_bound.(bWHty,0)
+    wh["z0"] = zeros(cfg["IT"],wh["N"])     # existing stock (sunk capital)
     for w in findall(sp["WH0"].!="0")
         # fix already installed water heaters
         for u=1:sp["WHz0"][w]
             set_upper_bound.(bWHty[1,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
             set_lower_bound.(bWHty[1,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
+            wh["z0"][1,wh["ty"].==string(sp["WH0"][w],'-',u)] .= 1
         end
         # release potential installed CHP units
         if sp["WHyn"][w] == "YES"

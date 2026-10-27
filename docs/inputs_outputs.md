@@ -69,7 +69,7 @@ display only.
 | `pEVpen` | $ per unit SOC per hour | Weight applied to the driver-preference term. |
 | `pEVv2g` | boolean | Allows EV discharge to the building/grid when true. |
 | `pIT` | integer | Number of investment windows. `0` disables investment and creates one internal window for existing assets. |
-| `pIR` | fraction/year | Annual interest rate used to annualize capital costs; must be between 0 and 1. |
+| `pIR` | fraction/year | Annual interest rate used to annualize capital costs. With `pIR = 0` the annuity factor is `1/life`. |
 
 ### `tm.csv`: time series
 
