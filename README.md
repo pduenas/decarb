@@ -55,8 +55,8 @@ result = DECARB.run_decarb!("examples/minimal";
 Progress output is enabled by default; pass `verbose=false` to suppress it. The
 function returns `nothing` by default, so a call entered directly at the Julia
 prompt does not display a final result. Pass `return_result=true` to receive the
-named tuple containing the solved JuMP model and loaded input dictionaries. The
-case results are written to its `out/` directory.
+named tuple containing the solved JuMP model, loaded input dictionaries, and
+`solve_info` summary. The case results are written to its `out/` directory.
 
 ### Other solvers
 

@@ -211,10 +211,11 @@ function run_decarb!(path::AbstractString;
     a18 = time()		# elapsed time
     println(io, "   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
 
-    result = (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo)
+    result = (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo,
+        solve_info)
     return return_result ? result : nothing
+end
 
-"""
 function git_commit()
     try
         return strip(readchomp(pipeline(Cmd(`git rev-parse HEAD`; dir=pkgdir(DECARB)); stderr=devnull)))

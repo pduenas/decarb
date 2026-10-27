@@ -890,7 +890,8 @@ end
     mkpath(joinpath(p, "out"))
     write(joinpath(p, "out", "balance.csv"), "stale\n")
     write(joinpath(p, "out", "notes.txt"), "keep\n")
-    ret = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false)
+    ret = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,
+        return_result=true)
     @test !isfile(joinpath(p, "out", "balance.csv"))
     @test isfile(joinpath(p, "out", "notes.txt"))
     @test ret.solve_info.termination_status == MOI.OPTIMAL
