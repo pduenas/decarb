@@ -1,7 +1,7 @@
 """
 run_decarb!(path; optimizer=HiGHS.Optimizer, attributes=Dict(),
             mip_gap=1e-4, time_limit=300.0, duals=true, verbose=true,
-            relax_integrality=false)
+            relax_integrality=false, return_result=false)
 
 Executes the complete DECARB optimization workflow for a distributed energy system
 
@@ -17,11 +17,11 @@ time_limit              time limit for the optimization problem
 optimizer               JuMP optimizer constructor, factory, or optimizer_with_attributes
 attributes              raw solver names or MOI optimizer attributes; override defaults
 duals                   fix integer decisions and re-solve to recover dual information
-verbose                 print progress and enable solver output (attributes override)
+verbose                 print progress and enable solver output (default: true)
 relax_integrality       solve the continuous relaxation instead of the integer model
+return_result           return the solved model and input dictionaries (default: false)
 
-returns named tuple with the solved model, all input dictionaries, and solve_info (the
-same name/value data written to out/solve_info.csv)
+returns nothing by default, or a named tuple with the solved model and input dictionaries
 
 """
 
@@ -32,7 +32,8 @@ function run_decarb!(path::AbstractString;
     time_limit::Real=300.0,
     duals::Bool=true,
     verbose::Bool=true,
-    relax_integrality::Bool=false)
+    relax_integrality::Bool=false,
+    return_result::Bool=false)
 
     io = verbose ? stdout : devnull
 
@@ -210,16 +211,11 @@ function run_decarb!(path::AbstractString;
     a18 = time()		# elapsed time
     println(io, "   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
 
-    return (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo, solve_info)
-
+    result = (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo,
+        solve_info)
+    return return_result ? result : nothing
 end
 
-"""
-git_commit()
-
-Returns the HEAD commit of the DECARB package directory, or "unknown" if unavailable
-
-"""
 function git_commit()
     try
         return strip(readchomp(pipeline(Cmd(`git rev-parse HEAD`; dir=pkgdir(DECARB)); stderr=devnull)))

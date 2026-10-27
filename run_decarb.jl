@@ -83,6 +83,26 @@ function optimizer_for(solver::String)
     return Gurobi.Optimizer
 end
 
+function print_summary(results)
+    rows = [
+        (result.case, result.status, string(round(result.elapsed; digits=2)), result.error)
+        for result in results
+    ]
+    headers = ("case", "status", "elapsed s", "error message")
+    widths = [
+        maximum(length(row[i]) for row in (headers, rows...))
+        for i in eachindex(headers)
+    ]
+
+    function print_row(row)
+        println(join((rpad(row[i], widths[i]) for i in eachindex(row)), " | "))
+    end
+
+    print_row(headers)
+    println(join((repeat("-", width) for width in widths), "-+-"))
+    foreach(print_row, rows)
+end
+
 function run_batch(args::Vector{String}=ARGS; optimizer=nothing)
     parsed = parse_args(args)
     isnothing(parsed) && return nothing
@@ -94,21 +114,31 @@ function run_batch(args::Vector{String}=ARGS; optimizer=nothing)
 
     lines = strip.(readlines(list_file))
     case_paths = filter(line -> !isempty(line) && !startswith(line, "#"), lines)
+    results = NamedTuple[]
 
     for raw_path in case_paths
         path = strip(raw_path, ['"', '\''])
-        case = basename(normpath(path)) == "in" ? dirname(normpath(path)) : normpath(path)
+        path = isabspath(path) ? normpath(path) : normpath(joinpath(dirname(list_file), path))
+        case = basename(path) == "in" ? dirname(path) : path
+        started = time()
 
-        if isnothing(selected_optimizer)
-            DECARB.run_decarb!(case)
-        else
-            DECARB.run_decarb!(case; optimizer=selected_optimizer)
+        try
+            if isnothing(selected_optimizer)
+                DECARB.run_decarb!(case)
+            else
+                DECARB.run_decarb!(case; optimizer=selected_optimizer)
+            end
+            push!(results, (case=case, status="success", elapsed=time() - started, error=""))
+        catch err
+            message = replace(sprint(showerror, err), '\n' => ' ', '\r' => ' ')
+            push!(results, (case=case, status="failed", elapsed=time() - started, error=message))
         end
     end
 
-    return nothing
+    print_summary(results)
+    return any(result -> result.status == "failed", results)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    run_batch()
+    run_batch() === true && exit(1)
 end
