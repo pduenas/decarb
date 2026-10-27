@@ -20,7 +20,7 @@ function load_bdgii(path::AbstractString,bdg::Dict)
     bdg["Bk1"] = df_bdg.pBk1[1]     # thermal coefficient- outdoor to indoor temperature [-]
     bdg["Bk2"] = df_bdg.pBk2[1]     # thermal coefficient- external radiation [°C/kW]
     bdg["Bk3"] = df_bdg.pBk3[1]     # thermal coefficient- internal heating/cooling [°C/kW]
-    bdg["Btime"] = df_bdg.pBtime[1] # callibration time in hours
+    bdg["Btime"] = df_bdg.pBtime[1] # calibration time in hours
 
     return bdg
 

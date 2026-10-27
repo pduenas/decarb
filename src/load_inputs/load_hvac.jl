@@ -30,7 +30,7 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
     filter!(row -> !ismissing(row.ty), df_hvac)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_hvac)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !(iszero(row.pHVmx) && iszero(row.pACmx)), df_hvac)
     # delete repeated rows
     unique!(df_hvac)

@@ -1,7 +1,7 @@
 """
 load_ev(path::AbstractString,tm::Dict,sp::Dict)
 
-Loads df_ev.csv file from path directory and stores values in a dictionary object
+Loads ev.csv file from path directory and stores values in a dictionary object
 
 inputs:
 path    string path to working directory
@@ -27,7 +27,7 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
     filter!(row -> !ismissing(row.ty), df_ev)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_ev)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !iszero(row.mx), df_ev)
     # delete repeated rows
     unique!(df_ev)
@@ -39,7 +39,7 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
 
     ev["ty"] = df_ev.ty         # name of electric vehicle
     ev["mx"] = df_ev.mx         # maximum battery capacity [kWh]
-    ev["drv"] = df_ev.drv       # driving effiency [kWh/km]
+    ev["drv"] = df_ev.drv       # driving efficiency [kWh/km]
     ev["cold"] = df_ev.cold     # winter efficiency penalty [p.u.]
     ev["up"] = df_ev.up         # charging rate [kWh/h]
     ev["dn"] = df_ev.dn         # discharging rate [kWh/h]

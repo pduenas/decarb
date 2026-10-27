@@ -28,7 +28,7 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
     filter!(row -> !ismissing(row.ty), df_pv)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_pv)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !iszero(row.mx), df_pv)
     # delete repeated rows
     unique!(df_pv)

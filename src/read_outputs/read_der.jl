@@ -58,7 +58,8 @@ function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,
         capex = cost.*new
         return DataFrame(Eq=type,Inv=cost,Qty=quantity,New=new,CAPEX=capex,Date=date)
     else
-        return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
+        return DataFrame(Eq=String[], Inv=eltype(cost)[], Qty=Float64[], New=Float64[],
+            CAPEX=Float64[], Date=eltype(tmDate)[])
     end
 
 end

@@ -26,7 +26,7 @@ function load_bess(path::AbstractString)
     filter!(row -> !ismissing(row.ty), df_bess)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_bess)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !iszero(row.mx), df_bess)
     # delete repeated rows
     unique!(df_bess)

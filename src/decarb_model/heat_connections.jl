@@ -34,7 +34,7 @@ function heat_connections!(model::Model,topo::Dict,tm::Dict,chp::Dict,abp::Dict)
     # active link from CHP to absorption chiller {0,1}
     @constraint(model, eCHPabp[t=1:tm["P"],c=1:chp["N"],a=1:abp["N"]; topo["chp_abp"][c,a]>0],
         vCHPabp[t,c,a] <= bCHPabp[c,a])
-    # unique active link from CHP to absorption chiller, and viceversa {0,1}
+    # unique active link from CHP to absorption chiller, and vice versa {0,1}
     if abp["N"]>0
         @constraint(model, eCHPabpC[c=1:chp["N"]; any(topo["chp_abp"][c,:].>0)],
             sum(bCHPabp[c,a] for a=1:abp["N"]) <= 1)

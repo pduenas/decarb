@@ -39,7 +39,7 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
         tm["Gcost"][t]*(model[:vCHP_G][t]+model[:vABP_G][t]+model[:vWH_G][t]) +
         tm["Lcost"][t]*(model[:vCHP_L][t]+model[:vABP_L][t]+model[:vWH_L][t]))
 
-    # penalties for driver type: range anxious (-1), indifferent (0), battery concious (1)
+    # penalties for driver type: range anxious (-1), indifferent (0), battery conscious (1)
     @expression(model, vEVpen,
         sum(cfg["EVdriver"]*cfg["EVpen"]*model[:vEVsoc][t,e]*tm["TM"][t]
             for t=1:tm["P"],e=1:ev["N"] if ev["mx_eff"][e] > 0))

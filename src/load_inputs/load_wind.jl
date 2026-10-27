@@ -27,7 +27,7 @@ function load_wind(path::AbstractString,tm::Dict)
     filter!(row -> !ismissing(row.ty), df_wind)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_wind)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !iszero(row.mx), df_wind)
 
     # delete repeated rows

@@ -75,7 +75,7 @@ function run_decarb!(path::AbstractString;
     configure_solver!(model, mip_gap, time_limit)
     verbose || set_silent(model)
     for (key, value) in attributes
-        set_optimizer_attribute(model, key, value)
+        set_attribute(model, key, value)
     end
 
     a2 = time()			# elapsed time

@@ -46,15 +46,14 @@ function create_chp_bdg(topo,chp)
 
     # rows: chp units | col1: hot air | col2: hot water
     chpbdg = zeros(chp["N"],2)
-    hyphen = findlast.("-",chp["ty"])
+    chp_type = replace.(chp["ty"], r"-\d+$" => "")
 
     for i=1:topo["N"]
         topo["lo"][i]!="Building" && continue
         col = topo["in"][i]=="hot air" ? 1 : topo["in"][i]=="hot water" ? 2 : 0
         col == 0 && continue
         for c=1:chp["N"]
-            isnothing(hyphen[c]) && continue
-            if chp["ty"][c][1:hyphen[c][1]-1]!=topo["up"][i]
+            if chp_type[c]!=topo["up"][i]
                 continue
             end
             chpbdg[c,col] = topo["eff"][i]
@@ -69,16 +68,13 @@ function create_chp_abp(topo,chp,abp)
 
     # rows: chp units | cols: absorption chillers
     chpabp = zeros(chp["N"],abp["N"])
-    hyphen_c = findlast.("-",chp["ty"])
-    hyphen_a = findlast.("-",abp["ty"])
+    chp_type = replace.(chp["ty"], r"-\d+$" => "")
+    abp_type = replace.(abp["ty"], r"-\d+$" => "")
 
     for i=1:topo["N"]
         for c=1:chp["N"]
-            isnothing(hyphen_c[c]) && continue
             for a=1:abp["N"]
-                isnothing(hyphen_a[a]) && continue
-                if chp["ty"][c][1:hyphen_c[c][1]-1]!=topo["up"][i] || 
-                    abp["ty"][a][1:hyphen_a[a][1]-1]!=topo["lo"][i]
+                if chp_type[c]!=topo["up"][i] || abp_type[a]!=topo["lo"][i]
                     continue
                 end
                 chpabp[c,a] = topo["eff"][i]
