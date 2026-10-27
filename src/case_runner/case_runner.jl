@@ -151,7 +151,32 @@ function run_decarb!(path::AbstractString;
     println(io, "\u23E9 solving model")
 
     mkpath(joinpath(path,"out"))        # create output directory if it does not exist
-    solve_info = solve_model!(path,model,relax_integrality; duals, verbose)
+
+    # remove stale DECARB outputs from previous runs; other user files are kept
+    for f in ("eq1.csv","eq2.csv","ts.csv","balance.csv","iis_constraints.txt","solve_info.csv")
+        rm(joinpath(path,"out",f); force=true)
+    end
+
+    mip = solve_model!(path,model,relax_integrality; duals, verbose)
+    solve_info = (;
+        decarb_version = string(pkgversion(DECARB)),
+        git_commit = git_commit(),
+        julia_version = string(VERSION),
+        solver_name = mip.solver_name,
+        solver_version = mip.solver_version,
+        termination_status = mip.termination_status,
+        primal_status = mip.primal_status,
+        objective_value = mip.objective_value,
+        objective_bound = mip.objective_bound,
+        relative_gap = mip.relative_gap,
+        solve_time_s = mip.solve_time_s,
+        mip_gap,
+        time_limit,
+        relax_integrality,
+        duals,
+        duals_available = mip.duals_available,
+        threads = mip.threads,
+        utc_timestamp = Dates.format(Dates.now(Dates.UTC), "yyyy-mm-ddTHH:MM:SS") * "Z")
 
     a16 = time()		# elapsed time
     println(io, "   \u231B elapsed time ... ", round(a16-a15; digits=2), " seconds\n")
@@ -181,6 +206,7 @@ function run_decarb!(path::AbstractString;
 
     write_outputs(path,tm["Date"],df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,
         df_wind,df_elec,balance,df_fuel,df_indoor,df_dual,df_econ; io)
+    write_solve_info(path,solve_info)
 
     a18 = time()		# elapsed time
     println(io, "   \u231B elapsed time ... ", round(a18-a17; digits=2), " seconds\n")
@@ -188,4 +214,11 @@ function run_decarb!(path::AbstractString;
     result = (; model, cfg, tm, bdg, sp, chp, abp, hvac, wh, pv, wind, bess, ev, topo)
     return return_result ? result : nothing
 
+"""
+function git_commit()
+    try
+        return strip(readchomp(pipeline(Cmd(`git rev-parse HEAD`; dir=pkgdir(DECARB)); stderr=devnull)))
+    catch
+        return "unknown"
+    end
 end

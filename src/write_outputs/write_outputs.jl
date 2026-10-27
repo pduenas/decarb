@@ -55,3 +55,21 @@ function write_outputs(path::AbstractString,tmDate,df_chp,df_hvac,df_abp,df_wh,d
     CSV.write(joinpath(path,"out","ts.csv"),dfTS,dateformat="mm/dd/yyyy HH:MM")
 
 end
+
+"""
+write_solve_info(path::AbstractString,solve_info)
+
+Writes the MIP solve summary returned by solve_model! to path/out/solve_info.csv, so a
+solution that stopped at a limit (e.g. TIME_LIMIT) can be told apart from an optimal one
+
+inputs:
+path        string path to working directory
+solve_info  named tuple returned by solve_model!
+
+"""
+
+function write_solve_info(path::AbstractString,solve_info)
+    df = DataFrame(name=collect(string.(keys(solve_info))),
+        value=collect(string.(values(solve_info))))
+    CSV.write(joinpath(path,"out","solve_info.csv"),df)
+end
