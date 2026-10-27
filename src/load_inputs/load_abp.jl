@@ -27,7 +27,7 @@ function load_abp(path::AbstractString,sp::Dict,bdg::Dict)
     filter!(row -> !ismissing(row.ty), df_abp)
     # delete all zero rows
     filter!(row -> !all(x -> x==0, row), df_abp)
-    # delete zero-capacity elemenets
+    # delete zero-capacity elements
     filter!(row -> !iszero(row.mx), df_abp)
     # delete repeated rows
     unique!(df_abp)

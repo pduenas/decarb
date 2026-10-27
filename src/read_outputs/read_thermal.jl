@@ -67,7 +67,8 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
 
         return select(report, :Eq, :Inv, :Qty, :New, :CAPEX, :Date)
     else
-        return DataFrame(Eq=nothing,Inv=nothing,Qty=nothing,New=nothing,CAPEX=nothing,Date=nothing)
+        return DataFrame(Eq=String[], Inv=eltype(cost)[], Qty=Int[], New=Int[],
+            CAPEX=eltype(cost)[], Date=eltype(tmDate)[])
     end
 
 end

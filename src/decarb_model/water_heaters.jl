@@ -35,7 +35,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
             set_lower_bound.(bWHty[1,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
             wh["z0"][1,wh["ty"].==string(sp["WH0"][w],'-',u)] .= 1
         end
-        # release potential installed CHP units
+        # release potential installed water heater units
         if sp["WHyn"][w] == "YES"
             for u=(sp["WHz0"][w]+1):bdg["Bwh"]
                 set_upper_bound.(bWHty[:,wh["ty"].==string(sp["WH0"][w],'-',u)],1)
@@ -62,7 +62,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
         @expression(model, vWH_G[t=1:tm["P"]], sum(vWH_Q[t,w]/wh["fcf"][w] for w=1:wh["N"]
             if wh["fcf"][w]>0 && wh["fuel"][w]=="G"))
     else
-        @variable(model, vWH_G[t=1:tm["P"]] == 0)
+        @expression(model, vWH_G[t=1:tm["P"]], AffExpr(0.0))
     end
     # liquid fuel purchased by water heaters [kWh]
     if any(wh["fuel"].=="L")

@@ -64,7 +64,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
             sum(vABP_Q[t,a]/abp["fcf"][a] for a=1:abp["N"]
                 if abp["fcf"][a]>0 && abp["fuel"][a]=="G" && abp["ac"][a]>0))
     else
-        @variable(model, vABP_G[t=1:tm["P"]] == 0)
+        @expression(model, vABP_G[t=1:tm["P"]], AffExpr(0.0))
     end
 
     # liquid fuel purchased by absorption chillers [kWh]

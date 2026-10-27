@@ -37,9 +37,9 @@ function load_sp(path::AbstractString,cfg::Dict)
     sp["PV0"] = collect(skipmissing(df_sp.pPV0))        # PV equipment
     sp["PVz0"] = collect(skipmissing(df_sp.pPVz0))      # PV existing panels [0,...,n]
     sp["PVyn"] = collect(skipmissing(df_sp.pPVyn))      # enable investment in PV
-    sp["WIND0"] = collect(skipmissing(df_sp.pWIND0))    # PV equipment
-    sp["WINDz0"] = collect(skipmissing(df_sp.pWINDz0))  # PV existing panels [0,...,n]
-    sp["WINDyn"] = collect(skipmissing(df_sp.pWINDyn))  # enable investment in PV
+    sp["WIND0"] = collect(skipmissing(df_sp.pWIND0))    # wind equipment
+    sp["WINDz0"] = collect(skipmissing(df_sp.pWINDz0))  # existing wind turbines [0,...,n]
+    sp["WINDyn"] = collect(skipmissing(df_sp.pWINDyn))  # enable investment in wind
     sp["BESS0"] = collect(skipmissing(df_sp.pBESS0))    # BESS equipment
     sp["BESSz0"] = collect(skipmissing(df_sp.pBESSz0))  # BESS existing modules [0,...,n]
     sp["BESSyn"] = collect(skipmissing(df_sp.pBESSyn))  # enable investment in BESS
