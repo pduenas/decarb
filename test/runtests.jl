@@ -1,5 +1,6 @@
 using Test
 using DECARB
+using Aqua
 using CSV, DataFrames, Dates
 using JuMP, HiGHS
 
@@ -1433,6 +1434,20 @@ end
 
 @testset "regression :: minimal eq1.csv matches committed fixture" begin
     regression_case("minimal")
+end
+
+@testset "Aqua.jl" begin
+    Aqua.test_all(DECARB;
+        ambiguities = true,
+        unbound_args = true,
+        # Gurobi's attributes are configured by name; DECARB does not import the solver package.
+        stale_deps = (ignore = [:Gurobi],),
+        deps_compat = true,
+        undefined_exports = false,
+        project_extras = false,
+        piracies = false,
+        persistent_tasks = false,
+    )
 end
 
 end # DECARB.jl
