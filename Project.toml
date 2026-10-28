@@ -13,6 +13,7 @@ JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
+Aqua = "0.8"
 AstroLib = "0.4"
 CSV = "0.10"
 DataFrames = "1.8"
@@ -21,9 +22,11 @@ HiGHS = "1.24.1"
 JuMP = "1.31"
 TimeZones = "1.22"
 julia = "1.10"
+Test = "1"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Aqua", "Test"]
