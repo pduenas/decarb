@@ -1,5 +1,5 @@
 """
-read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector,relaxed::Bool=false)
 
 Reads DER component outputs from model and load them into dataframe
 
@@ -10,11 +10,12 @@ equip   character vector with equipment type
 attr    dictionary of equipment attributes
 tmDate  date/time vector for all periods
 tmIW    investment window period indices
+relaxed true if integrality was relaxed
 
 returns dataframes of outputs
 """
 
-function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector,relaxed::Bool=false)
 
     # read specific output and attributes
     type = attr["ty"]
@@ -36,8 +37,9 @@ function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,
         sp_z0 = sp["WINDz0"]
     end
 
-    # Use CartesianIndex to preserve both investment window and equipment dimensions
-    idx = findall(!iszero, vals)
+    # relaxed solutions keep their fractional values
+    relaxed || (vals = round.(vals))
+    idx = findall(v -> abs(v) > 1e-6, vals)
     
     if !isempty(idx)
         eq = [i[2] for i in idx]
@@ -46,7 +48,7 @@ function read_der(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,
         date = [tmDate[tmIW[w]] for w in win]
         type = type[eq]
         cost = cost[eq]
-        quantity = [vals[i] for i in idx]   # per-window incremental installed quantity
+        quantity = Float64[vals[i] for i in idx]   # per-window incremental installed quantity
         new = copy(quantity)
         for n in findall(x -> x!="0", sp_yn)
             name = findall(x -> x==sp_0[n], type)
