@@ -178,14 +178,6 @@ DECARB is currently maintained by [Pablo Duenas](https://github.com/pduenas),
 who is affiliated with the [MIT Energy Initiative](https://energy.mit.edu/) and
 [Universidad Pontificia Comillas](https://www.comillas.edu/).
 
-
-## DECARB Team
-
-The original version of DECARB was developed at the [MIT Energy Initiative](https://energy.mit.edu/).
-by Pablo Duenas. Other contributors, in order, are Graham
-Turk, Karen Tapia-Ahumada, Leslie Norford, Shaohui Liu, Onur Talu, and Sungho
-Shin. All contributors are from the MIT Energy Initiative.
-
 ## Contributing
 
 Bug reports, documentation fixes, tests, and focused model improvements are
@@ -220,15 +212,7 @@ machine-readable [`CITATION.cff`](CITATION.cff) file.
 
 ## Security
 
-Security fixes are applied to the current `main` branch and, when practical,
-the latest published release. Do not open a public issue for a suspected
-vulnerability. Use GitHub's private vulnerability reporting feature or email
-`pduenas@mit.edu` with the subject `DECARB security report`.
-
-Include the affected version or commit, reproduction steps, impact, and any
-suggested mitigation. Allow time for acknowledgement and investigation before
-public disclosure. See [`SECURITY.md`](SECURITY.md) for GitHub's discoverable
-copy of this policy. Ordinary correctness bugs can use the public bug template.
+For security reports, see [SECURITY.md](SECURITY.md).
 
 ## License
 
