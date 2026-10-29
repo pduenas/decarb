@@ -27,6 +27,11 @@ function load_bdgi(path::AbstractString)
                     "pBtilt"=>Float64,"pBazi"=>Float64,"pBalb"=>Float64,"pBtck"=>Int,
                     "pBwind"=>Int,"pBbess"=>Int,"pBevmx"=>Float64),transpose=true) |> DataFrame
 
+    require_valid_columns(df_bdg,"bdg_i.csv",["pBalt","pBlon","pBlat","pBtz","pBihgp",
+        "pBihgl","pBihge","pBfoot","pBkroof","pBwest","pBkwest","pBeast","pBkeast",
+        "pBnorth","pBknorth","pBsouth","pBksouth","pBchp","pBhvac","pBabp","pBwh",
+        "pBpv","pBtilt","pBazi","pBalb","pBtck","pBwind","pBbess","pBevmx"])
+
     bdg["Balt"] = df_bdg.pBalt[1]       # altitude above sea level [m]
     bdg["Blon"] = df_bdg.pBlon[1]		# longitude [°]
     bdg["Blat"] = df_bdg.pBlat[1]		# latitude [°]

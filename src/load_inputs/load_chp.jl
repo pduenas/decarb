@@ -24,6 +24,9 @@ function load_chp(path::AbstractString,sp::Dict,bdg::Dict)
                     "tank"=>Float64,"h2p"=>Float64,"sup"=>Float64,"inv"=>Float64,
                     "fom"=>Float64,"vom"=>Float64,"life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_chp,"chp.csv",["mx","mn","fcf","fuel","tank","h2p","sup",
+        "inv","fom","vom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_chp)
     # delete all zero rows

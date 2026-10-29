@@ -28,6 +28,12 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
                     "pWms"=>Float64,"pEVdem"=>Float64,"pEVtm"=>Float64,
                     "pEVtype"=>Int,"pBppl"=>Float64)) |> DataFrame
 
+    # pP is validated with the timestamps below
+    require_columns(df_tm,"tm.csv",["pP"])
+    require_valid_columns(df_tm,"tm.csv",["pQcostBuy","pQcostSell","pQmx","pQmxCost",
+        "pQco2","pGcost","pLcost","pQlight","pQequip","pTout","pTmx","pTmn","pTon",
+        "pHWdem","pSdni","pSdhi","pWms","pEVdem","pEVtm","pEVtype","pBppl"])
+
     # Every data row defines an interval, including rows with all-zero values.
     validate_tm_timestamps(cfg["P0"], df_tm.pP)
     tm["Putc"] = collect(skipmissing(df_tm.pP)) # Input period ends are always UTC.
@@ -61,7 +67,8 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
     # Whole-minute midpoint offsets are sufficient for solar geometry.
     tm["Pmidutc"] = floor.(boundaries[1:end-1] .+
         Minute.(floor.(Int, elapsed_minutes ./ 2)), Minute)
-    tz = TimeZone(bdg["Btz"])
+    # an invalid zone is rejected by validate_inputs; display UTC dates until then
+    tz = something(iana_time_zone(bdg["Btz"]), tz"UTC")
     tm["Date"] = [DateTime(astimezone(ZonedDateTime(dt, tz"UTC"), tz))
                   for dt in tm["Putc"]] # Local dates for output display.
     tm["P"] = length(tm["Putc"])        # number of periods

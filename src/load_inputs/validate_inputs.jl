@@ -1,4 +1,58 @@
 """
+    iana_time_zone(name)
+
+Return the `TimeZone` for `name`, or `nothing` when it is not a valid IANA zone.
+"""
+function iana_time_zone(name)
+    name isa AbstractString || return nothing
+    try
+        return TimeZone(name)
+    catch e
+        e isa InterruptException && rethrow()
+        return nothing
+    end
+end
+
+"""
+    require_columns(df, file, cols)
+
+Throw an `ArgumentError` naming `file` when any column in `cols` is absent from `df`.
+"""
+function require_columns(df::AbstractDataFrame, file::AbstractString, cols)
+    for col in cols
+        String(col) in names(df) ||
+            throw(ArgumentError("$file is missing required column $col"))
+    end
+    return nothing
+end
+
+"""
+    require_valid_columns(df, file, cols; key=nothing)
+
+Throw an `ArgumentError` naming `file`, column and first row when a column in `cols`
+is absent, or holds a missing or non-finite value. Rows where the `key` column is
+missing are skipped, since loaders discard them.
+"""
+function require_valid_columns(df::AbstractDataFrame, file::AbstractString, cols;
+    key=nothing)
+    require_columns(df, file, cols)
+    skip = key === nothing || !(String(key) in names(df)) ? falses(nrow(df)) :
+        ismissing.(df[!, String(key)])
+    for col in cols
+        values = df[!, String(col)]
+        for row in eachindex(values)
+            skip[row] && continue
+            value = values[row]
+            ismissing(value) &&
+                throw(ArgumentError("$file column $col has a missing value at row $row"))
+            value isa Real && !isfinite(value) &&
+                throw(ArgumentError("$file column $col has a non-finite value at row $row"))
+        end
+    end
+    return nothing
+end
+
+"""
     validate_inputs(cfg, sp, bdg, tm, chp, abp, hvac, wh, pv, wind, bess, ev, topo;
                     io=stdout)
 
@@ -143,6 +197,8 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         push!(err,"pv.csv tech must be 1, 2 or 3")
     bdg["Btck"] in (0,1,2) ||
         push!(err,"bdg_i.csv pBtck must be 0 (fixed), 1 (single-axis) or 2 (dual-axis)")
+    iana_time_zone(bdg["Btz"]) === nothing &&
+        push!(err,"bdg_i.csv pBtz \"$(bdg["Btz"])\" is not a valid IANA time zone")
 
     # ---- installation space vs. existing stock ----------------------------
     for (pfx,space) in (("CHP","Bchp"),("ABP","Babp"),("HVAC","Bhvac"),("WH","Bwh"))

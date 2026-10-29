@@ -27,6 +27,13 @@ function load_cfg(path::AbstractString)
                       "pNSEVcost"=>Float64,"pEVdriver"=>Int,"pEVpen"=>Float64,
                       "pEVv2g"=>Bool,"pIT"=>Int,"pIR"=>Float64),transpose=true) |> DataFrame
 
+    # pP0 is validated with the tm.csv timestamps
+    require_columns(df_cfg,"cfg.csv",["pP0"])
+    require_valid_columns(df_cfg,"cfg.csv",["pTmode","pBESSsoc0","pBESSsocf","pEVsoc0",
+        "pEVmnsoc","pWHsto0","pWHstof","pTin0","pQmxBuy","pQmxSell","pST","pGco2",
+        "pLco2","pCO2mx","pCO2cost","pCO2ton","pQmxTM","pNSEcost","pNSTcost",
+        "pNSHWcost","pNSEVcost","pEVdriver","pEVpen","pEVv2g","pIT","pIR"])
+
     cfg["P0"] = df_cfg.pP0[1]               # UTC start
     cfg["Tmode"] = df_cfg.pTmode[1]         # temperature control mode {0,1}
     cfg["BESSsoc0"] = df_cfg.pBESSsoc0[1]   # initial state-of-charge of BESS

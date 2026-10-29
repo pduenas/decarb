@@ -23,6 +23,9 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
                     "mx"=>Float64,"drv"=>Float64,"cold"=>Float64,"up"=>Float64,
                     "dn"=>Float64,"effu"=>Float64,"effd"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_ev,"ev.csv",["mx","drv","cold","up","dn","effu","effd"];
+        key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_ev)
     # delete all zero rows

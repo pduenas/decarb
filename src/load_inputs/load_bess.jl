@@ -22,6 +22,9 @@ function load_bess(path::AbstractString)
                     "effd"=>Float64,"inv"=>Float64,"lc"=>Float64,"fom"=>Float64,
                     "life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_bess,"bess.csv",["mx","up","dn","effu","effd","inv","lc",
+        "fom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_bess)
     # delete all zero rows

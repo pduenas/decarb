@@ -24,6 +24,9 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
                     "loss"=>Float64,"fail"=>Float64,"inv"=>Float64,"lc"=>Float64,
                     "fom"=>Float64,"life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_pv,"pv.csv",["tech","mx","ar","eff","loss","fail","inv",
+        "lc","fom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_pv)
     # delete all zero rows
@@ -50,9 +53,14 @@ function load_pv(path::AbstractString,tm::Dict,bdg::Dict)
     # maximum potential number of PV panels [0,z]
     pv["zmx"] = floor.(bdg["Bpv"]./pv["ar"])
 
-    # PV panel capacity factor [kW/m2]
-    pv["pv_cf"] = maximum_solar_potential(pv["tech"],bdg["Btilt"],bdg["Bazi"],bdg["Btck"],
-        tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],bdg["Balb"],tm["P"],tm["Tout"])
+    # PV capacity factor [kW/m2]; invalid tech/tracking values are rejected by
+    # validate_inputs, so skip the derived computation for them
+    if all(in(1:3), pv["tech"]) && bdg["Btck"] in (0,1,2)
+        pv["pv_cf"] = maximum_solar_potential(pv["tech"],bdg["Btilt"],bdg["Bazi"],bdg["Btck"],
+            tm["ele"],tm["azi"],tm["Sdni"],tm["Sdhi"],bdg["Balb"],tm["P"],tm["Tout"])
+    else
+        pv["pv_cf"] = zeros(Float64,tm["P"],pv["N"])
+    end
 
     return pv
 
@@ -92,7 +100,7 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
     elseif pvtck==2
         cosinc = ones(Float64, np)
     else
-        error("❗  Invalid PV tracking type. Choose 0=fixed, 1=single-axis, or 2=dual-axis.")
+        throw(ArgumentError("Invalid PV tracking type. Choose 0=fixed, 1=single-axis, or 2=dual-axis."))
     end
 
     incid = acos.(clamp.(cosinc, -1, 1))
