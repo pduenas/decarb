@@ -64,6 +64,9 @@ function load_sp(path::AbstractString,cfg::Dict)
         sp["$(prefix)0"] = sp["$(prefix)0"][mask]
         sp["$(prefix)z0"] = sp["$(prefix)z0"][mask]
         sp["$(prefix)yn"] = sp["$(prefix)yn"][mask]
+        # unmodified yn values and their sp.csv data rows, kept for validation
+        sp["$(prefix)yn_raw"] = copy(sp["$(prefix)yn"])
+        sp["$(prefix)rows"] = collect(1:length(mask))[mask]
     end
 
     maskEV = .!((sp["EV0"].=="0") .& (sp["EVz0"].==0))

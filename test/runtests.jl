@@ -841,6 +841,29 @@ end
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
+@testset "validation :: sp.csv selections and investment flags" begin
+    path = mktempdir()
+    cp(CASE_SRC, path; force=true)
+    inputs = load_fixture(joinpath(path, "in"))
+
+    bad = deepcopy(inputs)
+    bad.sp["PV0"][1] = "PV-UNKNOWN"
+    @test_throws ArgumentError DECARB.validate_inputs(values(bad)...; io=devnull)
+
+    bad = deepcopy(inputs)
+    @test inputs.cfg["IT"] == 1
+    bad.sp["HVACyn_raw"][1] = "yes"
+    err = try DECARB.validate_inputs(values(bad)...; io=devnull) catch e e end
+    @test err isa ArgumentError
+    @test occursin("pHVACyn row 1", err.msg) && occursin("\"yes\"", err.msg)
+
+    warn = deepcopy(inputs)
+    warn.sp["PVz0"][1] = 0
+    out = IOBuffer()
+    DECARB.validate_inputs(values(warn)...; io=out)
+    @test occursin("has pPVz0 = 0 and pPVyn = NO", String(take!(out)))
+end
+
 @testset "validation :: loaded inputs need no source files" begin
     path, inputs = mktempdir() do path
         cp(CASE_SRC, path; force=true)

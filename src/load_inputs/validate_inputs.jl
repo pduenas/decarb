@@ -91,15 +91,34 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
 
     # ---- equipment selections in loaded catalogs --------------------------
     for (prefix, catalog) in (("CHP", chp), ("ABP", abp), ("HVAC", hvac),
-                              ("WH", wh), ("EV", ev))
+                              ("WH", wh), ("EV", ev), ("PV", pv), ("WIND", wind),
+                              ("BESS", bess))
         names = catalog["ty"]
+        exact = prefix in ("PV", "WIND", "BESS")    # these catalogs are not suffixed
         for selected in sp["$(prefix)0"]
             selected == "0" && continue
-            any(n -> n == selected || startswith(n, selected * "-"), names) && continue
+            any(n -> n == selected || (!exact && startswith(n, selected * "-")), names) && continue
             push!(err,"equipment \"$selected\" is selected in sp.csv but absent from the " *
                   "catalog. Check the spelling, and that its capacity is non-zero " *
                   "(zero-capacity rows are discarded on load). " *
                   "Available: $(join(unique(names), ", "))")
+        end
+    end
+
+    # ---- investment flags (raw values, before the pIT = 0 override) ---------
+    for prefix in ("CHP", "ABP", "HVAC", "WH", "PV", "WIND", "BESS")
+        raw = get(sp, "$(prefix)yn_raw", nothing)
+        raw === nothing && continue
+        rows = get(sp, "$(prefix)rows", collect(eachindex(raw)))
+        for (j, value) in enumerate(raw)
+            value in ("YES", "NO", "0") ||
+                push!(err,"sp.csv p$(prefix)yn row $(rows[j]) has invalid value " *
+                      "$(repr(value)); expected \"YES\", \"NO\" or \"0\"")
+        end
+        for (j, value) in enumerate(raw)
+            sp["$(prefix)0"][j] != "0" && sp["$(prefix)z0"][j] == 0 && value == "NO" &&
+                push!(wrn,"sp.csv row $(rows[j]): $(sp["$(prefix)0"][j]) has p$(prefix)z0 = 0 " *
+                      "and p$(prefix)yn = NO; selecting it has no effect")
         end
     end
 
