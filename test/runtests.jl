@@ -1071,6 +1071,23 @@ end
     @test only(eq2.Qty[eq2.Eq .== "PV-MONO"]) == 4
 end
 
+@testset "minimal :: eq2 identical with duals=false and duals=true" begin
+    pf = stage(run=false)
+    pt = stage(run=false)
+    DECARB.run_decarb!(pf; mip_gap=MIP_GAP, time_limit=TLIMIT, duals=false, verbose=false)
+    DECARB.run_decarb!(pt; mip_gap=MIP_GAP, time_limit=TLIMIT, duals=true, verbose=false)
+    @test isequal(readout(pf, "eq2.csv"), readout(pt, "eq2.csv"))
+end
+
+@testset "minimal :: relaxed run reports no near-zero quantities" begin
+    p = stage(run=false)
+    DECARB.run_decarb!(p; relax_integrality=true, verbose=false)
+    eq2 = readout(p, "eq2.csv")
+    @test nrow(eq2) > 0
+    @test eltype(eq2.Qty) <: AbstractFloat
+    @test !any(<(1e-6), eq2.Qty)
+end
+
 @testset "minimal :: deselected BESS and wind types are fixed to zero" begin
     p = stage(run = false)
     r = DECARB.run_decarb!(p; mip_gap=MIP_GAP, time_limit=TLIMIT, verbose=false,

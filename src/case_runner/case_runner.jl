@@ -184,13 +184,13 @@ function run_decarb!(path::AbstractString;
     println(io, "\u23E9 reading outputs")
 
     # read model outputs
-    df_chp = read_thermal(model,sp,"chp",chp,tm["Date"],tm["IW"])
-    df_hvac = read_thermal(model,sp,"hvac",hvac,tm["Date"],tm["IW"])
-    df_abp = read_thermal(model,sp,"abp",abp,tm["Date"],tm["IW"])
-    df_wh = read_thermal(model,sp,"wh",wh,tm["Date"],tm["IW"])
-    df_pv = read_der(model,sp,"pv",pv,tm["Date"],tm["IW"])
-    df_bess = read_der(model,sp,"bess",bess,tm["Date"],tm["IW"])
-    df_wind = read_der(model,sp,"wind",wind,tm["Date"],tm["IW"])
+    df_chp = read_thermal(model,sp,"chp",chp,tm["Date"],tm["IW"],relax_integrality)
+    df_hvac = read_thermal(model,sp,"hvac",hvac,tm["Date"],tm["IW"],relax_integrality)
+    df_abp = read_thermal(model,sp,"abp",abp,tm["Date"],tm["IW"],relax_integrality)
+    df_wh = read_thermal(model,sp,"wh",wh,tm["Date"],tm["IW"],relax_integrality)
+    df_pv = read_der(model,sp,"pv",pv,tm["Date"],tm["IW"],relax_integrality)
+    df_bess = read_der(model,sp,"bess",bess,tm["Date"],tm["IW"],relax_integrality)
+    df_wind = read_der(model,sp,"wind",wind,tm["Date"],tm["IW"],relax_integrality)
     df_elec,balance = read_electric(model,tm,chp["N"],hvac["N"],wh["N"],pv["N"],
         bess["N"],ev["N"],wind["N"],bess["mx"],bess["zmx0"],pv["zmx0"],wind["zmx0"],
         ev["mx_eff"],wh["fuel"])

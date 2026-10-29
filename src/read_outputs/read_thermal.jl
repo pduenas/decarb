@@ -1,5 +1,5 @@
 """
-read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector,relaxed::Bool=false)
 
 Reads thermal component outputs from model and load them into dataframe
 
@@ -10,11 +10,12 @@ equip   character vector with equipment type
 attr    dictionary of equipment attributes
 tmDate  date/time vector for all periods
 tmIW    investment window period indices
+relaxed true if integrality was relaxed
 
 returns dataframes of outputs
 """
 
-function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector)
+function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vector,tmIW::Vector,relaxed::Bool=false)
 
     # read specific output and attrs
     type = attr["ty"]
@@ -37,7 +38,10 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         sp_z0 = sp["WHz0"]
     end
 
-    idx = findall(!iszero, unit)
+    # relaxed solutions keep their fractional values
+    relaxed || (unit = round.(unit))
+    idx = findall(v -> abs(v) > 1e-6, unit)
+    QT = relaxed ? Float64 : Int64
 
     if !isempty(idx)
         eq = [i[2] for i in idx]
@@ -49,7 +53,7 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
         # Reports aggregate those copies back to their catalog equipment type.
         base_type = replace.(unit_type, r"-\d+$" => "")
         rows = DataFrame(Eq=base_type, Inv=cost, Window=win,
-            Qty=ones(Int64, length(idx)))
+            Qty=QT[unit[i] for i in idx])
         report = combine(groupby(rows, [:Eq, :Inv, :Window]), :Qty => sum => :Qty)
         sort!(report, [:Eq, :Window])
         report.New = copy(report.Qty)
@@ -67,7 +71,7 @@ function read_thermal(model::Model,sp::Dict,equip::String,attr::Dict,tmDate::Vec
 
         return select(report, :Eq, :Inv, :Qty, :New, :CAPEX, :Date)
     else
-        return DataFrame(Eq=String[], Inv=eltype(cost)[], Qty=Int[], New=Int[],
+        return DataFrame(Eq=String[], Inv=eltype(cost)[], Qty=QT[], New=QT[],
             CAPEX=eltype(cost)[], Date=eltype(tmDate)[])
     end
 
