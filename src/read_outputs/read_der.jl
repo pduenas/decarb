@@ -10,7 +10,7 @@ equip   character vector with equipment type
 attr    dictionary of equipment attributes
 tmDate  date/time vector for all periods
 tmIW    investment window period indices
-relaxed 
+relaxed true if integrality was relaxed
 
 returns dataframes of outputs
 """
