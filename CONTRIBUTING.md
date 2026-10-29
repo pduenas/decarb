@@ -147,14 +147,9 @@ stray files from failed runs.
 For changes affecting model execution, run a representative case:
 
 ```julia
-using DECARB
+using DECARB, HiGHS
 
-result = run_decarb!(
-    ".";
-    solver = :highs,
-    mip_gap = 1e-2,
-    time_limit = 300.0,
-)
+DECARB.run_decarb!("examples/minimal"; optimizer=HiGHS.Optimizer)
 ```
 
 Check that:

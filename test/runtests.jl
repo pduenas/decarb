@@ -1440,8 +1440,7 @@ end
     Aqua.test_all(DECARB;
         ambiguities = true,
         unbound_args = true,
-        # Gurobi's attributes are configured by name; DECARB does not import the solver package.
-        stale_deps = (ignore = [:Gurobi],),
+        stale_deps = true,
         deps_compat = true,
         undefined_exports = false,
         project_extras = false,
@@ -1451,3 +1450,6 @@ end
 end
 
 end # DECARB.jl
+
+# Opt-in local JET checks: DECARB_JET=true julia --project=. -e 'using Pkg; Pkg.test()'
+get(ENV, "DECARB_JET", "") == "true" && include("jet.jl")
