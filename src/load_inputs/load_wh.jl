@@ -24,6 +24,9 @@ function load_wh(path::AbstractString,sp::Dict,bdg::Dict)
                     "tank"=>Float64,"inv"=>Float64,"fom"=>Float64,"vom"=>Float64,
                     "life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_wh,"wh.csv",["mx","fcf","fuel","eff","tank","inv","fom",
+        "vom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_wh)
     # delete all zero rows

@@ -22,6 +22,8 @@ function load_topo(path::AbstractString,chp::Dict,abp::Dict)
     df_topo = CSV.File(path2file;delim=',',types=Dict{String,Type}("up"=>String,
                     "lo"=>String,"in"=>String,"eff"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_topo,"topo.csv",["lo","in","eff"];key="up")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.up), df_topo)
     # delete all zero rows

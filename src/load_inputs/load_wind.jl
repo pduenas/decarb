@@ -23,6 +23,9 @@ function load_wind(path::AbstractString,tm::Dict)
                     "fail"=>Float64,"inv"=>Float64,"lc"=>Float64,"fom"=>Float64,
                     "life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_wind,"wind.csv",["mx","mn","vmn","vmx","fail","inv","lc",
+        "fom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_wind)
     # delete all zero rows
@@ -60,11 +63,8 @@ function calculate_wind_output(nP,Wms,Qmx,Qmn,SPmn,SPmx,nD)
 
     for d=1:nD
         for t=1:nP
-            # interpolate output if wind speed within operation range
             if Wms[t]<=SPmx[d] && Wms[t]>=SPmn[d] && SPmx[d]!=SPmn[d]
                 Q[t,d] = (Qmx[d]-Qmn[d])/(SPmx[d]-SPmn[d])*(Wms[t]-SPmn[d])+Qmn[d]
-            elseif SPmn[d]==SPmx[d]
-                error("❗  Wind turbine $(d) has identical minimum and maximum wind speed.")
             end
         end
     end

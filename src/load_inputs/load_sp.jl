@@ -22,6 +22,18 @@ function load_sp(path::AbstractString,cfg::Dict)
                     ["p$(k)$(s)"=>t for k in ("CHP","ABP","HVAC","WH","PV","WIND","BESS","EV")
                      for (s,t) in (("0",String),("z0",Int),("yn",String))])) |> DataFrame
 
+    # columns are ragged, but each row of a group must be either blank or complete
+    for prefix in ("CHP","ABP","HVAC","WH","PV","WIND","BESS","EV")
+        group = ["p$(prefix)0","p$(prefix)z0"]
+        prefix == "EV" || push!(group,"p$(prefix)yn")
+        require_columns(df_sp,"sp.csv",group)
+        for row in 1:nrow(df_sp)
+            blanks = count(c -> ismissing(df_sp[row,c]),group)
+            0 < blanks < length(group) && throw(ArgumentError(
+                "sp.csv row $row has a missing value among columns $(join(group,", "))"))
+        end
+    end
+
     sp["CHP0"] = collect(skipmissing(df_sp.pCHP0))      # CHP equipment
     sp["CHPz0"] = collect(skipmissing(df_sp.pCHPz0))    # CHP existing units [0,...,n]
     sp["CHPyn"] = collect(skipmissing(df_sp.pCHPyn))    # enable investment in CHP

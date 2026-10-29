@@ -16,7 +16,8 @@ function load_bdgii(path::AbstractString,bdg::Dict)
    # load file into dataframe with predefined types
     df_bdg = CSV.File(path2file;delim=',',types=Dict{String,Type}("pBk1"=>Float64,
                     "pBk2"=>Float64,"pBk3"=>Float64,"pBtime"=>Float64)) |> DataFrame
-    
+    require_valid_columns(df_bdg,"bdg_ii.csv",["pBk1","pBk2","pBk3","pBtime"])
+
     bdg["Bk1"] = df_bdg.pBk1[1]     # thermal coefficient- outdoor to indoor temperature [-]
     bdg["Bk2"] = df_bdg.pBk2[1]     # thermal coefficient- external radiation [°C/kW]
     bdg["Bk3"] = df_bdg.pBk3[1]     # thermal coefficient- internal heating/cooling [°C/kW]

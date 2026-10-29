@@ -125,10 +125,21 @@ function test_input_files()
                     if accepted
                         @test result.error === nothing
                     else
-                        @test result.error isa Exception
-                        @test !(result.error isa SystemError || result.error isa Base.IOError)
+                        @test result.error isa ArgumentError
                     end
                 end
+            end
+        end
+    end
+    @testset "specific rejected inputs" begin
+        for (spec, variant) in (
+            ((file="tm.csv", field="pSdni", vertical=false), ""),
+            ((file="pv.csv", field="tech", vertical=false), "4"),
+            ((file="bdg_i.csv", field="pBtz", vertical=true), "Not/AZone"),
+        )
+            @testset "$(spec.file) :: $(spec.field) = $(repr(variant))" begin
+                result = input_case_result(spec, variant)
+                @test result.error isa ArgumentError
             end
         end
     end
@@ -440,8 +451,10 @@ end
             "hvac.csv column life has a missing value at row 1"),
     )
         path = stage(run=false, patches=Dict(file => patch))
-        inputs = load_fixture(joinpath(path, "in"))
-        @test_throws expected DECARB.validate_inputs(values(inputs)...; io=devnull)
+        @test_throws expected begin
+            inputs = load_fixture(joinpath(path, "in"))
+            DECARB.validate_inputs(values(inputs)...; io=devnull)
+        end
     end
 end
 
@@ -664,6 +677,8 @@ end
         write(input, header * "0.1,0.05,0.15,$hours\n")
         expected = isempty(hours) || hours == "invalid" ?
             "bdg_ii.csv column pBtime has a missing value at row 1" :
+            hours in ("NaN", "Inf") ?
+            "bdg_ii.csv column pBtime has a non-finite value at row 1" :
             "pBtime must be a positive, finite number"
         if hours == "invalid"
             @test_logs (:warn, r"error parsing Float64") @test_throws expected DECARB.validate_inputs(values(load_fixture(path))...; io=devnull)
@@ -713,22 +728,25 @@ end
 
         function check_error(contents, message)
             write(input, contents)
-            inputs = if occursin("invalid", contents)
-                @test_logs (:warn, r"error parsing Float64") load_fixture(path)
-            else
-                @test_logs load_fixture(path)
-            end
-            original = deepcopy(inputs)
-            err = try
-                DECARB.validate_inputs(values(inputs)...; io=devnull)
-            catch e
-                e
+            err = nothing
+            Test.with_logger(Test.TestLogger()) do
+                try
+                    inputs = load_fixture(path)
+                    original = deepcopy(inputs)
+                    err = try
+                        DECARB.validate_inputs(values(inputs)...; io=devnull)
+                    catch e
+                        e
+                    end
+                    @test isequal(inputs, original)
+                catch e
+                    err = e
+                end
             end
             @test err isa ArgumentError
             if err isa ArgumentError
                 @test err.msg == message
             end
-            @test isequal(inputs, original)
         end
 
         @testset "named columns" begin
@@ -778,6 +796,8 @@ end
             for hours in ("", "0", "-1", "NaN", "Inf", "-Inf", "invalid")
                 message = isempty(hours) || hours == "invalid" ?
                     "bdg_ii.csv column pBtime has a missing value at row 1" :
+                    occursin("Inf", hours) || hours == "NaN" ?
+                    "bdg_ii.csv column pBtime has a non-finite value at row 1" :
                     "bdg_ii.pBtime must be a positive, finite number"
                 check_error(header * "0.03,0.05,0.15,$hours\n",
                     message)
@@ -791,6 +811,8 @@ end
             for value in ("", "-0.1", "1.1", "NaN", "Inf", "-Inf", "invalid")
                 message = isempty(value) || value == "invalid" ?
                     "bdg_ii.csv column pBk1 has a missing value at row 1" :
+                    occursin("Inf", value) || value == "NaN" ?
+                    "bdg_ii.csv column pBk1 has a non-finite value at row 1" :
                     "bdg_ii.pBk1 must be in [0,1] for timestep resampling"
                 check_error(header * "$value,0.05,0.15,1\n",
                     message)
@@ -800,7 +822,7 @@ end
                 for value in ("", "NaN", "Inf", "-Inf", "invalid")
                     message = isempty(value) || value == "invalid" ?
                         "bdg_ii.csv column $column has a missing value at row 1" :
-                        "bdg_ii.$column must be finite"
+                        "bdg_ii.csv column $column has a non-finite value at row 1"
                     check_error(header * row(value), message)
                 end
             end
@@ -842,6 +864,8 @@ end
         ((header * "0.03,0.05,0.15,$hours\n",
           (isempty(hours) ?
            "bdg_ii.csv column pBtime has a missing value at row 1" :
+           hours in ("NaN", "Inf") ?
+           "bdg_ii.csv column pBtime has a non-finite value at row 1" :
            "bdg_ii.pBtime must be a positive, finite number"))
          for hours in ("", "0", "-1", "NaN", "Inf"))...,
     )

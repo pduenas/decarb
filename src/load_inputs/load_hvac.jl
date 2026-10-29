@@ -26,6 +26,9 @@ function load_hvac(path::AbstractString,tm::Dict,sp::Dict,bdg::Dict)
                     "pACeff_"=>Float64,"inv"=>Float64,"fom"=>Float64,"vom"=>Float64,
                     "life"=>Float64)) |> DataFrame
 
+    require_valid_columns(df_hvac,"hvac.csv",["pHVmx","pACmx","pHVeff","pACeff","temp",
+        "pHVmx_","pACmx_","pHVeff_","pACeff_","inv","fom","vom","life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_hvac)
     # delete all zero rows

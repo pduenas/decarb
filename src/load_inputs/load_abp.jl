@@ -23,6 +23,9 @@ function load_abp(path::AbstractString,sp::Dict,bdg::Dict)
                     "mx"=>Float64,"fcf"=>Float64,"fuel"=>String,"ac"=>Float64,
                     "inv"=>Float64,"fom"=>Float64,"vom"=>Float64,"life"=>Float64)) |> DataFrame
     
+    require_valid_columns(df_abp,"abp.csv",["mx","fcf","fuel","ac","inv","fom","vom",
+        "life"];key="ty")
+
     # delete non-existing rows
     filter!(row -> !ismissing(row.ty), df_abp)
     # delete all zero rows
