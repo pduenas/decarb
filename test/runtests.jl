@@ -1301,6 +1301,54 @@ end
     @test occursin("fcf must be in (0,1]", sprint(showerror, err))
 end
 
+function ev_unit_model(; kwh, time, soc0=0.5, mnsoc=0.5, v2g=1, up=0.0, dn=10.0)
+    P = size(kwh, 1)
+    model = Model(HiGHS.Optimizer)
+    set_silent(model)
+    cfg = Dict{String,Any}("EVsoc0"=>soc0, "EVmnsoc"=>mnsoc, "EVv2g"=>v2g)
+    tm = Dict{String,Any}("P"=>P, "TM"=>ones(P))
+    ev = Dict{String,Any}("N"=>1, "mx"=>[50.0], "up"=>[up], "dn"=>[dn],
+        "effu"=>[1.0], "effd"=>[1.0], "kwh"=>kwh, "time"=>time)
+    DECARB.electric_vehicles!(model, cfg, tm, ev)
+    return model, ev
+end
+
+@testset "EV :: trip shortfall slack makes infeasible trip feasible" begin
+    # 40 kWh trip with only 25 kWh stored and no charging available
+    kwh = reshape([0.0, 40.0, 0.0], 3, 1)
+    time = reshape([1.0, 0.0, 1.0], 3, 1)
+    model, _ = ev_unit_model(; kwh, time, mnsoc=0.0)
+    @objective(model, Min, sum(model[:vEVtrip][2, 1]))
+    optimize!(model)
+    @test termination_status(model) == MOI.OPTIMAL
+    # per-unit slack: 15 kWh of 50 kWh
+    @test value(model[:vEVtrip][2, 1]) ≈ 0.3 atol = 1e-6
+    # no slack is needed in periods without a trip
+    @test value(model[:vEVtrip][1, 1]) ≈ 0.0 atol = 1e-6
+end
+
+@testset "EV :: V2G cannot end below pEVmnsoc" begin
+    kwh = zeros(2, 1)
+    time = ones(2, 1)
+    model, ev = ev_unit_model(; kwh, time, mnsoc=0.5)
+    @objective(model, Max, sum(model[:vEVdn]))
+    optimize!(model)
+    @test termination_status(model) == MOI.OPTIMAL
+    @test value(sum(model[:vEVdn])) ≈ 0.0 atol = 1e-6
+    @test value(model[:vEVsoc][2, 1]) >= 0.5 - 1e-6
+
+    # lowering the final requirement frees 0.3*50 = 15 kWh for discharge
+    model, ev = ev_unit_model(; kwh, time, mnsoc=0.2)
+    @objective(model, Max, sum(model[:vEVdn]))
+    optimize!(model)
+    @test value(model[:vEV_DN][1, 1] + model[:vEV_DN][2, 1]) ≈ 15.0 atol = 1e-6
+end
+
+@testset "EV :: km_to_kwh is clamped at zero" begin
+    @test DECARB.km_to_kwh(0.0, 10.0, 40.0) == 0.0
+    @test DECARB.km_to_kwh(0.2, 10.0, 0.0) ≈ 2.0
+end
+
 # Compare identical installations in two windows for every equipment category.
 @testset "fixed O&M :: active investment duration" begin
     for (durations, first_hours, second_hours) in (
@@ -1326,7 +1374,7 @@ end
         model[:vQmx] = @variable(model, [1:0])
         model[:vEVlo] = @variable(model, [1:4, 1:0])
         model[:vEVsoc] = @variable(model, [1:4, 1:0])
-        ev = Dict("N"=>0, "mx_eff"=>Float64[])
+        ev = Dict("N"=>0, "mx_eff"=>Float64[], "kwh"=>zeros(4, 0))
         keys = (:bCHPty, :bABPty, :bHVACty, :bWHty, :zPV, :zWIND, :zBESS)
         catalogs = [Dict("N"=>1, "fom"=>[100.0*k], "inv"=>[0.0],
             "life"=>[20.0], "vom"=>[0.0]) for k in eachindex(keys)]

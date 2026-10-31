@@ -27,9 +27,10 @@ function objective_function!(model::Model,cfg::Dict,tm::Dict,chp::Dict,abp::Dict
     @expression(model, vNSTcost[t=1:tm["P"]], cfg["NSTcost"]*(model[:vTup][t]+model[:vTlo][t])*tm["TM"][t])
     # cost of non-served hot water [$]
     @expression(model, vNSHWcost[t=1:tm["P"]], cfg["NSHWcost"]*tm["HWdem"][t]*model[:vNShw][t])
-    # cost of leaving EV charge below required level [$]
+    # cost of unmet EV trip energy and of excursions below minimum SOC [$]
     @expression(model, vNSEVcost[t=1:tm["P"]],
-        cfg["NSEVcost"]*sum(model[:vEVlo][t,e] for e=1:ev["N"])*tm["TM"][t])
+        cfg["NSEVcost"]*sum(ev["mx_eff"][e]*(model[:vEVlo][t,e] +
+            (ev["kwh"][t,e]>0 ? model[:vEVtrip][t,e] : 0)) for e=1:ev["N"]))
     # cost of purchasing electricity [$]
     @expression(model, vQcost[t=1:tm["P"]], tm["TM"][t]*tm["QcostBuy"][t]*model[:vQbuy][t])
     # income from selling electricity [$]

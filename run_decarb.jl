@@ -80,7 +80,13 @@ function optimizer_for(solver::String)
               "Install it there, then rerun with --solver gurobi.")
 
     @eval import Gurobi
-    return Gurobi.Optimizer
+
+    return () -> Base.invokelatest(
+        getfield(
+            Base.invokelatest(getfield, @__MODULE__, :Gurobi),
+            :Optimizer,
+        ),
+    )
 end
 
 function print_summary(results)

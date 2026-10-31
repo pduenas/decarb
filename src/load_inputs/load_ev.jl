@@ -130,6 +130,7 @@ function km_to_kwh(drv,km,T)
     kwh2km = drv - 0.002460636*T + 0.000185174*T^2 - 0.0000142232*T^3 + 
         0.00000034518*T^4 - 0.00000000242563*T^5
 
-    return km*kwh2km
+    # intensity cannot be negative at extreme temperatures
+    return km*max(kwh2km,0.0)
 
 end
