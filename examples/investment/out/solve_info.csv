@@ -1,6 +1,6 @@
 name,value
 decarb_version,1.0.0
-git_commit,fe8354010b36f4dc7561cf31aa08117361f70cb0
+git_commit,224efa96981b10b6f710bbbcb43caa5e51232ade
 julia_version,1.12.7
 solver_name,Gurobi
 solver_version,13.0.3
@@ -9,7 +9,7 @@ primal_status,FEASIBLE_POINT
 objective_value,1621.3485413996334
 objective_bound,1621.3485413995952
 relative_gap,0.0
-solve_time_s,9.970999956130981
+solve_time_s,12.555000066757202
 mip_gap,0.0001
 time_limit,300.0
 relax_integrality,false
@@ -21,4 +21,4 @@ resolved_objective_value,n/a
 resolved_relative_gap,n/a
 resolved_solve_time_s,n/a
 threads,unset
-utc_timestamp,2026-10-31T14:23:41Z
+utc_timestamp,2026-10-31T22:20:01Z

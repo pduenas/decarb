@@ -1336,6 +1336,24 @@ end
     @test occursin("fcf must be in (0,1]", sprint(showerror, err))
 end
 
+@testset "validation :: fuel codes are case-sensitive" begin
+    baseline = load_fixture(joinpath(stage(run=false), "in"))
+    for name in (:chp, :abp, :wh)
+        inputs = deepcopy(baseline)
+        catalog = getproperty(inputs, name)
+        catalog["fuel"][1] = "g"
+        err = try
+            DECARB.validate_inputs(values(inputs)...; io=devnull)
+            nothing
+        catch e
+            e
+        end
+        @test err isa ArgumentError
+        @test err isa ArgumentError && occursin("$(name).csv", err.msg) &&
+            occursin("fuel", err.msg)
+    end
+end
+
 function ev_unit_model(; kwh, time, soc0=0.5, mnsoc=0.5, v2g=1, up=0.0, dn=10.0)
     P = size(kwh, 1)
     model = Model(HiGHS.Optimizer)

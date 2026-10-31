@@ -181,7 +181,18 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
                   "impossible: max(Tmx) equals the indoor upper bound")
     end
 
-    # ---- conversion factors and divide-by-zero guards ---------------------
+    # ---- fuel codes, conversion factors and divide-by-zero guards ---------
+    for (d,name,allowed) in ((chp,"chp",("G", "L")),
+                             (abp,"abp",("0", "G", "L")),
+                             (wh,"wh",("0", "G", "L")))
+        for i in 1:d["N"]
+            fuel = d["fuel"][i]
+            fuel in allowed ||
+                push!(err,"$(name).csv row $(i) ($(d["ty"][i])): fuel has invalid value " *
+                    "$(repr(fuel)); expected $(join(repr.(allowed), ", "))")
+        end
+    end
+
     # fcf is a conversion efficiency, not a heat-rate multiplier. A zero is
     # accepted only for equipment that does not consume fuel directly.
     for (d,name) in ((chp,"chp"), (abp,"abp"), (wh,"wh"))
