@@ -48,7 +48,7 @@ display only.
 | `pBESSsoc0` | fraction | Initial battery state of charge, in `[0,1]`. |
 | `pBESSsocf` | fraction | Required final battery state of charge, in `[0,1]`. |
 | `pEVsoc0` | fraction | Initial EV state of charge, in `[0,1]`. |
-| `pEVmnsoc` | fraction | Minimum preferred EV state of charge, in `[0,1]`; shortfall is allowed at `pNSEVcost`. |
+| `pEVmnsoc` | fraction | Minimum EV state of charge, in `[0,1]`. |
 | `pWHsto0` | fraction | Initial water-heater tank state, in `[0,1]`. |
 | `pWHstof` | fraction | Required final water-heater tank state, in `[0,1]`. |
 | `pTin0` | deg C | Initial indoor temperature. |
@@ -64,7 +64,7 @@ display only.
 | `pNSEcost` | $/kWh | Penalty for unserved electricity. A zero value prevents unserved electricity. |
 | `pNSTcost` | $/(deg C h) | Penalty for indoor-temperature deviation. A zero value prevents comfort-bound violations when comfort is active. |
 | `pNSHWcost` | $/kWh | Penalty for unserved hot water. A zero value prevents unserved hot water. |
-| `pNSEVcost` | $ per unit SOC per hour | Penalty for EV state-of-charge shortfall. |
+| `pNSEVcost` | $/kWh | Penalty for trip energy that cannot be supplied, and per kWh-hour below minimum SOC. |
 | `pEVdriver` | `-1`, `0`, or `1` | Driver preference: range-anxious, indifferent, or battery-conscious, respectively. |
 | `pEVpen` | $ per unit SOC per hour | Weight applied to the driver-preference term. |
 | `pEVv2g` | boolean | Allows EV discharge to the building/grid when true. |
@@ -327,7 +327,7 @@ zero outside that interval.
 |---|---|---|
 | `ty` | string | Unique EV type name. |
 | `mx` | kWh | Battery capacity. |
-| `drv` | kWh/km | Reference driving energy intensity. |
+| `drv` | kWh/km | Driving energy intensity at 0C, before the temperature polynomial is applied. |
 | `cold` | fraction | Reserved cold-weather penalty; currently inactive. Temperature effects are calculated separately from `drv` and `pTout`. |
 | `up`, `dn` | kW | Maximum charge and discharge rates. |
 | `effu`, `effd` | fraction | Charge and discharge efficiencies. |
