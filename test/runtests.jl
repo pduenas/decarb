@@ -1358,7 +1358,8 @@ function ev_unit_model(; kwh, time, soc0=0.5, mnsoc=0.5, v2g=1, up=0.0, dn=10.0)
     P = size(kwh, 1)
     model = Model(HiGHS.Optimizer)
     set_silent(model)
-    cfg = Dict{String,Any}("EVsoc0"=>soc0, "EVmnsoc"=>mnsoc, "EVv2g"=>v2g)
+    cfg = Dict{String,Any}("EVsoc0"=>soc0, "EVmnsoc"=>mnsoc, "EVv2g"=>v2g,
+        "NSEVcost"=>1.0)
     tm = Dict{String,Any}("P"=>P, "TM"=>ones(P))
     ev = Dict{String,Any}("N"=>1, "mx"=>[50.0], "up"=>[up], "dn"=>[dn],
         "effu"=>[1.0], "effd"=>[1.0], "kwh"=>kwh, "time"=>time)
@@ -1374,27 +1375,42 @@ end
     @objective(model, Min, sum(model[:vEVtrip][2, 1]))
     optimize!(model)
     @test termination_status(model) == MOI.OPTIMAL
-    # per-unit slack: 15 kWh of 50 kWh
+    # away-from-home charging: 15 kWh, represented as 15/50 p.u.
     @test value(model[:vEVtrip][2, 1]) ≈ 0.3 atol = 1e-6
     # no slack is needed in periods without a trip
     @test value(model[:vEVtrip][1, 1]) ≈ 0.0 atol = 1e-6
+    @test !is_fixed(model[:vEVtrip][2, 1])
+    @test is_fixed(model[:vEVtrip][1, 1])
+    @test is_fixed(model[:vEVtrip][3, 1])
 end
 
-@testset "EV :: V2G cannot end below pEVmnsoc" begin
-    kwh = zeros(2, 1)
-    time = ones(2, 1)
-    model, ev = ev_unit_model(; kwh, time, mnsoc=0.5)
-    @objective(model, Max, sum(model[:vEVdn]))
-    optimize!(model)
-    @test termination_status(model) == MOI.OPTIMAL
-    @test value(sum(model[:vEVdn])) ≈ 0.0 atol = 1e-6
-    @test value(model[:vEVsoc][2, 1]) >= 0.5 - 1e-6
-
-    # lowering the final requirement frees 0.3*50 = 15 kWh for discharge
-    model, ev = ev_unit_model(; kwh, time, mnsoc=0.2)
-    @objective(model, Max, sum(model[:vEVdn]))
-    optimize!(model)
-    @test value(model[:vEV_DN][1, 1] + model[:vEV_DN][2, 1]) ≈ 15.0 atol = 1e-6
+@testset "EV :: zero shortfall cost hardens trip and minimum SOC" begin
+    kwh = reshape([0.0, 40.0, 0.0], 3, 1)
+    time = reshape([1.0, 0.0, 1.0], 3, 1)
+    model = Model(HiGHS.Optimizer)
+    set_silent(model)
+    cfg = Dict{String,Any}("EVsoc0"=>0.5, "EVmnsoc"=>0.5, "EVv2g"=>1,
+        "NSEVcost"=>0.0)
+    tm = Dict{String,Any}("P"=>3, "TM"=>ones(3))
+    ev = Dict{String,Any}("N"=>1, "mx"=>[50.0], "up"=>[0.0], "dn"=>[10.0],
+        "effu"=>[1.0], "effd"=>[1.0], "kwh"=>kwh, "time"=>time)
+    DECARB.electric_vehicles!(model, cfg, tm, ev)
+    chp = Dict("N"=>0)
+    hvac = Dict("N"=>0)
+    wh = Dict("N"=>0)
+    pv = Dict("N"=>0)
+    wind = Dict("N"=>0)
+    bess = Dict("N"=>0)
+    load_tm = merge(tm, Dict("Qlight"=>zeros(3), "Qequip"=>zeros(3),
+        "Qmx"=>zeros(3), "QmxCost"=>zeros(3)))
+    load_cfg = merge(cfg, Dict("NSEcost"=>0.0, "QmxTM"=>0, "QmxBuy"=>100.0,
+        "QmxSell"=>100.0))
+    DECARB.electric_load!(model, load_cfg, load_tm, chp, hvac, wh, pv, wind, bess, ev;
+        io=devnull)
+    @test all(is_fixed, model[:vEVtrip])
+    @test all(is_fixed, model[:vEVlo])
+    @test all(iszero ∘ fix_value, model[:vEVtrip])
+    @test all(iszero ∘ fix_value, model[:vEVlo])
 end
 
 @testset "EV :: km_to_kwh is clamped at zero" begin
