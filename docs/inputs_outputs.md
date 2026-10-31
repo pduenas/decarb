@@ -178,7 +178,7 @@ Each row can select one catalog item in every equipment class. For each prefix
 pattern:
 
 ```csv
-pCHP0,pCHPz0,pCHPyn,pABP0,pABPz0,pABPyn,pHVAC0,pHVACz0,pHVACyn,pWH0,pWHz0,pWHyn,pPV0,pPVz0,pPVyn,pWIND0,pWINDz0,pWINDyn,pBESS0,pBESSz0,pBESSyn,pEV0,pEVz0,pEVyn
+pCHP0,pCHPz0,pCHPyn,pABP0,pABPz0,pABPyn,pHVAC0,pHVACz0,pHVACyn,pWH0,pWHz0,pWHyn,pPV0,pPVz0,pPVyn,pWIND0,pWINDz0,pWINDyn,pBESS0,pBESSz0,pBESSyn,pEV0,pEVz0
 ```
 
 | Column pattern | Description |
@@ -187,12 +187,11 @@ pCHP0,pCHPz0,pCHPyn,pABP0,pABPz0,pABPyn,pHVAC0,pHVACz0,pHVACyn,pWH0,pWHz0,pWHyn,
 | `p<PREFIX>z0` | Number of existing units. |
 | `p<PREFIX>yn` | `YES` to allow investment in this type, `NO` to limit it to existing units, or `0` for no selection. Investment is forced to `NO` when `pIT=0`. |
 
-EVs use `pEV0` and `pEVz0` in the same way. `pEVyn` must remain in the input
-header for schema compatibility, but EV investment is not implemented and its
-value is ignored. A trip identifier in `tm.csv` refers to an individual EV, so
+EVs use only `pEV0` and `pEVz0`; EV investment is not supported.
+A trip identifier in `tm.csv` refers to an individual EV, so
 two existing vehicles of the same type become two instances.
 
-A selection row whose three fields are all zero is removed. Every selected
+A selection row whose three fields (two for EVs) are all zero is removed. Every selected
 name must exist in its catalog and have nonzero capacity.
 
 ### `topo.csv`: thermal connections
@@ -473,7 +472,13 @@ This file has columns `name` and `value`. It records the run and the MIP solve:
 `primal_status`, `objective_value`, `objective_bound`, `relative_gap`,
 `solve_time_s` (captured before the dual re-solve), the requested `mip_gap`,
 `time_limit`, `relax_integrality` and `duals`, `duals_available`, `threads`
-(`unset` if not set) and `utc_timestamp`. The same data is returned as
+(`unset` if not set), `dual_resolve_status`, `mip_resolved`,
+`resolved_objective_value`, `resolved_relative_gap`, `resolved_solve_time_s` and
+`utc_timestamp`. If the fixed-integer dual LP has no feasible point and DECARB
+re-optimizes the MIP, `dual_resolve_status` is the LP termination status,
+`mip_resolved` is `true`, and the `resolved_*` fields contain the second MIP's
+objective value, relative gap and solve time. Otherwise the status and `resolved_*`
+fields are `"n/a"` and `mip_resolved` is `false`. The same data is returned as
 `solve_info` by `run_decarb!`. A
 `termination_status` of `TIME_LIMIT` means the reported solution is the best one
 found within `time_limit`, not necessarily within `mip_gap`.

@@ -16,7 +16,7 @@ relax_int       boolean flag to relax integrality constraints on integer variabl
 returns a named tuple with the MIP termination_status, primal_status, objective_value,
 objective_bound, relative_gap and solve_time_s (captured before the dual re-solve),
 solver_name, solver_version, threads ("unset" if not set), and
-duals_available, which is false when duals were not requested or could not be obtained
+duals_available, which is false when duals were not requested or could not be obtained.
 
 """
 
@@ -79,6 +79,12 @@ function solve_model!(path::AbstractString,model::Model,relax_int::Bool;
         end,
         duals_available = false)
 
+    dual_resolve_status = "n/a"
+    mip_resolved = false
+    resolved_objective_value = "n/a"
+    resolved_relative_gap = "n/a"
+    resolved_solve_time_s = "n/a"
+
     # fix integer variables at rounded values and re-solve the LP to get dual information
     if duals && !relax_int
         vALL = all_variables(model)
@@ -86,17 +92,28 @@ function solve_model!(path::AbstractString,model::Model,relax_int::Bool;
         undo = fix_discrete_variables(var -> round(value(var)), model)
         optimize!(model)
         if primal_status(model) != MOI.FEASIBLE_POINT
-            @warn "relaxed re-solve returned no solution; restoring the MIP solution, duals will be zero" status=termination_status(model)
+            dual_resolve_status = termination_status(model)
+            @warn "relaxed re-solve returned no solution; restoring the MIP solution, duals will be zero" status=dual_resolve_status
             undo()
             set_start_value.(vALL, v_L)
             optimize!(model)
             if primal_status(model) != MOI.FEASIBLE_POINT
-                error("❗  MIP could not be re-optimized after failed dual re-solve.\n(status = $(termination_status(model)))")
+                error("❗ MIP could not be re-optimized after failed dual re-solve.\n(status = $(termination_status(model)))")
             end
+            mip_resolved = true
+            resolved_objective_value = objective_value(model)
+            resolved_relative_gap = try relative_gap(model) catch; NaN end
+            resolved_solve_time_s = try solve_time(model) catch; NaN end
         end
     end
 
-    info = merge(info, (duals_available = duals && has_duals(model),))
+    info = merge(info, (
+        duals_available = duals && has_duals(model),
+        dual_resolve_status,
+        mip_resolved,
+        resolved_objective_value,
+        resolved_relative_gap,
+        resolved_solve_time_s))
     if duals
         println(progress_io, info.duals_available ? "   ℹ  Dual information available." :
             "   ❗  Dual information unavailable.")

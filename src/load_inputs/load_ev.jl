@@ -35,10 +35,8 @@ function load_ev(path::AbstractString,tm::Dict,sp::Dict)
     # delete repeated rows
     unique!(df_ev)
 
-    # fill "NO" by default to investment in electric vehicle
-    sp["EVyn"] = fill("NO", length(sp["EV0"]))
-
-    df_ev = extend_catalog(df_ev,sp["EV0"],sp["EVz0"],sp["EVyn"],nothing)
+    # Expand existing vehicles only; EV investment is not supported.
+    df_ev = extend_catalog(df_ev,sp["EV0"],sp["EVz0"],fill("NO", length(sp["EV0"])),nothing)
 
     ev["ty"] = df_ev.ty         # name of electric vehicle
     ev["mx"] = df_ev.mx         # maximum battery capacity [kWh]

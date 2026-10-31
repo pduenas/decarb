@@ -570,6 +570,11 @@ end
     @test !info.duals_available
     @test info.objective_value ≈ 1.0       # captured before the re-solve
     @test info.primal_status == MOI.FEASIBLE_POINT
+    @test info.dual_resolve_status == MOI.INFEASIBLE
+    @test info.mip_resolved
+    @test info.resolved_objective_value ≈ 1.0
+    @test isfinite(info.resolved_relative_gap) && info.resolved_relative_gap >= 0
+    @test info.resolved_solve_time_s >= 0
     @test !has_duals(model)
     @test is_binary(x) && !is_fixed(x)
     @test primal_status(model) == MOI.FEASIBLE_POINT
@@ -925,9 +930,16 @@ end
     @test info["primal_status"] == "FEASIBLE_POINT"
     for k in ("decarb_version", "git_commit", "julia_version", "solver_name",
               "solver_version", "objective_value", "solve_time_s", "mip_gap",
-              "time_limit", "relax_integrality", "duals", "threads", "utc_timestamp")
+              "time_limit", "relax_integrality", "duals", "threads",
+              "dual_resolve_status", "mip_resolved", "resolved_objective_value",
+              "resolved_relative_gap", "resolved_solve_time_s", "utc_timestamp")
         @test haskey(info, k)
     end
+    @test info["dual_resolve_status"] == "n/a"
+    @test info["mip_resolved"] == "false"
+    @test info["resolved_objective_value"] == "n/a"
+    @test info["resolved_relative_gap"] == "n/a"
+    @test info["resolved_solve_time_s"] == "n/a"
     # balance.csv is written ONLY when the electricity balance fails to close
     @test !isfile(joinpath(p, "out", "balance.csv"))
     @test !isfile(joinpath(p, "out", "iis_constraints.txt"))
