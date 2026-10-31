@@ -69,7 +69,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
         @expression(model, vWH_L[t=1:tm["P"]], sum(vWH_Q[t,w]/wh["fcf"][w] for w=1:wh["N"]
             if wh["fcf"][w]>0 && wh["fuel"][w]=="L"))
     else
-        @variable(model, vWH_L[t=1:tm["P"]] == 0)
+        @expression(model, vWH_L[t=1:tm["P"]], AffExpr(0.0))
     end
 
     # maximum available space for water heaters {0,Bwh}

@@ -347,6 +347,7 @@ result = DECARB.run_decarb!(case_path;
     duals=true,
     verbose=true,
     relax_integrality=false,
+    return_result=true,
 )
 ```
 
@@ -373,7 +374,7 @@ and, where required, licensed separately.
 
 The return value is a named tuple containing the solved JuMP `model` and the
 loaded/derived dictionaries `cfg`, `tm`, `bdg`, `sp`, `chp`, `abp`, `hvac`,
-`wh`, `pv`, `wind`, `bess`, `ev`, and `topo`.
+`wh`, `pv`, `wind`, `bess`, `ev`, `topo`, and `solve_info`.
 
 ## Output files
 

@@ -32,12 +32,10 @@ function write_outputs(path::AbstractString,tmDate,df_chp,df_hvac,df_abp,df_wh,d
     df_econ; io::IO=stdout)
 
     dfEQ1 = df_econ
-    dfEQ1 = something.(dfEQ1,"0")                   # fix missing values
 
     dfEQ2 = vcat(df_chp,df_hvac,df_abp,df_wh,df_pv,df_bess,df_wind)
 
     dfTS = hcat(DataFrame(Date=tmDate),df_elec,df_fuel,df_indoor,df_dual)
-    dfTS = something.(dfTS,"0")                     # fix missing values
 
     # write file of imbalances if any (warning: cumulative rounding errors)
     if any(abs.(balance).>0.1)
