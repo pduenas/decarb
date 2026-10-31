@@ -97,7 +97,7 @@ function hvac_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,hvac::Di
     for i1=1:cfg["IT"]
          tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
           @constraint(model, [t=tm["IW"][i1]:tlast,h=1:hvac["N"]; hvac["HVmx_eff"][h]>0 || hvac["ACmx_eff"][h]>0],
-            bHVAC_u[t,h] == sum(bHVACty[i2,h] for i2=1:i1))
+            bHVAC_u[t,h] == sum(bHVACty[i2,h] for i2=1:i1), base_name="eHVACu_w$(i1)")
     end
     # maximum heat provided by HVAC (0,1)
     @constraint(model, eHVACht[t=1:tm["P"],h=1:hvac["N"]; hvac["HVmx_eff"][h]>0],

@@ -85,7 +85,7 @@ function water_heaters!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wh::D
     for i1=1:cfg["IT"]
          tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
             @constraint(model, [t=tm["IW"][i1]:tlast,w=1:wh["N"]; wh["mx_eff"][w]>0],
-            bWH_u[t,w] == sum(bWHty[i2,w] for i2=1:i1))
+            bWH_u[t,w] == sum(bWHty[i2,w] for i2=1:i1), base_name="eWHu_w$(i1)")
     end
     # maximum water stored by water heater [0,1]
     @constraint(model, eWHsoc[t=1:tm["P"],w=1:wh["N"]; wh["tank_eff"][w]>0],
