@@ -14,10 +14,10 @@ abp     dictionary with absorption chiller data
 function heat_connections!(model::Model,topo::Dict,tm::Dict,chp::Dict,abp::Dict)
 
     # energy --heating-- from CHP to building: hot air, hot water [0,efficiency]
-    @variable(model, (topo["chp_bdg"][c,l]>0) >= 
+    @variable(model, (topo["chp_bdg"][c,l]>0 ? max(1.0,chp["h2p"][c]) : 0.0) >=
         vCHPbdg[t=1:tm["P"],c=1:chp["N"],l=1:2] >= 0)
     # energy --heating-- from CHP to absorption chiller [0,efficiency]
-    @variable(model, (topo["chp_abp"][c,a]>0) >= 
+    @variable(model, (topo["chp_abp"][c,a]>0 ? max(1.0,chp["h2p"][c]) : 0.0) >=
         vCHPabp[t=1:tm["P"],c=1:chp["N"],a=1:abp["N"]] >= 0)
     # active link CHP to absorption chiller {0,1}
     @variable(model, bCHPabp[c=1:chp["N"],a=1:abp["N"]], Bin)

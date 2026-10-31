@@ -1162,12 +1162,28 @@ end
     @test JuMP.coefficient(model[:vCHP_G][1], model[:vCHPabp][2, 1, 1]) == 0
 end
 
+@testset "chp :: heat connection bounds reflect heat-to-power ratio" begin
+    tm = Dict("P" => 1)
+    abp = Dict("N" => 0)
+    topo = Dict("chp_bdg" => [0.0 0.8], "chp_abp" => zeros(1, 0))
+
+    model = Model()
+    chp = Dict("N" => 1, "h2p" => [1.5])
+    DECARB.heat_connections!(model, topo, tm, chp, abp)
+    @test upper_bound(model[:vCHPbdg][1, 1, 2]) == 1.5
+
+    model = Model()
+    chp = Dict("N" => 1, "h2p" => [0.0])
+    DECARB.heat_connections!(model, topo, tm, chp, abp)
+    @test upper_bound(model[:vCHPbdg][1, 1, 2]) == 1.0
+end
+
 @testset "abp :: CHP heat path uses the same cooling efficiency" begin
     cfg = Dict("IT" => 1)
     tm = Dict("P" => 1, "TM" => [1.0], "IW" => [1])
     bdg = Dict("Babp" => 1)
     sp = Dict("ABP0" => ["CHILLER"], "ABPz0" => [1], "ABPyn" => ["NO"])
-    chp = Dict("N" => 1, "mx_eff" => [100.0])
+    chp = Dict("N" => 1, "mx_eff" => [100.0], "h2p" => [1.0])
     abp = Dict("N" => 1, "ty" => ["CHILLER-1"], "mx" => [50.0], "fuel" => ["G"],
                "ac" => [0.7], "fcf" => [0.9])
     topo = Dict("chp_bdg" => zeros(1, 2), "chp_abp" => reshape([0.8], 1, 1))
