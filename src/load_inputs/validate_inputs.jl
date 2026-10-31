@@ -159,6 +159,9 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     any(tm["QcostSell"] .> tm["QcostBuy"]) &&
         push!(wrn,"sale price exceeds purchase price in some periods; " *
                   "unbounded arbitrage is prevented only by the buy/sell binary")
+    any((tm["Sdni"] .> 0) .& (tm["ele"] .<= 0)) &&
+        push!(wrn,"tm.csv pSdni is positive in periods with non-positive midpoint " *
+                  "solar elevation; the DNI contribution will be ignored")
 
     # ---- thermal coefficients and forcing ---------------------------------
     isfinite(cfg["Tin0"]) || push!(err,"cfg.Tin0 must be finite")
