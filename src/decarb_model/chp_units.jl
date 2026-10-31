@@ -83,7 +83,7 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
                 )/chp["fcf"][c] for c=1:chp["N"]
                 if chp["mx_eff"][c]>0 && chp["h2p"][c]==0 && chp["fuel"][c]=="L" && chp["fcf"][c]>0))
     else
-        @variable(model, vCHP_L[t=1:tm["P"]] == 0)
+        @expression(model, vCHP_L[t=1:tm["P"]], AffExpr(0.0))
     end
 
     # maximum available space for CHP units {0,Bchp}
