@@ -179,11 +179,12 @@ end
 
 function calculate_solar_radiation(bdg,radiation,elevation,azimuth)
 
-    Q_Rroof  = bdg["Bkroof"] *bdg["Bfoot"] *sin.(elevation).*radiation
-    Q_Rwest  = bdg["Bkwest"] *bdg["Bwest"] *cos.(elevation).*max.(-sin.(azimuth),0).*radiation
-    Q_Reast  = bdg["Bkeast"] *bdg["Beast"] *cos.(elevation).*max.( sin.(azimuth),0).*radiation
-    Q_Rnorth = bdg["Bknorth"]*bdg["Bnorth"]*cos.(elevation).*max.( cos.(azimuth),0).*radiation
-    Q_Rsouth = bdg["Bksouth"]*bdg["Bsouth"]*cos.(elevation).*max.(-cos.(azimuth),0).*radiation
+    beam = (elevation .> 0) .* radiation  # DNI is zero when the sun is below the horizon
+    Q_Rroof  = bdg["Bkroof"] *bdg["Bfoot"] *sin.(elevation).*beam
+    Q_Rwest  = bdg["Bkwest"] *bdg["Bwest"] *cos.(elevation).*max.(-sin.(azimuth),0).*beam
+    Q_Reast  = bdg["Bkeast"] *bdg["Beast"] *cos.(elevation).*max.( sin.(azimuth),0).*beam
+    Q_Rnorth = bdg["Bknorth"]*bdg["Bnorth"]*cos.(elevation).*max.( cos.(azimuth),0).*beam
+    Q_Rsouth = bdg["Bksouth"]*bdg["Bsouth"]*cos.(elevation).*max.(-cos.(azimuth),0).*beam
 
     return Q_Rroof+Q_Rwest+Q_Reast+Q_Rnorth+Q_Rsouth
 

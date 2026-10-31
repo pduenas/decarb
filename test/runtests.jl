@@ -387,6 +387,29 @@ end
     @test DECARB.load_pv(path, other, bdg)["pv_cf"] == pv["pv_cf"]
 end
 
+@testset "solar beam terms are zero below the horizon" begin
+    tech = [1]
+    elevation = [0.0]
+    azimuth = [0.0]
+    @test DECARB.maximum_solar_potential(tech, 0.0, 0.0, 2, elevation, azimuth,
+        [1.0], [0.0], 0.0, 1, [25.0]) == zeros(1, 1)
+    @test DECARB.maximum_solar_potential(tech, 0.0, 0.0, 2, elevation, azimuth,
+        [1.0], [1.0], 0.0, 1, [25.0])[1] > 0
+
+    bdg = Dict("Bkroof" => 1.0, "Bfoot" => 1.0, "Bkwest" => 1.0, "Bwest" => 1.0,
+        "Bkeast" => 1.0, "Beast" => 1.0, "Bknorth" => 1.0, "Bnorth" => 1.0,
+        "Bksouth" => 1.0, "Bsouth" => 1.0)
+    @test DECARB.calculate_solar_radiation(bdg, [1.0], elevation, azimuth) == [0.0]
+
+    inputs = load_fixture(joinpath(CASE_SRC, "in"))
+    inputs.tm["ele"][1] = 0.0
+    inputs.tm["Sdni"][1] = 1.0
+    io = IOBuffer()
+    DECARB.validate_inputs(values(inputs)...; io)
+    @test occursin("pSdni is positive in periods with non-positive midpoint solar elevation",
+        String(take!(io)))
+end
+
 @testset "UTC timestamps :: annual examples have 8760 elapsed hours" begin
     for case in ("annual", "investment")
         path = joinpath(@__DIR__, "..", "examples", case, "in")

@@ -106,9 +106,10 @@ function maximum_solar_potential(tech,pvtilt,pvazi,pvtck,ele,azi,
     incid = acos.(clamp.(cosinc, -1, 1))
 
     # calculate the normalized flat irradiance based on real DNI and DHI
-    dni = max.(sdni.*cos.(incid), 0)            # avoid negative values
-    dhi = max.(sdhi, 0)                         # avoid negative values
-    ghi = max.(sdni.*sin.(ele), 0).+dhi         # obtain the global horizontal irradiance
+    beam = ele .> 0                                 # DNI is zero when the sun is below the horizon
+    dni = beam .* max.(sdni.*cos.(incid), 0)        # avoid negative values
+    dhi = max.(sdhi, 0)                             # avoid negative values
+    ghi = beam .* max.(sdni.*sin.(ele), 0) .+ dhi   # obtain the global horizontal irradiance
 
     sky = dhi.*(1 .+ cos.(pvtilt))./2
     ground = albedo.*ghi.*(1 .- cos.(pvtilt))./2 
