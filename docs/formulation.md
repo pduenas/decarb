@@ -127,8 +127,13 @@ state-of-charge fractions are enforced.
 
 EV state of charge additionally accounts for trip energy. Charging is limited
 to plugged-in periods, and discharge is disabled unless vehicle-to-grid is
-enabled. A slack variable permits a penalized shortfall below the requested
-minimum state of charge.
+enabled. `vEVtrip[t,e]` represents charging away from home during a trip. It
+is bounded in `[0,1]` because it contributes to normalized SOC, and is fixed
+to zero outside trips and for inactive EVs.
+
+Away-from-home charging and minimum-SOC shortfalls are penalized by
+`NSEVcost`. When `NSEVcost` is zero, both variables are fixed to zero, so
+trips and the minimum SOC requirement cannot be softened.
 
 ## Investments
 

@@ -64,7 +64,7 @@ display only.
 | `pNSEcost` | $/kWh | Penalty for unserved electricity. A zero value prevents unserved electricity. |
 | `pNSTcost` | $/(deg C h) | Penalty for indoor-temperature deviation. A zero value prevents comfort-bound violations when comfort is active. |
 | `pNSHWcost` | $/kWh | Penalty for unserved hot water. A zero value prevents unserved hot water. |
-| `pNSEVcost` | $/kWh | Penalty for trip energy that cannot be supplied, and per kWh-hour below minimum SOC. |
+| `pNSEVcost` | $/kWh | Penalty for EV charging away from home and per kWh-hour below minimum SOC. A zero value prohibits both types of EV shortfall. |
 | `pEVdriver` | `-1`, `0`, or `1` | Driver preference: range-anxious, indifferent, or battery-conscious, respectively. |
 | `pEVpen` | $ per unit SOC per hour | Weight applied to the driver-preference term. |
 | `pEVv2g` | boolean | Allows EV discharge to the building/grid when true. |

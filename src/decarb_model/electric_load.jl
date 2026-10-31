@@ -34,6 +34,14 @@ function electric_load!(model::Model,cfg::Dict,tm::Dict,chp::Dict,hvac::Dict,wh:
     # disable non-served energy if indicated
     cfg["NSEcost"]==0 ? fix.(vNSEq,0; force=true) : println(io, "   \u2139  Non-served energy allowed")
 
+    # disable EV trip and minimum-SOC shortfall if indicated
+    if cfg["NSEVcost"]==0
+        fix.(model[:vEVtrip],0; force=true)
+        fix.(model[:vEVlo],0; force=true)
+    else
+        println(io, "   \u2139  EV shortfall allowed")
+    end
+
     # non-served electricity [kWh]
     @expression(model, vNSE_Q[t=1:tm["P"]], tm["TM"][t]*(tm["Qlight"][t]+tm["Qequip"][t])*vNSEq[t])
     # electricity demand [kWh]

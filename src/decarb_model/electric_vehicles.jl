@@ -22,14 +22,21 @@ function electric_vehicles!(model::Model,cfg::Dict,tm::Dict,ev::Dict)
     @variable(model, 1 >= vEVsoc[t=1:tm["P"],e=1:ev["N"]] >= 0)    
     # excursion below minimum state-of-charge of electric vehicle [0,1]
     @variable(model, cfg["EVmnsoc"] >= vEVlo[t=1:tm["P"],e=1:ev["N"]] >= 0)
-    # trip energy shortfall of electric vehicle [0,1]
+    # charging away from home for electric vehicle [0,1]
     @variable(model, 1 >= vEVtrip[t=1:tm["P"],e=1:ev["N"]] >= 0)
 
     # correct maximum capacity for non-existing or disabled EVs
     ev["mx_eff"] = copy(ev["mx"])
-    for e = 1:ev["N"]
+    for e=1:ev["N"]
         if all(ev["time"][:,e].==0)
             ev["mx_eff"][e] = 0
+        end
+    end
+
+    # Away-from-home charging is only available during trips
+    for t = 1:tm["P"], e = 1:ev["N"]
+        if !(ev["kwh"][t,e] > 0 && ev["mx_eff"][e] > 0)
+            fix(vEVtrip[t,e], 0; force=true)
         end
     end
 
@@ -58,8 +65,5 @@ function electric_vehicles!(model::Model,cfg::Dict,tm::Dict,ev::Dict)
     # allowed excursion of minimum state-of-charge for electric vehicle
     @constraint(model, eEVlo[t=1:tm["P"],e=1:ev["N"]; ev["mx_eff"][e]>0],
         vEVsoc[t,e] >= cfg["EVmnsoc"]-vEVlo[t,e])
-    # final state-of-charge of active electric vehicles is not softened
-    @constraint(model, eEVsocf[e=1:ev["N"]; ev["mx_eff"][e]>0],
-        vEVsoc[tm["P"],e] >= cfg["EVmnsoc"])
 
 end
