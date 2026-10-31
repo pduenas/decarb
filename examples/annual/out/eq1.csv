@@ -1,8 +1,8 @@
 name,eq
-total_cost,-1168.2
-energy_bill,-1168.2
+total_cost,-1168.22
+energy_bill,-1168.22
 grid_sales,-1763.56
-grid_purchases,595.36
+grid_purchases,595.34
 capacity_charge,0.0
 fuel_purchases,0.0
 variable_om_cost,0.0
