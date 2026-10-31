@@ -49,7 +49,7 @@ function pv_panels!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,pv::Dict)
     for i1=1:cfg["IT"]
         tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
         @constraint(model, [t=tm["IW"][i1]:tlast,v=1:pv["N"]; pv["zmx0"][v]>0],
-            vPV_Q[t,v] <= tm["TM"][t]*pv["pv_cf"][t,v]*(sum(zPV[i2,v] for i2=1:i1))*pv["eff"][v].*pv["mx"][v])
+            vPV_Q[t,v] <= tm["TM"][t]*pv["pv_cf"][t,v]*(sum(zPV[i2,v] for i2=1:i1))*pv["eff"][v].*pv["mx"][v], base_name="ePVqmx_w$(i1)")
     end
 
 end

@@ -105,7 +105,7 @@ function chp_units!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::Dic
     for i1=1:cfg["IT"]
          tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
           @constraint(model, [t=tm["IW"][i1]:tlast,c=1:chp["N"]; chp["mx_eff"][c]>0],
-            bCHP_u[t,c] == sum(bCHPty[i2,c] for i2=1:i1))
+            bCHP_u[t,c] == sum(bCHPty[i2,c] for i2=1:i1), base_name="eCHPu_w$(i1)")
     end
     # disable electricity generation for boilers and furnaces
     @constraint(model, eCHPq0[t=1:tm["P"],c=1:chp["N"]; chp["h2p"][c]==0], vCHP_q[t,c] <= 0)

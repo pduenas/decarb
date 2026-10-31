@@ -87,7 +87,7 @@ function abp_chillers!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,topo::Dict,sp::
     for i1=1:cfg["IT"]
          tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
           @constraint(model, [t=tm["IW"][i1]:tlast,a=1:abp["N"]],
-            bABP_u[t,a] == sum(bABPty[i2,a] for i2=1:i1))
+            bABP_u[t,a] == sum(bABPty[i2,a] for i2=1:i1), base_name="eABPu_w$(i1)")
     end
     # allowed cooling to building from absorption chiller {0,1}
     @constraint(model, eABPacbdg[t=1:tm["P"],a=1:abp["N"]], vABPac[t,a] <= model[:bBDGac][t])

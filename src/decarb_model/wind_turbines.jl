@@ -50,7 +50,7 @@ function wind_turbines!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,wind:
     for i1=1:cfg["IT"]
         tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
         @constraint(model, [t=tm["IW"][i1]:tlast,d=1:wind["N"]; wind["zmx0"][d]>0],
-            vWINDq[t,d] <= sum(zWIND[i2,d] for i2=1:i1))
+            vWINDq[t,d] <= sum(zWIND[i2,d] for i2=1:i1), base_name="eWINDqmx_w$(i1)")
     end
 
 end

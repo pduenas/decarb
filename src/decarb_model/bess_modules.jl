@@ -62,13 +62,13 @@ function bess_modules!(model::Model,cfg::Dict,tm::Dict,bdg::Dict,sp::Dict,bess::
         tlast = i1 < cfg["IT"] ? tm["IW"][i1+1]-1 : tm["P"]
         # maximum electricity stored by BESS [0,z]
         @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
-            vBESSsoc[t,s] <= sum(zBESS[i2,s] for i2=1:i1))
+            vBESSsoc[t,s] <= sum(zBESS[i2,s] for i2=1:i1), base_name="eBESSsocmx_w$(i1)")
         # maximum electricity charged to BESS [0,z]
         @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
-            vBESSup[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["up"][s]/bess["mx"][s])
+            vBESSup[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["up"][s]/bess["mx"][s], base_name="eBESSupmx_w$(i1)")
         # maximum electricity discharged from BESS [0,z]
         @constraint(model, [t=tm["IW"][i1]:tlast,s=1:bess["N"]; bess["zmx0"][s]>0],
-            vBESSdn[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["dn"][s]/bess["mx"][s])
+            vBESSdn[t,s] <= sum(zBESS[i2,s] for i2=1:i1)*tm["TM"][t]*bess["dn"][s]/bess["mx"][s], base_name="eBESSdnmx_w$(i1)")
     end
 
     # charge/discharge mode of BESS {0,1}
