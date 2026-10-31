@@ -58,8 +58,7 @@ end
 """
 write_solve_info(path::AbstractString,solve_info)
 
-Writes the MIP solve summary returned by solve_model! to path/out/solve_info.csv, so a
-solution that stopped at a limit (e.g. TIME_LIMIT) can be told apart from an optimal one
+Writes the solve summary returned by solve_model! to path/out/solve_info.csv.
 
 inputs:
 path        string path to working directory

@@ -175,6 +175,11 @@ function run_decarb!(path::AbstractString;
         relax_integrality,
         duals,
         duals_available = mip.duals_available,
+        dual_resolve_status = mip.dual_resolve_status,
+        mip_resolved = mip.mip_resolved,
+        resolved_objective_value = mip.resolved_objective_value,
+        resolved_relative_gap = mip.resolved_relative_gap,
+        resolved_solve_time_s = mip.resolved_solve_time_s,
         threads = mip.threads,
         utc_timestamp = Dates.format(Dates.now(Dates.UTC), "yyyy-mm-ddTHH:MM:SS") * "Z")
 

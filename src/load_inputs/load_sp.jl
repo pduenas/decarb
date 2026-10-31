@@ -18,9 +18,13 @@ function load_sp(path::AbstractString,cfg::Dict)
     path2file = joinpath(path,"sp.csv")
 
     # load file into dataframe with predefined types
-    df_sp = CSV.File(path2file;delim=',',types=Dict{String,Type}(
-                    ["p$(k)$(s)"=>t for k in ("CHP","ABP","HVAC","WH","PV","WIND","BESS","EV")
-                     for (s,t) in (("0",String),("z0",Int),("yn",String))])) |> DataFrame
+    types = Dict{String,Type}(
+        "p$(k)$(s)"=>t for k in ("CHP","ABP","HVAC","WH","PV","WIND","BESS")
+        for (s,t) in (("0",String),("z0",Int),("yn",String)))
+    # EVs have existing units only; there is no investment flag.
+    types["pEV0"] = String
+    types["pEVz0"] = Int
+    df_sp = CSV.File(path2file;delim=',',types=types) |> DataFrame
 
     # columns are ragged, but each row of a group must be either blank or complete
     for prefix in ("CHP","ABP","HVAC","WH","PV","WIND","BESS","EV")
