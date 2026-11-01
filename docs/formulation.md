@@ -69,6 +69,15 @@ Grid purchases and sales are bounded by the case configuration and cannot
 occur simultaneously. Optional peak-demand variables track maximum grid import
 within configured tariff periods.
 
+## Combined heat and power
+
+CHP electrical output is normalized by installed electrical capacity. Each
+connected heat link variable uses the same normalization and has upper bound
+`max(1, h2p)`; an unconnected link is fixed to zero. The aggregate heat sent
+to all building and absorption-chiller links is bounded by `h2p` times CHP
+electrical output. Boilers (`h2p = 0`) instead use the existing-unit binary
+to bound their aggregate heat allocation.
+
 ## Building temperature
 
 Indoor temperature follows a first-order data-driven recurrence whose input
