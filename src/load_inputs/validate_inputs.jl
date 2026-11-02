@@ -302,6 +302,9 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         push!(wrn,"the following inputs are read but not active in DECARB v1.0 " *
                   "and have no effect: " * join(reserved,", "))
 
+    # ---- EV feasibility ----------------------------------------------------
+    isempty(err) && check_ev_feasibility!(err, cfg, tm, ev)
+
     # ---- temperature diagnostics -----------------------------------------
     # Run only after structural checks pass. These optimistic thermal checks
     # provide warnings, not a substitute for solving the coupled energy model.
@@ -340,6 +343,30 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     println(io, "   \u2139  inputs validated (", length(wrn), " warning(s))")
 
     return nothing
+end
+
+# With pNSEVcost = 0 the model forbids off-home charging and SOC shortfall.
+# The maximum-charge trajectory is an upper bound on SOC, so a violation means
+# the case is infeasible.
+function check_ev_feasibility!(err, cfg, tm, ev)
+    cfg["NSEVcost"] == 0 || return err
+    for e in 1:ev["N"]
+        (ev["mx"][e] > 0 && any(==(1), @view ev["time"][:, e])) || continue
+        soc = cfg["EVsoc0"]
+        for t in 1:tm["P"]
+            soc = min(1.0, soc + ev["time"][t,e] * tm["TM"][t] * ev["up"][e] *
+                      ev["effu"][e] / ev["mx"][e])
+            soc -= ev["kwh"][t,e] / ev["mx"][e]
+            if soc < cfg["EVmnsoc"] - 1e-9
+                push!(err, "EV $(ev["ty"][e]) cannot meet its minimum state of charge at " *
+                    "$(tm["Date"][t]): maximum reachable SOC is $(round(soc; digits=3)) " *
+                    "< pEVmnsoc = $(cfg["EVmnsoc"]); set pNSEVcost > 0 to allow " *
+                    "off-home charging and SOC shortfall")
+                break
+            end
+        end
+    end
+    return err
 end
 
 # Strip a trailing "-<number>" instance suffix added by extend_catalog.

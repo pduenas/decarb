@@ -1701,6 +1701,37 @@ end
     @test DECARB.validate_inputs(values(inputs)...; io=devnull) === nothing
 end
 
+@testset "validate_inputs :: EV feasibility precheck" begin
+    tm = Dict("P" => 3, "TM" => [1.0, 1.0, 1.0],
+        "Date" => [DateTime(2024, 1, 1, h) for h in 0:2])
+    ev = Dict("N" => 1, "ty" => ["EV-1"], "mx" => [50.0], "up" => [7.0],
+        "effu" => [0.9], "time" => zeros(3, 1), "kwh" => [0.0, 20.0, 0.0])
+    cfg = Dict("EVsoc0" => 0.2, "EVmnsoc" => 0.5, "NSEVcost" => 0.0)
+
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)   # never plugged in: skipped
+    @test isempty(err)
+
+    ev["time"][1, 1] = 1                             # one plugged period
+    ev["up"] = [0.5]
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test length(err) == 1
+    @test occursin("set pNSEVcost > 0", err[1])
+    @test_throws ArgumentError throw(ArgumentError(join(err, "\n")))
+
+    cfg["NSEVcost"] = 1.0
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test isempty(err)
+
+    cfg["NSEVcost"] = 0.0
+    ev["up"] = [50.0]                                # fast enough: feasible
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test isempty(err)
+end
+
 function eq1_metrics(path)
     df = CSV.read(joinpath(path, "out", "eq1.csv"), DataFrame)
     d  = Dict(string(n) => Float64(v) for (n, v) in zip(df.name, df.eq))
