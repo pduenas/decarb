@@ -9,6 +9,9 @@ on:
     branches:
       - main
       - develop
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,6 +44,8 @@ jobs:
       - uses: julia-actions/cache@v3
       - run: julia --project=@. -e "using Pkg; Pkg.instantiate()"
       - run: julia --project=@. -e "using Pkg; Pkg.test(coverage=${{ matrix.version == '1.12' && matrix.os == 'ubuntu-latest' }})"
+        env:
+          DECARB_FULL: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
       - uses: codecov/codecov-action@v7
