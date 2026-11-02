@@ -136,6 +136,8 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         0 <= cfg[k] <= 1 || push!(err,"cfg.$(k) = $(cfg[k]); expected a fraction in [0,1]")
     end
     0 <= cfg["IR"] < 1 || push!(err,"cfg.IR = $(cfg["IR"]); expected an annual rate in [0,1)")
+    cfg["IT"] >= 0 || push!(err,"cfg.csv pIT must be a non-negative integer")
+    cfg["QmxTM"] >= 0 || push!(err,"cfg.csv pQmxTM must be a non-negative integer")
     cfg["QmxBuy"]  > 0 || push!(err,"cfg.QmxBuy must be positive")
     cfg["QmxSell"] >= 0 || push!(err,"cfg.QmxSell must be non-negative")
     cfg["EVdriver"] in (-1,0,1) ||
@@ -300,6 +302,9 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         push!(wrn,"the following inputs are read but not active in DECARB v1.0 " *
                   "and have no effect: " * join(reserved,", "))
 
+    # ---- EV feasibility ----------------------------------------------------
+    isempty(err) && check_ev_feasibility!(err, cfg, tm, ev)
+
     # ---- temperature diagnostics -----------------------------------------
     # Run only after structural checks pass. These optimistic thermal checks
     # provide warnings, not a substitute for solving the coupled energy model.
@@ -340,6 +345,30 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
     return nothing
 end
 
+# With pNSEVcost = 0 the model forbids off-home charging and SOC shortfall.
+# The maximum-charge trajectory is an upper bound on SOC, so a violation means
+# the case is infeasible.
+function check_ev_feasibility!(err, cfg, tm, ev)
+    cfg["NSEVcost"] == 0 || return err
+    for e in 1:ev["N"]
+        (ev["mx"][e] > 0 && any(==(1), @view ev["time"][:, e])) || continue
+        soc = cfg["EVsoc0"]
+        for t in 1:tm["P"]
+            soc = min(1.0, soc + ev["time"][t,e] * tm["TM"][t] * ev["up"][e] *
+                      ev["effu"][e] / ev["mx"][e])
+            soc -= ev["kwh"][t,e] / ev["mx"][e]
+            if soc < cfg["EVmnsoc"] - 1e-9
+                push!(err, "EV $(ev["ty"][e]) cannot meet its minimum state of charge at " *
+                    "$(tm["Date"][t]): maximum reachable SOC is $(round(soc; digits=3)) " *
+                    "< pEVmnsoc = $(cfg["EVmnsoc"]); set pNSEVcost > 0 to allow " *
+                    "off-home charging and SOC shortfall")
+                break
+            end
+        end
+    end
+    return err
+end
+
 # Strip a trailing "-<number>" instance suffix added by extend_catalog.
 catalog_base_name(name::AbstractString) =
     (m = match(r"^(.*)-\d+$", name); m === nothing ? String(name) : String(m.captures[1]))
@@ -366,7 +395,7 @@ function validate_extended_inputs!(err, wrn, cfg, sp, bdg, tm, chp, pv, wind, to
                       "(departure without arrival)")
     end
     all(t -> t in (0,1), tm["Ton"]) || push!(err,"tm.csv pTon must be 0 or 1")
-    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi")
+    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi","EVdem","EVtm")
         all(>=(0), tm[key]) || push!(err,"tm.csv p$(key) must be non-negative")
     end
 

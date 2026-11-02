@@ -571,6 +571,23 @@ end
     end
 end
 
+@testset "validation :: negative counts and EV series" begin
+    for (field, msg) in (("pIT", "cfg.csv pIT must be a non-negative integer"),
+                         ("pQmxTM", "cfg.csv pQmxTM must be a non-negative integer"))
+        path = stage(run=false, patches=Dict("cfg.csv" => "$field,0" => "$field,-1"))
+        inputs = load_fixture(joinpath(path, "in"))
+        @test_throws ArgumentError DECARB.validate_inputs(values(inputs)...; io=devnull)
+        @test_throws msg DECARB.validate_inputs(values(inputs)...; io=devnull)
+    end
+    path = stage(run=false)
+    for key in ("EVdem", "EVtm")
+        inputs = load_fixture(joinpath(path, "in"))
+        inputs.tm[key][1] = -1
+        @test_throws ArgumentError DECARB.validate_inputs(values(inputs)...; io=devnull)
+        @test_throws "tm.csv p$key must be non-negative" DECARB.validate_inputs(values(inputs)...; io=devnull)
+    end
+end
+
 @testset "validation :: finite values and numeric bounds" begin
     test_input_bounds()
 end
@@ -1682,6 +1699,37 @@ end
     @test inputs.sp["PVz0"] == [300]
     @test inputs.bdg["Bbess"] == 500
     @test DECARB.validate_inputs(values(inputs)...; io=devnull) === nothing
+end
+
+@testset "validate_inputs :: EV feasibility precheck" begin
+    tm = Dict("P" => 3, "TM" => [1.0, 1.0, 1.0],
+        "Date" => [DateTime(2024, 1, 1, h) for h in 0:2])
+    ev = Dict("N" => 1, "ty" => ["EV-1"], "mx" => [50.0], "up" => [7.0],
+        "effu" => [0.9], "time" => zeros(3, 1), "kwh" => [0.0, 20.0, 0.0])
+    cfg = Dict("EVsoc0" => 0.2, "EVmnsoc" => 0.5, "NSEVcost" => 0.0)
+
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)   # never plugged in: skipped
+    @test isempty(err)
+
+    ev["time"][1, 1] = 1                             # one plugged period
+    ev["up"] = [0.5]
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test length(err) == 1
+    @test occursin("set pNSEVcost > 0", err[1])
+    @test_throws ArgumentError throw(ArgumentError(join(err, "\n")))
+
+    cfg["NSEVcost"] = 1.0
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test isempty(err)
+
+    cfg["NSEVcost"] = 0.0
+    ev["up"] = [50.0]                                # fast enough: feasible
+    err = String[]
+    DECARB.check_ev_feasibility!(err, cfg, tm, ev)
+    @test isempty(err)
 end
 
 function eq1_metrics(path)
