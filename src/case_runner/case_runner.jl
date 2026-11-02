@@ -42,6 +42,13 @@ function run_decarb!(path::AbstractString;
     println(io, "\u2503" * title * "\u2503")
     println(io, "\u2517" * "\u2501"^length(title) * "\u251B\n")
 
+    mkpath(joinpath(path,"out"))        # create output directory if it does not exist
+
+    # remove stale DECARB outputs from previous runs
+    for f in ("eq1.csv","eq2.csv","ts.csv","balance.csv","iis_constraints.txt","solve_info.csv")
+        rm(joinpath(path,"out",f); force=true)
+    end
+
     a0 = time()	    # start timer
 
     println(io, "\u23E9 loading inputs")
@@ -149,13 +156,6 @@ function run_decarb!(path::AbstractString;
     println(io, "   \u231B elapsed time ... ", round(a15-a14; digits=2), " seconds\n")
 
     println(io, "\u23E9 solving model")
-
-    mkpath(joinpath(path,"out"))        # create output directory if it does not exist
-
-    # remove stale DECARB outputs from previous runs; other user files are kept
-    for f in ("eq1.csv","eq2.csv","ts.csv","balance.csv","iis_constraints.txt","solve_info.csv")
-        rm(joinpath(path,"out",f); force=true)
-    end
 
     mip = solve_model!(path,model,relax_integrality; duals, verbose)
     solve_info = (;
