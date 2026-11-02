@@ -933,6 +933,17 @@ end
     end
 end
 
+@testset "minimal :: stale outputs removed before input validation" begin
+    p = stage(run=false)
+    mkpath(joinpath(p, "out"))
+    write(joinpath(p, "out", "eq1.csv"), "stale\n")
+    write(joinpath(p, "in", "bdg_ii.csv"),
+        "pBk1,pBk2,pBk3,pBtime\n0.03,0.05,0.15,0\n")
+
+    @test_throws ArgumentError DECARB.run_decarb!(p; verbose=false)
+    @test !isfile(joinpath(p, "out", "eq1.csv"))
+end
+
 @testset "minimal :: runs and writes outputs" begin
     p = stage(run=false)
     output = mktemp() do _, io
