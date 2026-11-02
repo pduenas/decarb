@@ -86,7 +86,7 @@ function load_tm(path::AbstractString,cfg::Dict,bdg::Dict)
 
     if cfg["QmxTM"]==0
         tm["QmxCostN"] = zeros(Float64, cfg["QmxTM"])
-    else
+    elseif cfg["QmxTM"]>0
         tm["QmxCostN"] = calculate_peak_charge(cfg["QmxTM"],tm["Qmx"],tm["QmxCost"],tm["P"])
     end
 
@@ -121,6 +121,8 @@ end
 function investment_windows(IT,H,TM)
     
     IW = Int32[]    # investment windows hours
+
+    IT > 0 || return IW
 
     # obtain simulation hour for investment in reverse order
     IH = floor(Int32,H/IT).*(1:IT)

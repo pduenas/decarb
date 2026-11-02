@@ -136,6 +136,8 @@ function validate_inputs(cfg::Dict,sp::Dict,bdg::Dict,tm::Dict,chp::Dict,abp::Di
         0 <= cfg[k] <= 1 || push!(err,"cfg.$(k) = $(cfg[k]); expected a fraction in [0,1]")
     end
     0 <= cfg["IR"] < 1 || push!(err,"cfg.IR = $(cfg["IR"]); expected an annual rate in [0,1)")
+    cfg["IT"] >= 0 || push!(err,"cfg.csv pIT must be a non-negative integer")
+    cfg["QmxTM"] >= 0 || push!(err,"cfg.csv pQmxTM must be a non-negative integer")
     cfg["QmxBuy"]  > 0 || push!(err,"cfg.QmxBuy must be positive")
     cfg["QmxSell"] >= 0 || push!(err,"cfg.QmxSell must be non-negative")
     cfg["EVdriver"] in (-1,0,1) ||
@@ -366,7 +368,7 @@ function validate_extended_inputs!(err, wrn, cfg, sp, bdg, tm, chp, pv, wind, to
                       "(departure without arrival)")
     end
     all(t -> t in (0,1), tm["Ton"]) || push!(err,"tm.csv pTon must be 0 or 1")
-    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi")
+    for key in ("Qlight","Qequip","Bppl","Sdni","Sdhi","EVdem","EVtm")
         all(>=(0), tm[key]) || push!(err,"tm.csv p$(key) must be non-negative")
     end
 

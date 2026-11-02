@@ -571,6 +571,23 @@ end
     end
 end
 
+@testset "validation :: negative counts and EV series" begin
+    for (field, msg) in (("pIT", "cfg.csv pIT must be a non-negative integer"),
+                         ("pQmxTM", "cfg.csv pQmxTM must be a non-negative integer"))
+        path = stage(run=false, patches=Dict("cfg.csv" => "$field,0" => "$field,-1"))
+        inputs = load_fixture(joinpath(path, "in"))
+        @test_throws ArgumentError DECARB.validate_inputs(values(inputs)...; io=devnull)
+        @test_throws msg DECARB.validate_inputs(values(inputs)...; io=devnull)
+    end
+    path = stage(run=false)
+    for key in ("EVdem", "EVtm")
+        inputs = load_fixture(joinpath(path, "in"))
+        inputs.tm[key][1] = -1
+        @test_throws ArgumentError DECARB.validate_inputs(values(inputs)...; io=devnull)
+        @test_throws "tm.csv p$key must be non-negative" DECARB.validate_inputs(values(inputs)...; io=devnull)
+    end
+end
+
 @testset "validation :: finite values and numeric bounds" begin
     test_input_bounds()
 end
